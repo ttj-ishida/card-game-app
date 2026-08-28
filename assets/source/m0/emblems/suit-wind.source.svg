@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Wind suit emblem</title>
+  <desc id="desc">Two sweeping leaf-like curves for the wind suit, recognizable without color.</desc>
+  <path d="M25 82 C56 30 126 36 137 39 C118 73 78 100 25 82 Z" fill="#31886B"/>
+  <path d="M34 117 C73 81 127 94 140 99 C112 134 68 144 34 117 Z" fill="#31886B"/>
+  <path d="M46 82 C72 72 100 63 124 42" fill="none" stroke="#FAF8F0" stroke-width="8" stroke-linecap="round"/>
+  <path d="M55 117 C82 110 106 105 130 100" fill="none" stroke="#FAF8F0" stroke-width="8" stroke-linecap="round"/>
+  <path d="M25 82 C56 30 126 36 137 39 C118 73 78 100 25 82 Z M34 117 C73 81 127 94 140 99 C112 134 68 144 34 117 Z" fill="none" stroke="#1B1D24" stroke-width="6" stroke-linejoin="round"/>
+</svg>

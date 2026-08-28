@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Fire suit emblem</title>
+  <desc id="desc">Flame silhouette for the fire suit, recognizable without color.</desc>
+  <path d="M80 12 C44 52 44 94 80 144 C116 94 116 52 80 12 Z" fill="#D84A2B"/>
+  <path d="M80 42 C62 68 64 98 80 121 C96 98 98 68 80 42 Z" fill="#FAF8F0" opacity="0.88"/>
+  <path d="M80 12 C44 52 44 94 80 144 C116 94 116 52 80 12 Z" fill="none" stroke="#1B1D24" stroke-width="6" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Earth suit emblem</title>
+  <desc id="desc">Diamond mountain silhouette for the earth suit, recognizable without color.</desc>
+  <path d="M80 10 L150 80 L80 150 L10 80 Z" fill="#8A6A2A"/>
+  <path d="M42 96 L72 58 L91 84 L105 70 L128 96 Z" fill="#FAF8F0" opacity="0.9"/>
+  <path d="M80 10 L150 80 L80 150 L10 80 Z" fill="none" stroke="#1B1D24" stroke-width="6" stroke-linejoin="round"/>
+</svg>

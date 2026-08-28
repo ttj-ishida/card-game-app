@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Water suit emblem</title>
+  <desc id="desc">Drop and wave silhouette for the water suit, recognizable without color.</desc>
+  <path d="M80 12 C43 58 32 91 51 119 C72 150 126 140 130 91 C106 112 76 101 80 61 Z" fill="#2577B8"/>
+  <path d="M42 111 C64 96 88 96 116 111" fill="none" stroke="#FAF8F0" stroke-width="10" stroke-linecap="round"/>
+  <path d="M80 12 C43 58 32 91 51 119 C72 150 126 140 130 91 C106 112 76 101 80 61 Z" fill="none" stroke="#1B1D24" stroke-width="6" stroke-linejoin="round"/>
+</svg>

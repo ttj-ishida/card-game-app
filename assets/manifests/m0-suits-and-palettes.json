@@ -1,0 +1,29 @@
+{
+  "todoId": "M0-GR-03",
+  "version": "0.1.0",
+  "status": "accepted-for-m0",
+  "emblemSize": { "width": 160, "height": 160, "viewBox": "0 0 160 160", "maxBytes": 20480 },
+  "suits": [
+    { "suitCode": "SUIT_FIRE", "assetId": "suit-fire", "color": "#D84A2B", "shapeCue": "flame", "sourcePath": "assets/source/m0/emblems/suit-fire.source.svg", "runtimePath": "assets/runtime/m0/emblems/suit-fire.svg" },
+    { "suitCode": "SUIT_WATER", "assetId": "suit-water", "color": "#2577B8", "shapeCue": "drop-wave", "sourcePath": "assets/source/m0/emblems/suit-water.source.svg", "runtimePath": "assets/runtime/m0/emblems/suit-water.svg" },
+    { "suitCode": "SUIT_WIND", "assetId": "suit-wind", "color": "#31886B", "shapeCue": "sweeping-leaf", "sourcePath": "assets/source/m0/emblems/suit-wind.source.svg", "runtimePath": "assets/runtime/m0/emblems/suit-wind.svg" },
+    { "suitCode": "SUIT_EARTH", "assetId": "suit-earth", "color": "#8A6A2A", "shapeCue": "diamond-mountain", "sourcePath": "assets/source/m0/emblems/suit-earth.source.svg", "runtimePath": "assets/runtime/m0/emblems/suit-earth.svg" }
+  ],
+  "palettes": {
+    "day": {
+      "surfaceTable": "#EEF5F1",
+      "surfaceCardFace": "#FAF8F0",
+      "inkPrimary": "#1B1D24",
+      "inkSecondary": "#3B4148",
+      "border": "#1B1D24"
+    },
+    "night": {
+      "surfaceTable": "#17202A",
+      "surfaceCardFace": "#FAF8F0",
+      "surfaceCardBack": "#2E3147",
+      "inkPrimary": "#F5F2E8",
+      "border": "#F5F2E8"
+    }
+  },
+  "license": "project-owned-placeholder"
+}
