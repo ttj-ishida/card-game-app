@@ -7,8 +7,8 @@
 ## 現在地
 
 - 現在のマイルストーン：M0 開発土台とカードカタログ
-- 完了：`M0-PM-01` リポジトリ構成・ブランチ方針・命名規則
-- 次：`M0-PM-02` 開発・検証・本番の環境分離方針
+- 完了：`M0-PM-02` 開発・検証・本番の環境分離方針
+- 次：`M0-SB-01` Supabase開発プロジェクトを作成する
 - 正式名称の決定期限：M6開始前
 
 ## リポジトリ構成
@@ -56,11 +56,12 @@ card-game-app/
 | 主要ブランチ | `main`のみ |
 | 作業ブランチ | TODO単位の短命ブランチ |
 | コミット | Conventional Commits＋TODO ID |
+| 環境 | `local`、`development`、`staging`、`production` |
 | DB変更 | `supabase/migrations`のみを正とする |
 | ルール実装 | `packages/game-core`のみを正とする |
 | 本番アセット | 安定IDとmanifestで管理 |
 
-選択理由と見直し条件は[ADR-0001](docs/adr/0001-repository-branch-and-naming.md)を参照してください。
+選択理由と見直し条件は[ADR-0001](docs/adr/0001-repository-branch-and-naming.md)と[ADR-0002](docs/adr/0002-environment-separation.md)を参照してください。
 
 ## 基本ワークフロー
 
