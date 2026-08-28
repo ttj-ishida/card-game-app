@@ -11,7 +11,8 @@
     "db:link": "supabase link --project-ref evzmtxwdsoebekxlqxeo",
     "mobile:start": "npm --prefix apps/mobile run start",
     "mobile:android": "npm --prefix apps/mobile run android",
-    "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
+    "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
+    "mobile:test": "npm --prefix apps/mobile run test"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
