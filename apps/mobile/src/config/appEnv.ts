@@ -39,7 +39,9 @@ function requirePublicValue(env: PublicEnv, key: keyof PublicEnv): string {
 function assertPublicAnonKey(value: string): void {
   const lowered = value.toLowerCase();
   if (lowered.includes('service_role') || lowered.includes('secret')) {
-    throw new Error('EXPO_PUBLIC_SUPABASE_ANON_KEY must not look like a service role or secret key');
+    throw new Error(
+      'EXPO_PUBLIC_SUPABASE_ANON_KEY must not look like a service role or secret key',
+    );
   }
 }
 

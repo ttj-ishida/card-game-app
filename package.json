@@ -12,7 +12,9 @@
     "mobile:start": "npm --prefix apps/mobile run start",
     "mobile:android": "npm --prefix apps/mobile run android",
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
-    "mobile:test": "npm --prefix apps/mobile run test"
+    "mobile:test": "npm --prefix apps/mobile run test",
+    "mobile:lint": "npm --prefix apps/mobile run lint",
+    "mobile:format:check": "npm --prefix apps/mobile run format:check"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
