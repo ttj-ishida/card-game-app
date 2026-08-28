@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1050" viewBox="0 0 750 1050" role="img" aria-labelledby="title desc">
+  <title id="title">M0 Card Template</title>
+  <desc id="desc">Safe area template for M0 temporary card art.</desc>
+  <rect width="750" height="1050" fill="#FAF8F0"/>
+  <rect x="24" y="24" width="702" height="1002" rx="36" fill="none" stroke="#1B1D24" stroke-width="8"/>
+  <rect x="60" y="84" width="630" height="882" rx="20" fill="none" stroke="#2577B8" stroke-width="5" stroke-dasharray="22 16"/>
+  <rect x="90" y="126" width="570" height="798" rx="16" fill="none" stroke="#C28A18" stroke-width="4" stroke-dasharray="14 14"/>
+  <rect x="60" y="84" width="96" height="126" rx="10" fill="#EEF5F1" stroke="#8B9098" stroke-width="4"/>
+  <rect x="594" y="840" width="96" height="126" rx="10" fill="#EEF5F1" stroke="#8B9098" stroke-width="4"/>
+  <text x="375" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#1B1D24" font-weight="700">5:7 / 750 x 1050</text>
+  <text x="375" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="96" fill="#1B1D24" font-weight="700">CARD</text>
+  <text x="375" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#3B4148">safe area: 60,84,630,882</text>
+  <text x="375" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#3B4148">essential text: 90,126,570,798</text>
+  <text x="108" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1B1D24" font-weight="700">MARK</text>
+  <text x="642" y="910" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1B1D24" font-weight="700">MARK</text>
+</svg>

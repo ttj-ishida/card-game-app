@@ -1,0 +1,36 @@
+{
+  "todoId": "M0-GR-02",
+  "version": "0.1.0",
+  "status": "accepted-for-m0",
+  "cardTemplate": {
+    "aspectRatio": "5:7",
+    "source": {
+      "width": 750,
+      "height": 1050,
+      "viewBox": "0 0 750 1050",
+      "scaleFromBase": 3
+    },
+    "displaySizes": {
+      "thumbnail": { "width": 150, "height": 210 },
+      "catalog": { "width": 250, "height": 350 },
+      "detail": { "width": 500, "height": 700 }
+    },
+    "bounds": {
+      "outerBleed": 24,
+      "safeArea": { "x": 60, "y": 84, "width": 630, "height": 882 },
+      "essentialTextArea": { "x": 90, "y": 126, "width": 570, "height": 798 },
+      "cornerMark": { "width": 96, "height": 126 }
+    },
+    "style": {
+      "minimumStrokeSourcePx": 4,
+      "cornerRadiusSourcePx": 36,
+      "colorSpace": "sRGB",
+      "runtimeFormat": "svg",
+      "maxBytesPerCard": 81920
+    },
+    "paths": {
+      "sourceTemplate": "assets/source/m0/card-template.source.svg",
+      "runtimeTemplate": "assets/runtime/m0/card-template.svg"
+    }
+  }
+}

@@ -14,7 +14,8 @@
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
     "mobile:test": "npm --prefix apps/mobile run test",
     "mobile:lint": "npm --prefix apps/mobile run lint",
-    "mobile:format:check": "npm --prefix apps/mobile run format:check"
+    "mobile:format:check": "npm --prefix apps/mobile run format:check",
+    "assets:check": "node scripts/check-m0-assets.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
