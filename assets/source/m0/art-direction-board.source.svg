@@ -1,0 +1,62 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">M0-GR-01 Art Direction Board</title>
+  <desc id="desc">One page art direction board for Daifugomin 2000 temporary card assets.</desc>
+  <rect width="1920" height="1080" fill="#EEF5F1"/>
+  <rect x="0" y="560" width="1920" height="520" fill="#17202A"/>
+  <text x="80" y="96" font-family="Arial, sans-serif" font-size="46" fill="#1B1D24" font-weight="700">M0 Art Direction / Daifugomin 2000</text>
+  <text x="80" y="144" font-family="Arial, sans-serif" font-size="24" fill="#3B4148">Readable temporary card art for Android landscape catalog and battle UI.</text>
+
+  <g transform="translate(80 210)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="26" fill="#1B1D24" font-weight="700">World / Line / Texture</text>
+    <rect x="0" y="28" width="500" height="270" rx="18" fill="#FAF8F0" stroke="#1B1D24" stroke-width="5"/>
+    <rect x="24" y="52" width="452" height="222" rx="12" fill="none" stroke="#8B9098" stroke-width="3" stroke-dasharray="18 12"/>
+    <text x="250" y="122" text-anchor="middle" font-family="Arial, sans-serif" font-size="96" fill="#1B1D24" font-weight="700">7</text>
+    <text x="250" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#3B4148">large rank first</text>
+    <path d="M248 198 C218 225 220 254 250 266 C280 254 282 225 252 198 Z" fill="#D84A2B"/>
+    <text x="250" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#1B1D24">strong frame, quiet texture, safe inner content</text>
+  </g>
+
+  <g transform="translate(670 210)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="26" fill="#1B1D24" font-weight="700">Suit Silhouettes</text>
+    <g transform="translate(0 44)">
+      <rect width="150" height="150" rx="12" fill="#FAF8F0" stroke="#D84A2B" stroke-width="4"/>
+      <path d="M75 26 C43 62 47 106 75 126 C103 106 107 62 75 26 Z" fill="#D84A2B"/>
+      <text x="75" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#1B1D24">Fire</text>
+    </g>
+    <g transform="translate(190 44)">
+      <rect width="150" height="150" rx="12" fill="#FAF8F0" stroke="#2577B8" stroke-width="4"/>
+      <path d="M75 22 C44 62 38 92 54 114 C70 136 111 132 118 96 C94 110 72 94 75 62 Z" fill="#2577B8"/>
+      <text x="75" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#1B1D24">Water</text>
+    </g>
+    <g transform="translate(380 44)">
+      <rect width="150" height="150" rx="12" fill="#FAF8F0" stroke="#31886B" stroke-width="4"/>
+      <path d="M38 88 C64 48 116 52 116 52 C104 78 78 98 38 88 Z M46 106 C82 86 120 98 120 98 C96 122 68 126 46 106 Z" fill="#31886B"/>
+      <text x="75" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#1B1D24">Wind</text>
+    </g>
+    <g transform="translate(570 44)">
+      <rect width="150" height="150" rx="12" fill="#FAF8F0" stroke="#8A6A2A" stroke-width="4"/>
+      <path d="M75 24 L122 75 L75 126 L28 75 Z" fill="#8A6A2A"/>
+      <path d="M50 84 L72 56 L94 84 Z" fill="#FAF8F0" opacity="0.85"/>
+      <text x="75" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#1B1D24">Earth</text>
+    </g>
+  </g>
+
+  <g transform="translate(80 650)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="26" fill="#F5F2E8" font-weight="700">Day / Night Compatibility</text>
+    <rect x="0" y="36" width="340" height="250" rx="16" fill="#FAF8F0" stroke="#F5F2E8" stroke-width="4"/>
+    <text x="170" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" fill="#1B1D24" font-weight="700">SKILL</text>
+    <rect x="28" y="166" width="284" height="42" rx="6" fill="#C28A18"/>
+    <text x="170" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" fill="#1B1D24" font-weight="700">warning uses label + band</text>
+    <rect x="390" y="36" width="340" height="250" rx="16" fill="#2E3147" stroke="#F5F2E8" stroke-width="4"/>
+    <path d="M560 80 L642 126 L642 218 L560 264 L478 218 L478 126 Z" fill="none" stroke="#F5F2E8" stroke-width="8"/>
+    <text x="560" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#F5F2E8" font-weight="700">CARD BACK</text>
+  </g>
+
+  <g transform="translate(900 650)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="26" fill="#F5F2E8" font-weight="700">Do / Avoid</text>
+    <rect x="0" y="40" width="420" height="80" rx="10" fill="#FAF8F0"/>
+    <text x="28" y="92" font-family="Arial, sans-serif" font-size="28" fill="#1B1D24" font-weight="700">DO: rank + emblem + label</text>
+    <rect x="0" y="145" width="420" height="80" rx="10" fill="#2E3147" stroke="#8B9098" stroke-width="4" stroke-dasharray="12 10"/>
+    <text x="28" y="197" font-family="Arial, sans-serif" font-size="28" fill="#F5F2E8" font-weight="700">AVOID: color-only meaning</text>
+  </g>
+</svg>

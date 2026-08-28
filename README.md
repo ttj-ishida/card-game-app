@@ -7,8 +7,8 @@
 ## 現在地
 
 - 現在のマイルストーン：M0 開発土台とカードカタログ
-- 完了：`M0-EX-04` 言語リソースキーと日本語辞書の土台を作る
-- 次：`M0-GR-01` アートディレクション1枚資料を作る
+- 完了：`M0-GR-01` アートディレクション1枚資料を作る
+- 次：`M0-GR-02` カード縦横比、セーフエリア、書出しサイズを決める
 - 正式名称の決定期限：M6開始前
 
 ## リポジトリ構成
@@ -92,4 +92,3 @@ git switch -c feat/m0-ex-01-expo-bootstrap
 - [Expo: Set up EAS Build with a monorepo](https://docs.expo.dev/build-reference/build-with-monorepos/)
 - [Supabase: Local development workflow](https://supabase.com/docs/guides/local-development/cli-workflows)
 - [Supabase: Database migrations](https://supabase.com/docs/guides/local-development/database-migrations)
-

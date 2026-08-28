@@ -1,0 +1,19 @@
+﻿{
+  "todoId": "M0-GR-01",
+  "version": "0.1.0",
+  "createdAt": "2026-08-28",
+  "license": "project-owned-placeholder",
+  "assets": [
+    {
+      "assetId": "m0-art-direction-board",
+      "kind": "review-board",
+      "sourcePath": "assets/source/m0/art-direction-board.source.svg",
+      "runtimePath": "assets/runtime/m0/art-direction-board.svg",
+      "width": 1920,
+      "height": 1080,
+      "colorSpace": "sRGB",
+      "maxBytes": 256000,
+      "requirements": ["UI-A11Y-001", "UI-A11Y-002", "UI-A11Y-003", "UI-LAYOUT-001", "FX-002", "FX-003", "FUT-006"]
+    }
+  ]
+}
