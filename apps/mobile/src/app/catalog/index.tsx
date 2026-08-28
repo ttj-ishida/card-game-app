@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { translate } from '../../i18n/translate';
+
 export default function CatalogScreen() {
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Card Catalog</Text>
-      <Text style={styles.body}>Master data and temporary assets connect here in M0-QA-01.</Text>
+      <Text style={styles.title}>{translate('catalog.title')}</Text>
+      <Text style={styles.body}>{translate('catalog.placeholder')}</Text>
     </View>
   );
 }

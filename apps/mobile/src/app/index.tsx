@@ -1,14 +1,16 @@
 import { Link } from 'expo-router';
+
+import { translate } from '../i18n/translate';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Card Game App</Text>
-      <Text style={styles.subtitle}>M0 development shell</Text>
+      <Text style={styles.title}>{translate('app.title')}</Text>
+      <Text style={styles.subtitle}>{translate('home.subtitle')}</Text>
       <Link href="/catalog" asChild>
         <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>Open catalog</Text>
+          <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
         </Pressable>
       </Link>
     </View>
