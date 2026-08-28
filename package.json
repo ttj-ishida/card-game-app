@@ -1,0 +1,11 @@
+{
+  "name": "card-game-app",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "supabase": "^2.116.0"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+
+.env
+.env.*
+!.env.example
+
+*.local
+*password*.txt
+*secret*.txt
+
+.DS_Store
+Thumbs.db
