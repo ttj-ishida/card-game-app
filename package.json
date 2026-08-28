@@ -15,6 +15,7 @@
     "mobile:test": "npm --prefix apps/mobile run test",
     "mobile:lint": "npm --prefix apps/mobile run lint",
     "mobile:format:check": "npm --prefix apps/mobile run format:check",
+    "assets:generate": "node scripts/generate-m0-card-placeholders.mjs",
     "assets:check": "node scripts/check-m0-assets.mjs"
   },
   "devDependencies": {

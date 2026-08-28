@@ -1,0 +1,338 @@
+{
+  "todoId": "M0-GR-04",
+  "version": "0.1.0",
+  "status": "accepted-for-m0",
+  "templateRef": "assets/manifests/m0-card-template.json",
+  "suitPaletteRef": "assets/manifests/m0-suits-and-palettes.json",
+  "physicalDeckCount": 42,
+  "numberCards": [
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_FIRE",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-1-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-1-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-1-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_WATER",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-1-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-1-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-1-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_WIND",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-1-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-1-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-1-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_EARTH",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-1-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-1-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-1-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_FIRE",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-2-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-2-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-2-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_WATER",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-2-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-2-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-2-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_WIND",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-2-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-2-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-2-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_EARTH",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-2-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-2-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-2-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_FIRE",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-3-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-3-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-3-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_WATER",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-3-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-3-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-3-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_WIND",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-3-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-3-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-3-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_EARTH",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-3-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-3-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-3-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_FIRE",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-4-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-4-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-4-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_WATER",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-4-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-4-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-4-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_WIND",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-4-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-4-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-4-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_EARTH",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-4-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-4-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-4-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_FIRE",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-5-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-5-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-5-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_WATER",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-5-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-5-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-5-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_WIND",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-5-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-5-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-5-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_EARTH",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-5-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-5-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-5-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_FIRE",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-6-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-6-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-6-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_WATER",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-6-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-6-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-6-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_WIND",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-6-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-6-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-6-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_EARTH",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-6-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-6-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-6-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_FIRE",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-7-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-7-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-7-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_WATER",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-7-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-7-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-7-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_WIND",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-7-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-7-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-7-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_EARTH",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-7-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-7-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-7-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_FIRE",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-8-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-8-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-8-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_WATER",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-8-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-8-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-8-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_WIND",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-8-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-8-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-8-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_EARTH",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-8-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-8-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-8-suit-earth.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_FIRE",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_FIRE",
+      "assetId": "card-number-rank-9-suit-fire",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-9-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-9-suit-fire.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_WATER",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_WATER",
+      "assetId": "card-number-rank-9-suit-water",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-9-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-9-suit-water.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_WIND",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_WIND",
+      "assetId": "card-number-rank-9-suit-wind",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-9-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-9-suit-wind.svg"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_EARTH",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_EARTH",
+      "assetId": "card-number-rank-9-suit-earth",
+      "sourcePath": "assets/source/m0/cards/number/card-number-rank-9-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/number/card-number-rank-9-suit-earth.svg"
+    }
+  ],
+  "skillCards": [
+    {
+      "skillId": "SKILL_CARD_JOKER_HERO",
+      "effectCode": "SKILL_JOKER_HERO",
+      "cardCount": 1,
+      "assetId": "skill-card-joker-hero",
+      "sourcePath": "assets/source/m0/cards/skill/skill-card-joker-hero.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/skill/skill-card-joker-hero.svg"
+    },
+    {
+      "skillId": "SKILL_CARD_JOKER_SAINT",
+      "effectCode": "SKILL_JOKER_SAINT",
+      "cardCount": 1,
+      "assetId": "skill-card-joker-saint",
+      "sourcePath": "assets/source/m0/cards/skill/skill-card-joker-saint.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/skill/skill-card-joker-saint.svg"
+    },
+    {
+      "skillId": "SKILL_CARD_EXTENSION_SEAL",
+      "effectCode": "SKILL_EXTENSION_SEAL",
+      "cardCount": 2,
+      "assetId": "skill-card-extension-seal",
+      "sourcePath": "assets/source/m0/cards/skill/skill-card-extension-seal.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/skill/skill-card-extension-seal.svg"
+    },
+    {
+      "skillId": "SKILL_CARD_REVOLUTION",
+      "effectCode": "SKILL_REVOLUTION",
+      "cardCount": 2,
+      "assetId": "skill-card-revolution",
+      "sourcePath": "assets/source/m0/cards/skill/skill-card-revolution.source.svg",
+      "runtimePath": "assets/runtime/m0/cards/skill/skill-card-revolution.svg"
+    }
+  ],
+  "cardBack": {
+    "assetId": "card-back-m0",
+    "sourcePath": "assets/source/m0/cards/back/card-back-m0.source.svg",
+    "runtimePath": "assets/runtime/m0/cards/back/card-back-m0.svg"
+  },
+  "license": "project-owned-placeholder"
+}

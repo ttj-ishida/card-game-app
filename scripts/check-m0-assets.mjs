@@ -12,6 +12,14 @@ function assertRatio(size, label) {
   assert(size.width * 7 === size.height * 5, label + ' must keep the 5:7 ratio');
 }
 
+function assertSvgSize(path, width, height, viewBox, maxBytes) {
+  const svg = readFileSync(path, 'utf8');
+  assert(svg.includes(`width="${width}"`), path + ' must declare width ' + width);
+  assert(svg.includes(`height="${height}"`), path + ' must declare height ' + height);
+  assert(svg.includes(`viewBox="${viewBox}"`), path + ' must declare viewBox ' + viewBox);
+  assert(statSync(path).size <= maxBytes, path + ' exceeds max bytes');
+}
+
 function validateCardTemplate() {
   const manifest = readJson('assets/manifests/m0-card-template.json');
   const template = manifest.cardTemplate;
@@ -32,11 +40,7 @@ function validateCardTemplate() {
   assert(essential.y + essential.height <= safe.y + safe.height, 'essential area height must stay inside safe area');
 
   for (const path of [template.paths.sourceTemplate, template.paths.runtimeTemplate]) {
-    const svg = readFileSync(path, 'utf8');
-    assert(svg.includes('width="750"'), path + ' must declare width 750');
-    assert(svg.includes('height="1050"'), path + ' must declare height 1050');
-    assert(svg.includes('viewBox="0 0 750 1050"'), path + ' must declare the template viewBox');
-    assert(statSync(path).size <= template.style.maxBytesPerCard, path + ' exceeds maxBytesPerCard');
+    assertSvgSize(path, 750, 1050, template.source.viewBox, template.style.maxBytesPerCard);
   }
 }
 
@@ -52,15 +56,40 @@ function validateSuitsAndPalettes() {
   for (const suit of manifest.suits) {
     assert(/^#[0-9A-F]{6}$/.test(suit.color), suit.assetId + ' must use uppercase hex color');
     for (const path of [suit.sourcePath, suit.runtimePath]) {
-      const svg = readFileSync(path, 'utf8');
-      assert(svg.includes('width="160"'), path + ' must declare width 160');
-      assert(svg.includes('height="160"'), path + ' must declare height 160');
-      assert(svg.includes('viewBox="0 0 160 160"'), path + ' must declare emblem viewBox');
-      assert(statSync(path).size <= manifest.emblemSize.maxBytes, path + ' exceeds emblem maxBytes');
+      assertSvgSize(path, 160, 160, manifest.emblemSize.viewBox, manifest.emblemSize.maxBytes);
     }
+  }
+}
+
+function validateCardPlaceholders() {
+  const template = readJson('assets/manifests/m0-card-template.json').cardTemplate;
+  const manifest = readJson('assets/manifests/m0-card-placeholders.json');
+  const requiredSuitCodes = ['SUIT_FIRE', 'SUIT_WATER', 'SUIT_WIND', 'SUIT_EARTH'];
+  assert(manifest.todoId === 'M0-GR-04', 'placeholder manifest todoId must be M0-GR-04');
+  assert(manifest.numberCards.length === 36, 'number card placeholder count must be 36');
+  assert(manifest.skillCards.length === 4, 'skill placeholder definition count must be 4');
+  assert(manifest.skillCards.reduce((sum, skill) => sum + skill.cardCount, 0) === 6, 'skill physical card count must be 6');
+  assert(manifest.physicalDeckCount === 42, 'physical deck count must be 42');
+
+  for (let rank = 1; rank <= 9; rank += 1) {
+    for (const suitCode of requiredSuitCodes) {
+      const cardId = `CARD_NUMBER_RANK_${rank}_${suitCode}`;
+      assert(manifest.numberCards.some((card) => card.cardId === cardId), cardId + ' must have a placeholder');
+    }
+  }
+
+  const allPaths = [
+    ...manifest.numberCards.flatMap((card) => [card.sourcePath, card.runtimePath]),
+    ...manifest.skillCards.flatMap((card) => [card.sourcePath, card.runtimePath]),
+    manifest.cardBack.sourcePath,
+    manifest.cardBack.runtimePath,
+  ];
+  for (const path of allPaths) {
+    assertSvgSize(path, template.source.width, template.source.height, template.source.viewBox, template.style.maxBytesPerCard);
   }
 }
 
 validateCardTemplate();
 validateSuitsAndPalettes();
+validateCardPlaceholders();
 console.log('M0 asset checks passed');

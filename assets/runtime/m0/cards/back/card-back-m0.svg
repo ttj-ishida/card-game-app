@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1050" viewBox="0 0 750 1050" role="img">
+  <rect width="750" height="1050" rx="36" fill="#2E3147"/>
+  <rect x="24" y="24" width="702" height="1002" rx="36" fill="none" stroke="#F5F2E8" stroke-width="8"/>
+  <path d="M375 170 L560 275 L560 775 L375 880 L190 775 L190 275 Z" fill="none" stroke="#F5F2E8" stroke-width="18"/>
+  <path d="M375 285 L470 525 L375 765 L280 525 Z" fill="#F5F2E8" opacity="0.18"/>
+  <text x="375" y="548" text-anchor="middle" font-family="Arial, sans-serif" font-size="70" fill="#F5F2E8" font-weight="700">M0</text>
+  <text x="375" y="630" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#F5F2E8">CARD BACK</text>
+</svg>
