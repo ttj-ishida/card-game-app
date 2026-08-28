@@ -16,7 +16,9 @@
     "mobile:lint": "npm --prefix apps/mobile run lint",
     "mobile:format:check": "npm --prefix apps/mobile run format:check",
     "assets:generate": "node scripts/generate-m0-card-placeholders.mjs",
-    "assets:check": "node scripts/check-m0-assets.mjs"
+    "assets:check": "node scripts/check-m0-assets.mjs",
+    "ui:test": "npm --prefix apps/mobile exec -- tsx --test packages/ui/src/tokens.test.ts",
+    "ui:typecheck": "npm --prefix apps/mobile exec -- tsc --noEmit --project packages/ui/tsconfig.json"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
