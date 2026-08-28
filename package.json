@@ -8,7 +8,10 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
-    "db:link": "supabase link --project-ref evzmtxwdsoebekxlqxeo"
+    "db:link": "supabase link --project-ref evzmtxwdsoebekxlqxeo",
+    "mobile:start": "npm --prefix apps/mobile run start",
+    "mobile:android": "npm --prefix apps/mobile run android",
+    "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
