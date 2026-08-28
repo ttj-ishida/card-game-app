@@ -1,68 +1,68 @@
-# ADR-0003: Card Asset Template, Ratio, Safe Area, and Export Sizes
+# ADR-0003: カードアセットテンプレート、比率、セーフエリア、書き出しサイズ
 
-- Status: Accepted for M0
-- Date: 2026-08-28
-- Related TODO: M0-GR-02
-- Depends on: M0-GR-01
+- 状態: M0で採用
+- 日付: 2026-08-28
+- 関連TODO: M0-GR-02
+- 依存TODO: M0-GR-01
 
-## Context
+## 背景
 
-M0 must show all 42 cards in a catalog with temporary art. The exact production illustration style is not final, but every placeholder asset needs a stable frame, predictable dimensions, and safe area rules before M0-GR-04 can generate number cards, skill cards, and card backs.
+M0では、仮素材付きのカードカタログで42枚すべてを表示する必要がある。最終的な本番イラスト方針は未確定だが、M0-GR-04で数字カード、スキルカード、カード裏面を生成する前に、各仮素材が共通のフレーム、予測可能な寸法、セーフエリア規則を持つ必要がある。
 
-The app is Android-first, landscape-only for v1.0, and must support phone and tablet screens. Card art itself remains portrait inside the landscape interface.
+本アプリはAndroid先行で、v1.0では横画面固定、スマートフォンとタブレットを対象とする。カードアート自体は、横画面UIの中に縦長カードとして配置する。
 
-## Requirements
+## 要件
 
-- Inputs: M0-GR-01 art direction, master card IDs from M0-SB-04, Android landscape target, and accessibility requirements.
-- Outputs: one card template decision record, one machine-readable manifest, one editable template SVG, and one runtime template SVG.
-- Normal case: all generated M0 card placeholders share the same ratio, viewBox, safe area, and export-size vocabulary.
-- Failure case: invalid dimensions, missing safe-area bounds, oversized assets, or mismatch between source and runtime template must fail asset inspection.
-- Out of scope: final illustration quality, localized card names, animation timings, and store artwork.
+- 入力: M0-GR-01のアートディレクション、M0-SB-04のカードマスタID、Android横画面対象、アクセシビリティ要件。
+- 出力: カードテンプレートの意思決定記録、機械可読manifest、編集可能なテンプレートSVG、runtime用テンプレートSVG。
+- 正常系: 生成されるM0カード仮素材が、同じ比率、viewBox、セーフエリア、書き出しサイズ体系を共有する。
+- 失敗系: 不正な寸法、セーフエリア欠落、容量超過、source/runtimeテンプレート不一致は、アセット検査で失敗させる。
+- 対象外: 本番イラスト品質、カード名の多言語化、演出タイミング、ストア用アート。
 
-## Options Considered
+## 比較した選択肢
 
-| Option | Summary | Development Cost | Operating Cost | Security | Future Extension | Player Experience |
+| 案 | 概要 | 開発工数 | 運用費 | セキュリティ | 将来拡張 | 利用者体験 |
 |---|---|---|---|---|---|---|
-| A: 5:7 portrait card, 750 x 1050 source | Simple playing-card-like ratio, integer scaling to 250 x 350 catalog cards. | Low | Low | No special risk | Strong, easy to generate and scale | Familiar card silhouette and readable ranks. |
-| B: 63:88 poker ratio, 756 x 1056 source | Real-card-inspired ratio with closer physical-card feel. | Medium | Low | No special risk | Good, but less convenient integer scaling | Slightly more authentic, little M0 benefit. |
-| C: Square tile, 768 x 768 source | Dense catalog grid and easy icon layout. | Low | Low | No special risk | Weak for later hand/table UI | Less card-like, weakens table readability. |
+| A: 5:7縦長カード、source 750 x 1050 | 250 x 350のカタログカードへ整数縮小しやすい、シンプルなカード比率。 | 低 | 低 | 特別なリスクなし | 強い。生成と拡縮が容易 | カードらしい形で数字を読みやすい。 |
+| B: 63:88ポーカー比率、source 756 x 1056 | 実物カードに近い比率。 | 中 | 低 | 特別なリスクなし | 良いが整数縮小がやや扱いづらい | 少し本物らしいがM0での効果は小さい。 |
+| C: 正方形タイル、source 768 x 768 | カタログを密に並べやすく、アイコン配置が簡単。 | 低 | 低 | 特別なリスクなし | 手札・場のUIへの拡張が弱い | カードらしさが薄く、卓上表示の読みやすさが落ちる。 |
 
-## Decision
+## 決定
 
-Adopt option A: 5:7 portrait card art with a 750 x 1050 source canvas.
+案Aを採用する。カードアートは5:7の縦長比率とし、source canvasは750 x 1050 pxに固定する。
 
-The M0 base display size is 250 x 350 px. The source is 3x that base size, giving simple downscaling for thumbnails and enough room for future placeholder refinements. A 5:7 ratio is familiar as a card silhouette, easier to calculate than physical-card ratios, and works cleanly in React Native layout constraints.
+M0の基準表示サイズは250 x 350 pxとする。sourceは基準表示の3倍で、サムネイルへの縮小が単純になり、後続の仮素材改善にも余裕がある。5:7はカードのシルエットとして自然で、実物カード比率より計算しやすく、React Nativeのlayout制約にも乗せやすい。
 
-## Fixed Template Values
+## 固定テンプレート値
 
-| Item | Value |
+| 項目 | 値 |
 |---|---|
-| Aspect ratio | 5:7 portrait |
-| Source size | 750 x 1050 px |
-| ViewBox |  0 750 1050 |
-| Base catalog size | 250 x 350 px |
-| Thumbnail size | 150 x 210 px |
-| Detail preview size | 500 x 700 px |
-| Source scale | 3x base catalog size |
-| Outer bleed | 24 px from source edge |
-| Safe area | x=60, y=84, width=630, height=882 |
-| Essential text area | x=90, y=126, width=570, height=798 |
-| Corner mark box | 96 x 126 px |
-| Minimum stroke | 4 px source, equivalent to about 1.33 px at base display |
-| Runtime format for M0 | SVG, sRGB, opaque card face/back unless specifically an overlay |
-| Maximum placeholder size | 80 KB per card SVG |
+| 縦横比 | 5:7 縦長 |
+| source size | 750 x 1050 px |
+| viewBox | 0 0 750 1050 |
+| カタログ基準サイズ | 250 x 350 px |
+| サムネイルサイズ | 150 x 210 px |
+| 詳細プレビューサイズ | 500 x 700 px |
+| source scale | カタログ基準サイズの3倍 |
+| 外側余白 | source端から24 px |
+| セーフエリア | x=60, y=84, width=630, height=882 |
+| 重要テキスト領域 | x=90, y=126, width=570, height=798 |
+| コーナーマーク枠 | 96 x 126 px |
+| 最小線幅 | source上で4 px。基準表示で約1.33 px相当 |
+| M0 runtime形式 | SVG、sRGB。カード表面・裏面は原則不透明。overlayのみ透過可 |
+| 仮素材の最大容量 | カードSVG 1枚あたり80 KB |
 
-## Consequences
+## 影響
 
-- M0-GR-03 suit emblems should fit inside a 160 x 160 source-space box and remain readable at thumbnail size.
-- M0-GR-04 number, skill, and back placeholders must use the manifest values instead of per-file custom dimensions.
-- M0-EX-05 design tokens should expose card ratio, radii, spacing, colors, and semantic state values derived from M0-GR-01 and this ADR.
-- M0-QA-01 can map Supabase card IDs to placeholder asset paths without recalculating dimensions.
+- M0-GR-03の属性紋章は、source空間の160 x 160枠に収まり、サムネイルでも読める必要がある。
+- M0-GR-04の数字カード、スキルカード、カード裏面は、ファイルごとの独自寸法ではなくmanifest値を使う。
+- M0-EX-05のデザイントークンは、本ADRとM0-GR-01からカード比率、角丸、余白、色、状態値を公開する。
+- M0-QA-01は、寸法を再計算せず、SupabaseのカードIDを仮素材パスへ対応付けられる。
 
-## Review and Revisit Conditions
+## 見直し条件
 
-Revisit this decision if final production art requires a materially different card silhouette, if Android catalog cards need to show more than four columns on small landscape devices, or if performance measurements show SVG card placeholders are too expensive.
+本番アートで大きく異なるカードシルエットが必要になった場合、小型Android横画面のカタログで4列超の表示が必要になった場合、またはSVG仮素材の描画負荷が高すぎると判明した場合に見直す。
 
-## Verification
+## 確認方法
 
-Run npm run assets:check to validate the manifest dimensions, safe-area bounds, source/runtime SVG dimensions, and size limits.
+`npm run assets:check` を実行し、manifestの寸法、セーフエリア境界、source/runtime SVG寸法、容量上限を検証する。

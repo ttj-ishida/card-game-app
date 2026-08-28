@@ -1,40 +1,40 @@
-# M0-GR-04 Card Placeholder Assets
+# M0-GR-04 カード仮素材
 
 - TODO: M0-GR-04
-- Version: v0.1
-- Date: 2026-08-28
-- Depends on: M0-GR-02, M0-GR-03
-- Manifest: assets/manifests/m0-card-placeholders.json
+- 版: v0.1
+- 日付: 2026-08-28
+- 依存TODO: M0-GR-02、M0-GR-03
+- manifest: assets/manifests/m0-card-placeholders.json
 
-## Purpose
+## 目的
 
-Provide temporary card images for the M0 catalog. The generated set follows the Supabase master seed: 36 number cards and 4 skill card definitions whose card_count values represent 6 physical skill cards. A shared M0 card back is also included for hidden/deck states.
+M0カードカタログで使う仮カード画像を用意する。生成対象はSupabase master seedに合わせ、数字カード36枚と、card_countの合計で物理カード6枚を表すスキルカード定義4件とする。非公開・山札状態用に共通カード裏面も含める。
 
-## Asset Coverage
+## アセット範囲
 
-| Type | Coverage | Runtime path |
+| 種別 | 対象 | runtime path |
 |---|---|---|
-| Number cards | RANK_1 through RANK_9 across SUIT_FIRE, SUIT_WATER, SUIT_WIND, SUIT_EARTH | assets/runtime/m0/cards/number/*.svg |
-| Skill cards | SKILL_CARD_JOKER_HERO, SKILL_CARD_JOKER_SAINT, SKILL_CARD_EXTENSION_SEAL, SKILL_CARD_REVOLUTION | assets/runtime/m0/cards/skill/*.svg |
-| Card back | Shared M0 card back | assets/runtime/m0/cards/back/card-back-m0.svg |
+| 数字カード | RANK_1からRANK_9、SUIT_FIRE、SUIT_WATER、SUIT_WIND、SUIT_EARTHの全組み合わせ | assets/runtime/m0/cards/number/*.svg |
+| スキルカード | SKILL_CARD_JOKER_HERO、SKILL_CARD_JOKER_SAINT、SKILL_CARD_EXTENSION_SEAL、SKILL_CARD_REVOLUTION | assets/runtime/m0/cards/skill/*.svg |
+| カード裏面 | M0共通カード裏面 | assets/runtime/m0/cards/back/card-back-m0.svg |
 
-## Rules
+## ルール
 
-- Placeholder dimensions come from assets/manifests/m0-card-template.json.
-- Suit colors and color-independent shape cues come from assets/manifests/m0-suits-and-palettes.json.
-- Re-running npm run assets:generate should recreate the same manifest and SVG paths.
-- Skill definitions with card_count 2 intentionally share one placeholder image per skill ID.
+- 仮素材の寸法は assets/manifests/m0-card-template.json に従う。
+- 属性色と色以外の形の手がかりは assets/manifests/m0-suits-and-palettes.json に従う。
+- `npm run assets:generate` を再実行すると、同じmanifestとSVG pathが再生成される。
+- card_countが2のスキル定義は、skill IDごとに1つの仮画像を共有する。
 
-## Review Record
+## レビュー記録
 
-| Step | Result |
+| 手順 | 結果 |
 |---|---|
-| Rough | Generated simple SVG placeholders from stable card and skill IDs. |
-| Review | Self-check confirms every number card ID and skill definition has source/runtime assets. |
-| Revision | Manifest records physicalDeckCount 42 while preserving 4 skill master definitions. |
-| Approval | Accepted for M0-QA-01 catalog integration. |
-| Export | Source and runtime SVG files generated from scripts/generate-m0-card-placeholders.mjs. |
+| ラフ | 安定したカードID・スキルIDから単純なSVG仮素材を生成した。 |
+| レビュー | すべての数字カードIDとスキル定義にsource/runtime assetがあることを確認した。 |
+| 修正 | スキルmaster定義4件を保ったまま、manifestのphysicalDeckCountで42枚を表現した。 |
+| 承認 | M0-QA-01のカードカタログ結合に使う仮素材として採用。 |
+| 書き出し | scripts/generate-m0-card-placeholders.mjs から source/runtime SVGを生成した。 |
 
-## Verification
+## 確認方法
 
-Run npm run assets:generate and npm run assets:check to regenerate and validate asset count, IDs, dimensions, and file-size limits.
+`npm run assets:generate` と `npm run assets:check` を実行し、asset数、ID、寸法、容量上限を検証する。

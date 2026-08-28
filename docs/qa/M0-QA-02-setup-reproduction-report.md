@@ -1,19 +1,19 @@
-# M0-QA-02 New Setup Reproduction Report
+# M0-QA-02 新規セットアップ再現レポート
 
 - TODO: M0-QA-02
-- Date: 2026-08-28
-- Source repository: C:\Projects\card-game-app
-- Reproduction directory: C:\Users\tetsu\AppData\Local\Temp\card-game-app-m0-qa-02-20260828233816
+- 日付: 2026-08-28
+- 元リポジトリ: C:\Projects\card-game-app
+- 再現ディレクトリ: C:\Users\tetsu\AppData\Local\Temp\card-game-app-m0-qa-02-20260828233816
 
-## Scope
+## 対象範囲
 
-Reproduced the M0 setup from a separate local clone. The verification covered dependency restoration, asset checks, UI token tests, mobile tests, lint, format check, Android export, Supabase migrations, seed application, and DB tests.
+別のローカルcloneからM0セットアップを再現した。検証対象は、依存復元、asset検査、UI token test、mobile test、lint、format check、Android向けexport、Supabase migration、seed適用、DB testである。
 
-## Important Isolation Note
+## 重要な隔離メモ
 
-A direct db reset from the clone was not used because the clone initially shared the same Supabase project_id and ports as the existing local development stack. To avoid resetting the active development database, the clone's temporary supabase/config.toml was changed only inside the temp directory:
+clone直後は既存のlocal development stackと同じSupabase project_idとportを共有していたため、cloneからの直接db resetは使用しなかった。稼働中の開発DBをresetしないように、temp directory内の supabase/config.toml だけを次の値へ変更した。
 
-| Setting | Temporary value |
+| 設定 | 一時値 |
 |---|---|
 | project_id | card-game-app-m0-qa-02 |
 | API port | 55421 |
@@ -23,39 +23,39 @@ A direct db reset from the clone was not used because the clone initially shared
 | Analytics port | 55427 |
 | Pooler port | 55429 |
 
-The isolated stack was stopped after verification.
+隔離stackは検証後に停止した。
 
-## Results
+## 結果
 
-| Step | Result | Notes |
+| 手順 | 結果 | メモ |
 |---|---|---|
-| git clone from local repository | PASS | Fresh temp directory was created. |
-| npm ci | PASS | Root dependencies restored. |
-| npm --prefix apps/mobile ci | PASS | Completed with npm audit moderate warnings from installed dependency tree. |
-| npm run assets:check | PASS | M0 asset manifests and files valid. |
-| npm run ui:test | PASS | 4 tests passed. |
-| npm run ui:typecheck | PASS | Shared UI token package typechecks. |
-| npm run mobile:test | PASS | 12 tests passed. |
-| npm run mobile:typecheck | PASS | Mobile TypeScript passed. |
-| npm run mobile:lint | PASS | ESLint passed. |
-| npm run mobile:format:check | PASS | Passed after adding .gitattributes LF normalization. |
-| npx expo export --platform android --output-dir dist | PASS | Android bundle exported. |
-| npx supabase start with isolated ports | PASS | Migrations and seed applied from clone. |
-| npx supabase test db --local supabase/tests/master_schema.sql | PASS | 20 DB tests passed. |
-| npx supabase test db --local supabase/tests/master_seed.sql | PASS | 19 DB tests passed. |
-| npx supabase test db --local supabase/tests/master_access.sql | PASS | 24 DB tests passed. |
-| npx supabase stop | PASS | Isolated stack stopped. |
+| ローカルリポジトリからgit clone | PASS | 新規の一時ディレクトリを作成した。 |
+| npm ci | PASS | ルート依存関係を復元した。 |
+| npm --prefix apps/mobile ci | PASS | mobile依存関係ツリーでnpm auditのmoderate warningは出たが完了した。 |
+| npm run assets:check | PASS | M0 asset manifestとファイルが有効。 |
+| npm run ui:test | PASS | 4件のtestが成功。 |
+| npm run ui:typecheck | PASS | shared UI token packageがtypecheckを通過。 |
+| npm run mobile:test | PASS | 12件のtestが成功。 |
+| npm run mobile:typecheck | PASS | mobile TypeScriptが通過。 |
+| npm run mobile:lint | PASS | ESLintが通過。 |
+| npm run mobile:format:check | PASS | .gitattributesでLF正規化後に通過。 |
+| npx expo export --platform android --output-dir dist | PASS | Android bundleをexportできた。 |
+| isolated portsでnpx supabase start | PASS | clone側のmigrationsとseedを適用できた。 |
+| npx supabase test db --local supabase/tests/master_schema.sql | PASS | 20件のDB testが成功。 |
+| npx supabase test db --local supabase/tests/master_seed.sql | PASS | 19件のDB testが成功。 |
+| npx supabase test db --local supabase/tests/master_access.sql | PASS | 24件のDB testが成功。 |
+| npx supabase stop | PASS | isolated stackを停止した。 |
 
-## Defects and Follow-up
+## 不具合とfollow-up
 
-| Severity | Count | Notes |
+| 重大度 | 件数 | メモ |
 |---|---:|---|
-| High | 0 | No high-severity known defects. |
-| Medium | 1 | npm ci reports moderate audit findings in mobile dependency tree. This is not blocking M0 setup reproduction but should be reviewed before release milestones. |
-| Low | 1 | Direct clone DB reset requires project_id/port isolation when another local Supabase stack is already running. The report and script document this. |
+| 高 | 0 | 既知の高重大度不具合はない。 |
+| 中 | 1 | mobile依存関係ツリーでnpm ci時にmoderate audit findingsが報告される。M0再現のblockerではないが、release milestone前に確認する。 |
+| 低 | 1 | 他のlocal Supabase stackが起動中の場合、直接clone DB resetにはproject_id/port隔離が必要。本レポートとscriptに記録した。 |
 
-## Regression Registration
+## 回帰登録
 
-- scripts/qa-m0-setup-repro.ps1 captures the repeatable command sequence.
-- .gitattributes prevents future Windows clones from failing Prettier format checks due CRLF checkout.
-- This report records the temp clone path and isolated Supabase settings used for reproduction.
+- scripts/qa-m0-setup-repro.ps1 に再実行可能なコマンド列を記録した。
+- .gitattributes により、Windows cloneでCRLF checkoutが原因のPrettier failureを防ぐ。
+- 本レポートにtemp clone pathと隔離Supabase設定を記録した。

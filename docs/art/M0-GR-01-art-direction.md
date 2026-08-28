@@ -1,91 +1,91 @@
-﻿# M0-GR-01 Art Direction One-Pager
+# M0-GR-01 アートディレクション1枚資料
 
 - TODO: M0-GR-01
-- Version: v0.1
-- Date: 2026-08-28
-- Status: M0 accepted baseline
-- Source asset: ssets/source/m0/art-direction-board.source.svg
-- Runtime preview: ssets/runtime/m0/art-direction-board.svg
-- Asset manifest: ssets/source-manifests/m0-gr-01-art-direction.json
+- 版: v0.1
+- 日付: 2026-08-28
+- 状態: M0基準として採用
+- 元素材: assets/source/m0/art-direction-board.source.svg
+- 実行時プレビュー: assets/runtime/m0/art-direction-board.svg
+- アセットmanifest: assets/source-manifests/m0-gr-01-art-direction.json
 
-## Purpose
+## 目的
 
-M0 uses temporary art to make the card catalog readable before final illustration work starts. This direction favors clear table-play legibility over decorative fantasy detail. The visual language should make number, suit, skill type, card back, day/night state, and disabled/locked states understandable in a landscape Android layout.
+M0では、本番イラストの前にカードカタログを読める状態にするため、仮素材を使用する。この方針では、装飾的なファンタジー表現よりも、卓上カードゲームとしての視認性を優先する。数字、属性、スキル種別、カード裏面、昼夜状態、無効・ロック状態が、Android横画面レイアウトで理解できることを重視する。
 
-## Requirement Mapping
+## 要件対応
 
-| Requirement | M0-GR-01 decision |
+| 要件 | M0-GR-01での決定 |
 |---|---|
-| UI-A11Y-001 | Day/night, suit, and lock states must differ by icon, shape, label, or pattern, not color alone. |
-| UI-A11Y-002 | Fire, water, wind, and earth each get a stable emblem silhouette in addition to a color. |
-| UI-A11Y-003 | Card labels use large central numerals and short Japanese labels; no long text inside small card art. |
-| UI-LAYOUT-001 | All previews assume Android landscape, from phone to tablet, with dense catalog scanning. |
-| FX-002 | Day and night backgrounds use different value ranges and border treatments before animation work. |
-| FX-003 | Attribute lock uses the suit emblem plus a ring/barrier motif, not just a tint. |
-| DATA-M-001 / DATA-M-002 | Art IDs must map to stable card and skill IDs without depending on display names. |
-| FUT-006 | Every asset has a stable ID, version, source path, runtime path, and license metadata. |
+| UI-A11Y-001 | 昼夜、属性、ロック状態は、色だけでなくアイコン、形、ラベル、パターンで差を付ける。 |
+| UI-A11Y-002 | 火、水、風、土には色に加えて安定した紋章シルエットを割り当てる。 |
+| UI-A11Y-003 | カード内は大きな数字と短い日本語ラベルを優先し、小さなカード内に長文を入れない。 |
+| UI-LAYOUT-001 | すべてのpreviewはAndroid横画面のスマートフォン・タブレットを前提にする。 |
+| FX-002 | 昼夜背景は、アニメーション前でも明度差と境界表現で区別できるようにする。 |
+| FX-003 | 属性ロックは、単なる色変更ではなく、属性紋章と輪・結界モチーフを組み合わせる。 |
+| DATA-M-001 / DATA-M-002 | アートIDは表示名に依存せず、安定したカードID・スキルIDへ対応付ける。 |
+| FUT-006 | 各assetに安定ID、版、source path、runtime path、ライセンス情報を持たせる。 |
 
-## Visual Direction
+## 見た目の方向性
 
-- World: compact magical card table; readable tournament utility with restrained ceremonial details.
-- Mood: crisp, slightly luminous, not gloomy; card content should remain clear on both light and dark boards.
-- Shape language: strong outer card frame, large rank area, suit emblem in a fixed corner/center lockup, skill cards with a clear banner.
-- Line: 2 to 4 px geometric strokes at source scale; avoid hairlines that vanish on small screens.
-- Texture: subtle paper grain or flat color bands only; avoid noisy painterly detail during M0.
-- Motion implication: assets should leave room for later glow, lock, submit, and revolution overlays.
+- 世界観: コンパクトな魔法のカード卓。読みやすい対戦UIに、控えめな儀式感を足す。
+- 雰囲気: くっきり、少し発光感があるが暗すぎない。明るい盤面と暗い盤面の両方でカード内容を読める。
+- 形: 強い外枠、大きな数字領域、固定位置の属性紋章、スキルカード用の明確な帯。
+- 線: source scaleで2から4 px以上の幾何学的な線。縮小時に消える細線を避ける。
+- 質感: 控えめな紙質またはフラットな色面。M0ではノイズの強い絵画調を避ける。
+- 後続余地: glow、lock、submit、revolution overlayを後から足せる余白を残す。
 
-## Palette Direction
+## パレット方針
 
-| Role | Token name | Hex | Usage |
+| 役割 | token名 | Hex | 用途 |
 |---|---|---|---|
-| Day table | surface.table.day | #EEF5F1 | Default catalog and battle preview background. |
-| Night table | surface.table.night | #17202A | Revolution/night preview background. |
-| Card face | surface.card.face | #FAF8F0 | Number and skill card body. |
-| Card back | surface.card.back | #2E3147 | Hidden card and deck back. |
-| Ink primary | ink.primary | #1B1D24 | Main text and rank marks. |
-| Ink inverse | ink.inverse | #F5F2E8 | Text on dark surfaces. |
-| Fire | suit.fire | #D84A2B | Fire suit; triangle/flame silhouette. |
-| Water | suit.water | #2577B8 | Water suit; wave/drop silhouette. |
-| Wind | suit.wind | #31886B | Wind suit; swirl/leaf silhouette. |
-| Earth | suit.earth | #8A6A2A | Earth suit; diamond/mountain silhouette. |
-| Warning | state.warning | #C28A18 | Time or invalid action warning. |
-| Disabled | state.disabled | #8B9098 | Disabled controls with pattern/opacity. |
+| 昼の卓 | surface.table.day | #EEF5F1 | カタログと通常対局previewの背景。 |
+| 夜の卓 | surface.table.night | #17202A | 革命・夜状態previewの背景。 |
+| カード表面 | surface.card.face | #FAF8F0 | 数字カードとスキルカード本体。 |
+| カード裏面 | surface.card.back | #2E3147 | 非公開カードと山札裏面。 |
+| 通常文字 | ink.primary | #1B1D24 | 主要テキストと数字。 |
+| 反転文字 | ink.inverse | #F5F2E8 | 暗い面上のテキスト。 |
+| 火 | suit.fire | #D84A2B | 火属性。三角・炎シルエット。 |
+| 水 | suit.water | #2577B8 | 水属性。波・しずくシルエット。 |
+| 風 | suit.wind | #31886B | 風属性。流線・葉シルエット。 |
+| 土 | suit.earth | #8A6A2A | 土属性。菱形・山シルエット。 |
+| 警告 | state.warning | #C28A18 | 時間警告や不正操作警告。 |
+| 無効 | state.disabled | #8B9098 | 無効control。patternやopacityも併用する。 |
 
-## Asset Specification
+## アセット仕様
 
-| Item | M0 fixed value |
+| 項目 | M0固定値 |
 |---|---|
-| Usage | Card catalog, battle mock UI, docs review board. |
-| Source canvas | SVG, 1920 x 1080 px, sRGB. |
-| Runtime preview | SVG, 1920 x 1080 px, optimized for repository tracking. |
-| Card assumption | Portrait card art embedded into landscape UI; exact card ratio fixed in M0-GR-02. |
-| Safe area | Keep essential text and emblems inside the inner 80% until M0-GR-02 finalizes exact guides. |
-| Transparency | Emblems and overlays may use transparent background; card faces and backs are opaque. |
-| File size target | One emblem <= 20 KB, one card placeholder <= 80 KB, one review board <= 250 KB. |
-| Naming | Lowercase kebab-case asset names; card mappings use stable master IDs. |
-| License | Project-owned placeholder art generated in repository; not third-party production art. |
+| 使用場所 | カードカタログ、対局モックUI、docsレビュー資料。 |
+| source canvas | SVG、1920 x 1080 px、sRGB。 |
+| 実行時プレビュー | SVG、1920 x 1080 px。リポジトリ追跡向けに軽量化する。 |
+| カード前提 | 横画面UIの中に縦長カードを置く。正確なカード比率はM0-GR-02で固定する。 |
+| セーフエリア | M0-GR-02の正確なguide確定までは、重要な文字と紋章を内側80%に収める。 |
+| 透過 | 紋章とoverlayは透過可。カード表面と裏面は不透明。 |
+| 容量目標 | 紋章1点は20 KB以下、カード仮素材1点は80 KB以下、review boardは250 KB以下。 |
+| 命名 | lowercase kebab-case。カード対応は安定したmaster IDを使う。 |
+| ライセンス | リポジトリ内で生成したプロジェクト所有の仮素材。本番用第三者素材ではない。 |
 
-## Review Record
+## レビュー記録
 
-| Step | Result |
+| 手順 | 結果 |
 |---|---|
-| Rough | This document and SVG board define world, color, line, texture, and prohibited examples. |
-| Review | Self-review checks requirement mapping, color-independent suit cues, file tracking, and contrast notes. |
-| Revision | M0 v0.1 accepts flat readable temporary art and defers final illustration style to M2/M8. |
-| Approval | Accepted for M0 follow-up tasks M0-GR-02, M0-GR-03, M0-GR-04, and M0-EX-05. |
-| Export | Runtime preview exported as SVG with matching source manifest entry. |
+| ラフ | 本資料とSVG boardで、世界観、色、線、質感、禁止例を定義した。 |
+| レビュー | 要件対応、色以外の属性識別、ファイル追跡、contrast noteを確認した。 |
+| 修正 | M0 v0.1として、読みやすいflat仮素材を採用し、本番イラスト方針はM2/M8へ送る。 |
+| 承認 | M0-GR-02、M0-GR-03、M0-GR-04、M0-EX-05の前提として採用。 |
+| 書き出し | 元manifest項目と実行時プレビューSVGを保存した。 |
 
-## Prohibited Examples
+## 禁止例
 
-- Do not rely on red/blue/green/brown alone to distinguish suits.
-- Do not put long rules text inside card placeholder art.
-- Do not use dark low-contrast frames that hide rank or skill labels on night backgrounds.
-- Do not introduce decorative gradients as the main readability mechanism.
-- Do not change asset IDs when display names change.
+- 属性を赤、青、緑、茶の色だけで見分けさせない。
+- カード仮素材内に長いルール説明文を入れない。
+- 夜背景で数字やスキル名が沈む低contrast frameを使わない。
+- 装飾gradientを主要な読みやすさの手段にしない。
+- 表示名が変わっただけでasset IDを変えない。
 
-## Verification
+## 確認方法
 
-- Minimum display: central labels and suit silhouettes remain identifiable when the board is scaled down to a catalog thumbnail.
-- Enlarged display: strokes and spacing do not reveal accidental overlaps.
-- Day/night: both backgrounds preserve enough contrast for card face, card back, and warning state.
-- Lightweight mode: no required information depends on animation, sound, blur, or high frame rate.
+- 最小表示: boardをカタログthumbnailまで縮小しても、中央ラベルと属性シルエットを識別できる。
+- 拡大表示: 線と余白に不自然な重なりがない。
+- 昼夜: カード表面、裏面、警告状態が両背景で十分に読める。
+- 軽量設定: animation、sound、blur、高fpsへ必須情報を依存させない。

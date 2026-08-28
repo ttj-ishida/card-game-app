@@ -1,25 +1,25 @@
-# M0-EX-05 Design Token Interface
+# M0-EX-05 デザイントークンinterface
 
 - TODO: M0-EX-05
-- Package: packages/ui
-- Public entrypoint: packages/ui/src/index.ts
+- package: packages/ui
+- 公開entrypoint: packages/ui/src/index.ts
 
-## Public Categories
+## 公開カテゴリ
 
-| Category | Responsibility |
+| カテゴリ | 責務 |
 |---|---|
-| colors | Semantic surfaces, ink, suit colors, and state colors from M0-GR-01 and M0-GR-03. |
-| spacing | Shared spacing primitives for compact Android landscape UI. |
-| radius | Control, card, modal, and source-card corner radius values. |
-| typography | System font family, fixed font sizes, weights, and zero letter spacing. |
-| card | Aspect ratio, source size, display sizes, and safe-area bounds from M0-GR-02. |
+| colors | M0-GR-01とM0-GR-03に基づく、semantic surface、文字色、属性色、状態色。 |
+| spacing | Android横画面のcompact UIで共通利用する余白値。 |
+| radius | control、card、modal、source cardの角丸値。 |
+| typography | system font family、固定font size、weight、letter spacing 0。 |
+| card | M0-GR-02に基づく縦横比、source size、display size、safe-area bounds。 |
 
-## Boundaries
+## 境界
 
-- The token package contains display constants only.
-- It does not read Supabase, persist data, log user information, or know private hands.
-- Runtime screens may import tokens directly or map them into framework-specific style objects.
+- token packageは表示用の定数だけを持つ。
+- Supabaseを読まない。永続化しない。個人情報、非公開手札、秘密情報をlogに出さない。
+- runtime画面はtokenを直接importしてもよいし、framework固有のstyle objectへ変換してもよい。
 
-## Verification
+## 確認方法
 
-Run npm run ui:test and npm run ui:typecheck to verify token values and TypeScript compatibility.
+`npm run ui:test` と `npm run ui:typecheck` を実行し、token値とTypeScript互換性を検証する。
