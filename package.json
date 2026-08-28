@@ -3,7 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "supabase": "supabase"
+    "supabase": "supabase",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:link": "supabase link --project-ref evzmtxwdsoebekxlqxeo"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
