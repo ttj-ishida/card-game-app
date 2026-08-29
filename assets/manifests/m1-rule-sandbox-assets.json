@@ -1,0 +1,359 @@
+{
+  "todoIds": ["M1-GR-01", "M1-GR-02", "M1-GR-03"],
+  "version": "0.1.0",
+  "status": "accepted-for-m1-sandbox",
+  "layoutSize": {
+    "width": 900,
+    "height": 240,
+    "viewBox": "0 0 900 240",
+    "maxBytes": 81920
+  },
+  "iconSize": {
+    "width": 160,
+    "height": 160,
+    "viewBox": "0 0 160 160",
+    "maxBytes": 20480
+  },
+  "jokerOverlaySize": {
+    "width": 240,
+    "height": 160,
+    "viewBox": "0 0 240 160",
+    "maxBytes": 20480
+  },
+  "combinationLayouts": [
+    {
+      "assetId": "m1-layout-1-cards",
+      "cardCount": 1,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-1-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-1-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-2-cards",
+      "cardCount": 2,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-2-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-2-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-3-cards",
+      "cardCount": 3,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-3-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-3-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-4-cards",
+      "cardCount": 4,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-4-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-4-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-5-cards",
+      "cardCount": 5,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-5-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-5-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-6-cards",
+      "cardCount": 6,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-6-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-6-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-7-cards",
+      "cardCount": 7,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-7-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-7-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-8-cards",
+      "cardCount": 8,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-8-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-8-cards.svg"
+    },
+    {
+      "assetId": "m1-layout-9-cards",
+      "cardCount": 9,
+      "sourcePath": "assets/source/m1/rule-sandbox/layouts/m1-layout-9-cards.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/layouts/m1-layout-9-cards.svg"
+    }
+  ],
+  "stateIcons": [
+    {
+      "assetId": "state-day-night",
+      "shapeCue": "split-circle",
+      "sourcePath": "assets/source/m1/rule-sandbox/icons/state-day-night.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/icons/state-day-night.svg"
+    },
+    {
+      "assetId": "state-suit-lock",
+      "shapeCue": "ring-lock",
+      "sourcePath": "assets/source/m1/rule-sandbox/icons/state-suit-lock.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/icons/state-suit-lock.svg"
+    },
+    {
+      "assetId": "state-extension-seal",
+      "shapeCue": "bar-seal",
+      "sourcePath": "assets/source/m1/rule-sandbox/icons/state-extension-seal.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/icons/state-extension-seal.svg"
+    },
+    {
+      "assetId": "state-revolution",
+      "shapeCue": "reversal-arrows",
+      "sourcePath": "assets/source/m1/rule-sandbox/icons/state-revolution.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/icons/state-revolution.svg"
+    }
+  ],
+  "jokerDeclarationOverlays": [
+    {
+      "assetId": "m1-joker-rank-1-suit-fire",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-1-suit-water",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-1-suit-wind",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-1-suit-earth",
+      "rankCode": "RANK_1",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-1-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-2-suit-fire",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-2-suit-water",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-2-suit-wind",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-2-suit-earth",
+      "rankCode": "RANK_2",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-2-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-3-suit-fire",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-3-suit-water",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-3-suit-wind",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-3-suit-earth",
+      "rankCode": "RANK_3",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-3-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-4-suit-fire",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-4-suit-water",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-4-suit-wind",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-4-suit-earth",
+      "rankCode": "RANK_4",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-4-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-5-suit-fire",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-5-suit-water",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-5-suit-wind",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-5-suit-earth",
+      "rankCode": "RANK_5",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-5-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-6-suit-fire",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-6-suit-water",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-6-suit-wind",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-6-suit-earth",
+      "rankCode": "RANK_6",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-6-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-7-suit-fire",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-7-suit-water",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-7-suit-wind",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-7-suit-earth",
+      "rankCode": "RANK_7",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-7-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-8-suit-fire",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-8-suit-water",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-8-suit-wind",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-8-suit-earth",
+      "rankCode": "RANK_8",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-8-suit-earth.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-9-suit-fire",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_FIRE",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-fire.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-fire.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-9-suit-water",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_WATER",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-water.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-water.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-9-suit-wind",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_WIND",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-wind.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-wind.svg"
+    },
+    {
+      "assetId": "m1-joker-rank-9-suit-earth",
+      "rankCode": "RANK_9",
+      "suitCode": "SUIT_EARTH",
+      "sourcePath": "assets/source/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-earth.source.svg",
+      "runtimePath": "assets/runtime/m1/rule-sandbox/joker-overlays/m1-joker-rank-9-suit-earth.svg"
+    }
+  ]
+}

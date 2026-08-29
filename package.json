@@ -18,7 +18,11 @@
     "assets:generate": "node scripts/generate-m0-card-placeholders.mjs",
     "assets:check": "node scripts/check-m0-assets.mjs",
     "ui:test": "npm --prefix apps/mobile exec -- tsx --test packages/ui/src/tokens.test.ts",
-    "ui:typecheck": "npm --prefix apps/mobile exec -- tsc --noEmit --project packages/ui/tsconfig.json"
+    "ui:typecheck": "npm --prefix apps/mobile exec -- tsc --noEmit --project packages/ui/tsconfig.json",
+    "game-core:test": "npm --prefix apps/mobile exec -- tsx --test packages/game-core/src/**/*.test.ts",
+    "game-core:typecheck": "npm --prefix apps/mobile exec -- tsc --noEmit --project packages/game-core/tsconfig.json",
+    "assets:generate:m1": "node scripts/generate-m1-rule-sandbox-assets.mjs",
+    "assets:check:m1": "node scripts/check-m1-assets.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
