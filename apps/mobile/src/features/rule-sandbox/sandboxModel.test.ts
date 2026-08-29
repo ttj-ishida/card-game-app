@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { resolvePlay } from '@card-game-app/game-core';
+import { translate } from '../../i18n/translate';
+
 import {
   SANDBOX_MAX_PLAYERS,
   SANDBOX_MIN_PLAYERS,
@@ -9,6 +12,7 @@ import {
   buildPlayInput,
   clearField,
   createInitialRound,
+  describeResolution,
   emptyPlayDraft,
   isValidFieldCards,
   makeSandboxCard,
@@ -242,4 +246,42 @@ test('buildPlayInput carries a skill and a transform-joker declaration', () => {
 
 test('emptyPlayDraft is a play with no cards', () => {
   assert.deepEqual(emptyPlayDraft(), { kind: 'PLAY', cardIds: [] });
+});
+
+test('describeResolution maps an illegal result to a translatable reason key', () => {
+  const round = createInitialRound(); // no field
+  const view = describeResolution(resolvePlay(round, { kind: 'PASS', playerId: 'P1' }));
+  assert.equal(view.ok, false);
+  assert.equal(view.reasonKey, 'sandbox.reason.FIELD_EMPTY');
+  assert.doesNotThrow(() => translate(view.reasonKey as string));
+  assert.deepEqual(view.badges, []);
+});
+
+test('describeResolution maps a legal result to an action key and badges', () => {
+  const round = setFieldCards(
+    setActivePlayer(createInitialRound(), 'P1'),
+    [makeSandboxCard('RANK_6', 'SUIT_WATER')],
+    'P2',
+  );
+  const withCard = addCardToHand(round, 'P1', 'RANK_8', 'SUIT_FIRE');
+  const view = describeResolution(
+    resolvePlay(withCard, { kind: 'PLAY', playerId: 'P1', cardIds: ['SBX_RANK_8_SUIT_FIRE'] }),
+  );
+  assert.equal(view.ok, true);
+  assert.equal(view.actionKey, 'sandbox.action.REPLACE');
+  assert.doesNotThrow(() => translate(view.actionKey as string));
+});
+
+test('describeResolution reports a winner badge and id', () => {
+  let round = createInitialRound();
+  round = setPlayerCount(round, 2);
+  round = removeCardFromHand(round, 'P1', 'SBX_RANK_3_SUIT_FIRE');
+  round = removeCardFromHand(round, 'P1', 'SBX_RANK_4_SUIT_WATER');
+  round = setFieldCards(round, [makeSandboxCard('RANK_6', 'SUIT_WATER')], 'P2');
+  const view = describeResolution(
+    resolvePlay(round, { kind: 'PLAY', playerId: 'P1', cardIds: ['SBX_RANK_8_SUIT_FIRE'] }),
+  );
+  assert.equal(view.ok, true);
+  assert.ok(view.badges.includes('winner'));
+  assert.equal(view.winnerId, 'P1');
 });

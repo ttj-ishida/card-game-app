@@ -9,6 +9,7 @@ import {
   type PlayerState,
   type PlayerStatus,
   type PlayInput,
+  type PlayResolution,
   type RankCode,
   type RoundState,
   type SkillEffectCode,
@@ -287,4 +288,35 @@ export function buildPlayInput(round: RoundState, draft: PlayDraft): PlayInput {
     ];
   }
   return play;
+}
+
+export type SandboxBadge = 'naturalRevolution' | 'fieldCleared' | 'winner';
+
+export type ResolutionView = {
+  ok: boolean;
+  reasonKey?: string;
+  actionKey?: string;
+  badges: SandboxBadge[];
+  winnerId?: string;
+};
+
+export function describeResolution(resolution: PlayResolution): ResolutionView {
+  if (!resolution.ok) {
+    return {
+      ok: false,
+      reasonKey: `sandbox.reason.${resolution.reason}`,
+      badges: [],
+    };
+  }
+  const { outcome } = resolution;
+  const badges: SandboxBadge[] = [];
+  if (outcome.naturalRevolution) badges.push('naturalRevolution');
+  if (outcome.fieldCleared) badges.push('fieldCleared');
+  if (outcome.winnerId) badges.push('winner');
+  return {
+    ok: true,
+    actionKey: `sandbox.action.${outcome.actionKind}`,
+    badges,
+    ...(outcome.winnerId ? { winnerId: outcome.winnerId } : {}),
+  };
 }
