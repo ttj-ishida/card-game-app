@@ -1,21 +1,29 @@
+import { useState } from 'react';
 import { useStore } from 'zustand';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
-import { RANK_CODES, SUIT_CODES } from '@card-game-app/game-core';
+import { RANK_CODES, SUIT_CODES, type NumberCard } from '@card-game-app/game-core';
 
 import {
   addCardToHand,
+  addDiscard,
   clearField,
+  isValidFieldCards,
+  makeSandboxCard,
   removeCardFromHand,
+  removeDiscard,
   setActivePlayer,
   setConsecutivePasses,
   setDayNight,
   setExtensionSealed,
+  setFieldCards,
+  setFieldLastPlayer,
   setLockedSuit,
   setPlayerCount,
   setPlayerSkill,
+  setPlayerSkillUsed,
   setPlayerStatus,
 } from '../../features/rule-sandbox/sandboxModel';
 import { SANDBOX_PRESETS } from '../../features/rule-sandbox/sandboxPresets';
@@ -57,6 +65,10 @@ export default function SandboxScreen() {
   const state = useStore(ruleSandboxStore, (store) => store);
   const { draft, playDraft, lastResult, history } = state;
   const activePlayer = draft.players.find((player) => player.playerId === draft.activePlayerId);
+
+  const [fieldDraftCards, setFieldDraftCards] = useState<NumberCard[]>([]);
+  const [fieldDraftLastPlayer, setFieldDraftLastPlayer] = useState('P1');
+  const fieldDraftValid = isValidFieldCards(fieldDraftCards);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -158,71 +170,92 @@ export default function SandboxScreen() {
             ))}
           </View>
 
-          {draft.players.map((player) => (
-            <View key={player.playerId} style={styles.playerRow}>
-              <Text style={styles.playerId}>{player.playerId}</Text>
-              <View style={styles.handWrap}>
-                {player.hand.map((cardEntry) => (
-                  <Pressable
-                    key={cardEntry.cardId}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${translate('sandbox.hand')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
-                    onPress={() =>
-                      state.editRound((round) =>
-                        removeCardFromHand(round, player.playerId, cardEntry.cardId),
-                      )
-                    }
-                  >
-                    <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
-                  </Pressable>
-                ))}
+          {draft.players.map((player) => {
+            const skill = player.skill;
+            return (
+              <View key={player.playerId} style={styles.playerRow}>
+                <Text style={styles.playerId}>{player.playerId}</Text>
+                <View style={styles.handWrap}>
+                  {player.hand.map((cardEntry) => (
+                    <Pressable
+                      key={cardEntry.cardId}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${translate('sandbox.hand')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
+                      onPress={() =>
+                        state.editRound((round) =>
+                          removeCardFromHand(round, player.playerId, cardEntry.cardId),
+                        )
+                      }
+                    >
+                      <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+                    </Pressable>
+                  ))}
+                </View>
+                <View style={styles.statusWrap}>
+                  {(['ACTIVE', 'PASSED', 'OUT'] as const).map((status) => (
+                    <Pressable
+                      key={status}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: player.status === status }}
+                      onPress={() =>
+                        state.editRound((round) => setPlayerStatus(round, player.playerId, status))
+                      }
+                      style={styles.miniButton}
+                    >
+                      <Text style={styles.miniButtonText}>
+                        {translate(`sandbox.status.${status}`)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <View style={styles.skillWrap}>
+                  {(
+                    [
+                      null,
+                      'SKILL_JOKER_HERO',
+                      'SKILL_JOKER_SAINT',
+                      'SKILL_EXTENSION_SEAL',
+                      'SKILL_REVOLUTION',
+                    ] as const
+                  ).map((effect) => (
+                    <Pressable
+                      key={effect ?? 'none'}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: (skill?.effectCode ?? null) === effect }}
+                      onPress={() =>
+                        state.editRound((round) => setPlayerSkill(round, player.playerId, effect))
+                      }
+                      style={styles.miniButton}
+                    >
+                      <Text style={styles.miniButtonText}>
+                        {effect
+                          ? translate(`sandbox.skill.${effect}`)
+                          : translate('sandbox.skill.none')}
+                      </Text>
+                    </Pressable>
+                  ))}
+                  {skill ? (
+                    <Pressable
+                      accessibilityRole="switch"
+                      accessibilityLabel={translate('sandbox.skill.used')}
+                      accessibilityState={{ checked: skill.used }}
+                      onPress={() =>
+                        state.editRound((round) =>
+                          setPlayerSkillUsed(round, player.playerId, !skill.used),
+                        )
+                      }
+                      style={skill.used ? styles.pill : styles.miniButton}
+                    >
+                      <Text style={styles.miniButtonText}>
+                        {translate('sandbox.skill.used')}
+                        {skill.used ? ' ✓' : ''}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
-              <View style={styles.statusWrap}>
-                {(['ACTIVE', 'PASSED', 'OUT'] as const).map((status) => (
-                  <Pressable
-                    key={status}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: player.status === status }}
-                    onPress={() =>
-                      state.editRound((round) => setPlayerStatus(round, player.playerId, status))
-                    }
-                    style={styles.miniButton}
-                  >
-                    <Text style={styles.miniButtonText}>
-                      {translate(`sandbox.status.${status}`)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-              <View style={styles.skillWrap}>
-                {(
-                  [
-                    null,
-                    'SKILL_JOKER_HERO',
-                    'SKILL_JOKER_SAINT',
-                    'SKILL_EXTENSION_SEAL',
-                    'SKILL_REVOLUTION',
-                  ] as const
-                ).map((effect) => (
-                  <Pressable
-                    key={effect ?? 'none'}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: (player.skill?.effectCode ?? null) === effect }}
-                    onPress={() =>
-                      state.editRound((round) => setPlayerSkill(round, player.playerId, effect))
-                    }
-                    style={styles.miniButton}
-                  >
-                    <Text style={styles.miniButtonText}>
-                      {effect
-                        ? translate(`sandbox.skill.${effect}`)
-                        : translate('sandbox.skill.none')}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          ))}
+            );
+          })}
 
           <View style={styles.row}>
             <Text style={styles.label}>{translate('sandbox.field.label')}</Text>
@@ -247,6 +280,89 @@ export default function SandboxScreen() {
             ) : (
               <Text style={styles.muted}>{translate('sandbox.field.empty')}</Text>
             )}
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>{translate('sandbox.field.edit')}</Text>
+            {fieldDraftCards.map((cardEntry) => (
+              <Pressable
+                key={cardEntry.cardId}
+                accessibilityRole="button"
+                accessibilityLabel={`${translate('sandbox.field.edit')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
+                onPress={() =>
+                  setFieldDraftCards((cards) =>
+                    cards.filter((entry) => entry.cardId !== cardEntry.cardId),
+                  )
+                }
+              >
+                <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+              </Pressable>
+            ))}
+            {fieldDraftCards.length === 0 ? (
+              <Text style={styles.muted}>{translate('sandbox.field.empty')}</Text>
+            ) : null}
+          </View>
+
+          {fieldDraftCards.length > 0 && !fieldDraftValid ? (
+            <Text style={styles.illegal}>{translate('sandbox.field.invalid')}</Text>
+          ) : null}
+
+          <View style={styles.row}>
+            <Text style={styles.label}>{translate('sandbox.field.lastPlayer')}</Text>
+            {draft.players.map((player) => (
+              <Pressable
+                key={player.playerId}
+                accessibilityRole="button"
+                accessibilityState={{ selected: fieldDraftLastPlayer === player.playerId }}
+                onPress={() => {
+                  setFieldDraftLastPlayer(player.playerId);
+                  state.editRound((round) => setFieldLastPlayer(round, player.playerId));
+                }}
+                style={styles.miniButton}
+              >
+                <Text style={styles.miniButtonText}>{player.playerId}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>{translate('sandbox.field.edit')}</Text>
+            {RANK_CODES.map((rankCode) =>
+              SUIT_CODES.map((suitCode) => (
+                <Pressable
+                  key={`field_${rankCode}_${suitCode}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${translate('sandbox.field.edit')} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
+                  onPress={() =>
+                    setFieldDraftCards((cards) => {
+                      const nextCard = makeSandboxCard(rankCode, suitCode);
+                      return cards.some((entry) => entry.cardId === nextCard.cardId)
+                        ? cards
+                        : [...cards, nextCard];
+                    })
+                  }
+                >
+                  <CardChip rankCode={rankCode} suitCode={suitCode} />
+                </Pressable>
+              )),
+            )}
+          </View>
+
+          <View style={styles.row}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={translate('sandbox.field.commit')}
+              accessibilityState={{ disabled: !fieldDraftValid }}
+              disabled={!fieldDraftValid}
+              onPress={() =>
+                state.editRound((round) =>
+                  setFieldCards(round, fieldDraftCards, fieldDraftLastPlayer),
+                )
+              }
+              style={fieldDraftValid ? styles.pill : styles.miniButton}
+            >
+              <Text style={styles.miniButtonText}>{translate('sandbox.field.commit')}</Text>
+            </Pressable>
           </View>
 
           <View style={styles.row}>
@@ -310,6 +426,45 @@ export default function SandboxScreen() {
                   onPress={() =>
                     state.editRound((round) =>
                       addCardToHand(round, draft.activePlayerId, rankCode, suitCode),
+                    )
+                  }
+                >
+                  <CardChip rankCode={rankCode} suitCode={suitCode} />
+                </Pressable>
+              )),
+            )}
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>{translate('sandbox.discard')}</Text>
+            {draft.discardPile.map((cardEntry) => (
+              <Pressable
+                key={cardEntry.cardId}
+                accessibilityRole="button"
+                accessibilityLabel={`${translate('sandbox.discard')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
+                onPress={() => state.editRound((round) => removeDiscard(round, cardEntry.cardId))}
+              >
+                <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+              </Pressable>
+            ))}
+            {draft.discardPile.length === 0 ? (
+              <Text style={styles.muted}>{translate('sandbox.field.empty')}</Text>
+            ) : null}
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>
+              {translate('sandbox.discard')} {translate('sandbox.addCard')}
+            </Text>
+            {RANK_CODES.map((rankCode) =>
+              SUIT_CODES.map((suitCode) => (
+                <Pressable
+                  key={`discard_${rankCode}_${suitCode}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${translate('sandbox.discard')} ${translate('sandbox.addCard')} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
+                  onPress={() =>
+                    state.editRound((round) =>
+                      addDiscard(round, makeSandboxCard(rankCode, suitCode)),
                     )
                   }
                 >

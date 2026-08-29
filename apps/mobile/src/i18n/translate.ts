@@ -28,6 +28,8 @@ export const jaDictionary = {
   'sandbox.field.lastPlayer': '最終出し手',
   'sandbox.field.empty': '場なし',
   'sandbox.field.invalid': 'この組み合わせは無効です',
+  'sandbox.field.edit': '場を編集',
+  'sandbox.field.commit': '場に設定',
   'sandbox.lock.label': '属性ロック',
   'sandbox.lock.none': 'なし',
   'sandbox.seal.label': '追加封印',
