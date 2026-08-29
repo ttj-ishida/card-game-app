@@ -6,8 +6,10 @@ import {
   SANDBOX_MIN_PLAYERS,
   addCardToHand,
   addDiscard,
+  buildPlayInput,
   clearField,
   createInitialRound,
+  emptyPlayDraft,
   isValidFieldCards,
   makeSandboxCard,
   removeCardFromHand,
@@ -200,4 +202,44 @@ test('moving a field card into a hand collapses or shrinks the field', () => {
   // Observed real behavior: removing the middle card of a 3-card sequence leaves
   // [3-fire, 5-wind], which is not a valid combination, so the field collapses to null.
   assert.equal(moved.activeField, null);
+});
+
+test('buildPlayInput builds a pass for the active player', () => {
+  const round = setActivePlayer(createInitialRound(), 'P2');
+  assert.deepEqual(buildPlayInput(round, { kind: 'PASS', cardIds: [] }), {
+    kind: 'PASS',
+    playerId: 'P2',
+  });
+});
+
+test('buildPlayInput builds a plain number play', () => {
+  const round = createInitialRound();
+  assert.deepEqual(buildPlayInput(round, { kind: 'PLAY', cardIds: ['SBX_RANK_3_SUIT_FIRE'] }), {
+    kind: 'PLAY',
+    playerId: 'P1',
+    cardIds: ['SBX_RANK_3_SUIT_FIRE'],
+  });
+});
+
+test('buildPlayInput carries a skill and a transform-joker declaration', () => {
+  const round = setPlayerSkill(createInitialRound(), 'P1', 'SKILL_JOKER_HERO');
+  assert.deepEqual(
+    buildPlayInput(round, {
+      kind: 'PLAY',
+      cardIds: ['SBX_RANK_3_SUIT_FIRE'],
+      useSkill: 'JOKER_TRANSFORM',
+      jokerDeclaration: { rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' },
+    }),
+    {
+      kind: 'PLAY',
+      playerId: 'P1',
+      cardIds: ['SBX_RANK_3_SUIT_FIRE'],
+      useSkill: 'JOKER_TRANSFORM',
+      jokerDeclarations: [{ skillId: 'SBX_SKILL_P1', rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' }],
+    },
+  );
+});
+
+test('emptyPlayDraft is a play with no cards', () => {
+  assert.deepEqual(emptyPlayDraft(), { kind: 'PLAY', cardIds: [] });
 });

@@ -8,6 +8,7 @@ import {
   type NumberCard,
   type PlayerState,
   type PlayerStatus,
+  type PlayInput,
   type RankCode,
   type RoundState,
   type SkillEffectCode,
@@ -248,4 +249,42 @@ export function removeCardFromHand(
     ...player,
     hand: player.hand.filter((card) => card.cardId !== cardId),
   }));
+}
+
+export type PlayDraft = {
+  kind: 'PASS' | 'PLAY';
+  cardIds: string[];
+  useSkill?: 'EXTENSION_SEAL' | 'REVOLUTION' | 'JOKER_TRANSFORM' | 'JOKER_CLEAR';
+  jokerDeclaration?: { rankCode: RankCode; suitCode: SuitCode };
+};
+
+export function emptyPlayDraft(): PlayDraft {
+  return { kind: 'PLAY', cardIds: [] };
+}
+
+export function buildPlayInput(round: RoundState, draft: PlayDraft): PlayInput {
+  const playerId = round.activePlayerId;
+  if (draft.kind === 'PASS') {
+    return { kind: 'PASS', playerId };
+  }
+  const player = round.players.find((entry) => entry.playerId === playerId);
+  const skillId = player?.skill?.skillId ?? `SBX_SKILL_${playerId}`;
+  const play: Extract<PlayInput, { kind: 'PLAY' }> = {
+    kind: 'PLAY',
+    playerId,
+    cardIds: [...draft.cardIds],
+  };
+  if (draft.useSkill) {
+    play.useSkill = draft.useSkill;
+  }
+  if (draft.useSkill === 'JOKER_TRANSFORM' && draft.jokerDeclaration) {
+    play.jokerDeclarations = [
+      {
+        skillId,
+        rankCode: draft.jokerDeclaration.rankCode,
+        suitCode: draft.jokerDeclaration.suitCode,
+      },
+    ];
+  }
+  return play;
 }
