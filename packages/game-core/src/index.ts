@@ -38,6 +38,7 @@ export type NumberCard = {
   cardId: string;
   rankCode: RankCode;
   suitCode: SuitCode;
+  transformedFromSkillId?: string;
 };
 
 export type SkillCard = {
@@ -86,6 +87,26 @@ export function createNumberCard(
   suitCode: SuitCode,
 ): NumberCard {
   return { kind: "NUMBER", cardId, rankCode, suitCode };
+}
+
+export function createTransformedJokerCard(
+  skillId: string,
+  rankCode: RankCode,
+  suitCode: SuitCode,
+): NumberCard {
+  return {
+    kind: "NUMBER",
+    cardId: `JOKER_AS_${skillId}`,
+    rankCode,
+    suitCode,
+    transformedFromSkillId: skillId,
+  };
+}
+
+export function isTransformedJokerCard(
+  card: NumberCard | null | undefined,
+): boolean {
+  return Boolean(card?.transformedFromSkillId);
 }
 
 export function createSkillCard(
@@ -216,7 +237,9 @@ export type IllegalPlayReason =
   | "NOT_STRONGER"
   | "EXTENSION_SEALED"
   | "SUIT_LOCKED"
-  | "NATURAL_REVOLUTION_WITH_REVOLUTION_SKILL";
+  | "NATURAL_REVOLUTION_WITH_REVOLUTION_SKILL"
+  | "DUPLICATE_JOKER_DECLARATION"
+  | "JOKER_TRANSFORM_LAST_NUMBER_WIN";
 
 export type LegalNumberPlayResult = {
   legal: true;
@@ -236,6 +259,93 @@ export type IllegalNumberPlayResult = {
 
 export type NumberPlayResult = LegalNumberPlayResult | IllegalNumberPlayResult;
 
+export type JokerDeclaration = {
+  skillId: string;
+  rankCode: RankCode;
+  suitCode: SuitCode;
+};
+
+export function evaluateJokerTransformPlay(input: {
+  current: NumberCombination | null;
+  realNumberCards: NumberCard[];
+  jokerDeclarations: JokerDeclaration[];
+  dayNight: DayNight;
+  lockedSuitCode?: SuitCode | null;
+  extensionSealed?: boolean;
+  usesRevolutionSkill?: boolean;
+  remainingNumberCardCount?: number;
+}): NumberPlayResult {
+  if (
+    input.jokerDeclarations.length > 0 &&
+    input.remainingNumberCardCount !== undefined &&
+    input.realNumberCards.length >= input.remainingNumberCardCount
+  ) {
+    return { legal: false, reason: "JOKER_TRANSFORM_LAST_NUMBER_WIN" };
+  }
+
+  const transformedJokers = input.jokerDeclarations.map((declaration) =>
+    createTransformedJokerCard(
+      declaration.skillId,
+      declaration.rankCode,
+      declaration.suitCode,
+    ),
+  );
+  const candidateCards = [...input.realNumberCards, ...transformedJokers];
+
+  if (hasDuplicateNumberIdentity(candidateCards)) {
+    return { legal: false, reason: "DUPLICATE_JOKER_DECLARATION" };
+  }
+
+  return evaluateNumberPlay({
+    current: input.current,
+    candidateCards,
+    dayNight: input.dayNight,
+    lockedSuitCode: input.lockedSuitCode,
+    extensionSealed: input.extensionSealed,
+    usesRevolutionSkill: input.usesRevolutionSkill,
+  });
+}
+
+export type JokerClearResult =
+  | {
+      legal: true;
+      clearedCards: NumberCard[];
+      lockedSuitCode: null;
+      extensionSealed: false;
+      dayNightAfter: DayNight;
+      mustLead: true;
+      canPass: false;
+      canUseSecondSkill: false;
+    }
+  | { legal: false; reason: "NO_FIELD_TO_CLEAR" };
+
+export function evaluateJokerClear(input: {
+  currentField: ActiveField | null;
+  dayNight: DayNight;
+}): JokerClearResult {
+  if (!input.currentField) return { legal: false, reason: "NO_FIELD_TO_CLEAR" };
+
+  return {
+    legal: true,
+    clearedCards: [...input.currentField.combination.cards],
+    lockedSuitCode: null,
+    extensionSealed: false,
+    dayNightAfter: input.dayNight,
+    mustLead: true,
+    canPass: false,
+    canUseSecondSkill: false,
+  };
+}
+
+function hasDuplicateNumberIdentity(cards: NumberCard[]): boolean {
+  const seen = new Set<string>();
+  for (const card of cards) {
+    const identity = `${card.rankCode}:${card.suitCode}`;
+    if (seen.has(identity)) return true;
+    seen.add(identity);
+  }
+  return false;
+}
 export function evaluateNumberPlay(input: {
   current: NumberCombination | null;
   candidateCards: NumberCard[];
