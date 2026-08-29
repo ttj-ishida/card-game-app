@@ -79,6 +79,8 @@ export type RoundState = {
   lockedSuitCode: SuitCode | null;
   extensionSealed: boolean;
   discardPile: NumberCard[];
+  consecutivePasses: number;
+  winnerId: string | null;
 };
 
 export function createNumberCard(
@@ -145,6 +147,8 @@ export function createRoundState(input: {
   lockedSuitCode?: SuitCode | null;
   extensionSealed?: boolean;
   discardPile?: NumberCard[];
+  consecutivePasses?: number;
+  winnerId?: string | null;
 }): RoundState {
   return {
     rulesetCode: input.rulesetCode,
@@ -160,6 +164,8 @@ export function createRoundState(input: {
     lockedSuitCode: input.lockedSuitCode ?? null,
     extensionSealed: input.extensionSealed ?? false,
     discardPile: [...(input.discardPile ?? [])],
+    consecutivePasses: input.consecutivePasses ?? 0,
+    winnerId: input.winnerId ?? null,
   };
 }
 
@@ -633,4 +639,332 @@ function completeLegalResult(
     extras.dayNightAfter = nextDayNight(originalDayNight);
   }
   return legalResult(actionKind, combination, resultingCombination, extras);
+}
+
+export type PlaySkillUse =
+  | "EXTENSION_SEAL"
+  | "REVOLUTION"
+  | "JOKER_TRANSFORM"
+  | "JOKER_CLEAR";
+
+export type PlayInput =
+  | { kind: "PASS"; playerId: string }
+  | {
+      kind: "PLAY";
+      playerId: string;
+      cardIds: string[];
+      useSkill?: PlaySkillUse;
+      jokerDeclarations?: JokerDeclaration[];
+    };
+
+export type PlayRejectionReason =
+  | IllegalPlayReason
+  | "ROUND_FINISHED"
+  | "NOT_ACTIVE_PLAYER"
+  | "CARD_NOT_IN_HAND"
+  | "SKILL_NOT_AVAILABLE"
+  | "FIELD_EMPTY"
+  | "MUST_LEAD"
+  | "NO_FIELD_TO_CLEAR"
+  | "TRANSFORM_JOKER_GO_OUT";
+
+export type PlayOutcome = {
+  actionKind: PlayActionKind | "PASS";
+  fieldCleared: boolean;
+  naturalRevolution: boolean;
+  dayNightAfter: DayNight;
+  winnerId: string | null;
+};
+
+export type PlayResolution =
+  | { ok: true; state: RoundState; outcome: PlayOutcome }
+  | { ok: false; reason: PlayRejectionReason; state: RoundState };
+
+export function resolvePlay(
+  state: RoundState,
+  play: PlayInput,
+): PlayResolution {
+  const reject = (reason: PlayRejectionReason): PlayResolution => ({
+    ok: false,
+    reason,
+    state,
+  });
+
+  if (state.winnerId) return reject("ROUND_FINISHED");
+  if (play.playerId !== state.activePlayerId) return reject("NOT_ACTIVE_PLAYER");
+
+  const player = state.players.find((p) => p.playerId === play.playerId);
+  if (!player) return reject("NOT_ACTIVE_PLAYER");
+
+  return play.kind === "PASS"
+    ? resolvePassPlay(state, player)
+    : resolveCardPlay(state, player, play);
+}
+
+function inRoundPlayerCount(state: RoundState): number {
+  return state.players.filter((p) => p.status !== "OUT").length;
+}
+
+function nextActivePlayerId(players: PlayerState[], fromId: string): string {
+  const count = players.length;
+  const start = players.findIndex((p) => p.playerId === fromId);
+  for (let step = 1; step <= count; step += 1) {
+    const candidate = players[(start + step) % count];
+    if (candidate.status === "ACTIVE") return candidate.playerId;
+  }
+  return fromId;
+}
+
+function clonePlayer(player: PlayerState): PlayerState {
+  return {
+    playerId: player.playerId,
+    status: player.status,
+    hand: player.hand.map((card) => ({ ...card })),
+    skill: player.skill ? { ...player.skill } : null,
+    consecutivePasses: player.consecutivePasses,
+  };
+}
+
+function reactivate(player: PlayerState): PlayerState {
+  const cloned = clonePlayer(player);
+  if (cloned.status === "PASSED") cloned.status = "ACTIVE";
+  return cloned;
+}
+
+function buildState(
+  base: RoundState,
+  patch: Partial<RoundState>,
+): RoundState {
+  return {
+    rulesetCode: base.rulesetCode,
+    rulesetVersion: base.rulesetVersion,
+    dayNight: patch.dayNight ?? base.dayNight,
+    players: patch.players ?? base.players.map(clonePlayer),
+    activePlayerId: patch.activePlayerId ?? base.activePlayerId,
+    activeField:
+      patch.activeField !== undefined ? patch.activeField : base.activeField,
+    lockedSuitCode:
+      patch.lockedSuitCode !== undefined
+        ? patch.lockedSuitCode
+        : base.lockedSuitCode,
+    extensionSealed: patch.extensionSealed ?? base.extensionSealed,
+    discardPile: patch.discardPile ?? [...base.discardPile],
+    consecutivePasses: patch.consecutivePasses ?? base.consecutivePasses,
+    winnerId: patch.winnerId !== undefined ? patch.winnerId : base.winnerId,
+  };
+}
+
+function resolvePassPlay(
+  state: RoundState,
+  player: PlayerState,
+): PlayResolution {
+  const pass = evaluatePass({
+    activeField: state.activeField,
+    consecutivePassesBefore: state.consecutivePasses,
+    activePlayerCount: inRoundPlayerCount(state),
+    lastPlayerActive: true,
+  });
+  if (!pass.legal) return { ok: false, reason: pass.reason, state };
+
+  if (pass.clearsField && state.activeField) {
+    const clear = resolveFieldClear({
+      currentField: state.activeField,
+      dayNight: state.dayNight,
+      lastPlayerActive: true,
+      fallbackLeaderId: state.activeField.lastPlayerId,
+    });
+    const next = buildState(state, {
+      players: state.players.map(reactivate),
+      activePlayerId: clear.nextLeaderId,
+      activeField: null,
+      lockedSuitCode: null,
+      extensionSealed: false,
+      discardPile: [...state.discardPile, ...clear.clearedCards],
+      consecutivePasses: 0,
+    });
+    return {
+      ok: true,
+      state: next,
+      outcome: {
+        actionKind: "PASS",
+        fieldCleared: true,
+        naturalRevolution: false,
+        dayNightAfter: clear.dayNightAfter,
+        winnerId: null,
+      },
+    };
+  }
+
+  const players = state.players.map((p) => {
+    const cloned = clonePlayer(p);
+    if (p.playerId === player.playerId) cloned.status = "PASSED";
+    return cloned;
+  });
+  const next = buildState(state, {
+    players,
+    activePlayerId: nextActivePlayerId(players, player.playerId),
+    consecutivePasses: state.consecutivePasses + 1,
+  });
+  return {
+    ok: true,
+    state: next,
+    outcome: {
+      actionKind: "PASS",
+      fieldCleared: false,
+      naturalRevolution: false,
+      dayNightAfter: state.dayNight,
+      winnerId: null,
+    },
+  };
+}
+
+function skillMatches(skill: SkillCard, use: PlaySkillUse): boolean {
+  if (use === "EXTENSION_SEAL") return skill.effectCode === "SKILL_EXTENSION_SEAL";
+  if (use === "REVOLUTION") return skill.effectCode === "SKILL_REVOLUTION";
+  return (
+    skill.effectCode === "SKILL_JOKER_HERO" ||
+    skill.effectCode === "SKILL_JOKER_SAINT"
+  );
+}
+
+function resolveCardPlay(
+  state: RoundState,
+  player: PlayerState,
+  play: Extract<PlayInput, { kind: "PLAY" }>,
+): PlayResolution {
+  const reject = (reason: PlayRejectionReason): PlayResolution => ({
+    ok: false,
+    reason,
+    state,
+  });
+
+  if (new Set(play.cardIds).size !== play.cardIds.length) {
+    return reject("CARD_NOT_IN_HAND");
+  }
+  const handById = new Map(player.hand.map((card) => [card.cardId, card]));
+  const playedCards: NumberCard[] = [];
+  for (const cardId of play.cardIds) {
+    const card = handById.get(cardId);
+    if (!card) return reject("CARD_NOT_IN_HAND");
+    playedCards.push(card);
+  }
+
+  if (play.useSkill) {
+    if (
+      !player.skill ||
+      player.skill.used ||
+      !skillMatches(player.skill, play.useSkill)
+    ) {
+      return reject("SKILL_NOT_AVAILABLE");
+    }
+  }
+
+  const isJokerClear = play.useSkill === "JOKER_CLEAR";
+  const isJokerTransform = play.useSkill === "JOKER_TRANSFORM";
+  const usesRevolutionSkill = play.useSkill === "REVOLUTION";
+
+  if (isJokerClear) {
+    const jokerClear = evaluateJokerClear({
+      currentField: state.activeField,
+      dayNight: state.dayNight,
+    });
+    if (!jokerClear.legal) return reject(jokerClear.reason);
+  }
+
+  const current = isJokerClear
+    ? null
+    : state.activeField?.combination ?? null;
+  const lockedSuitCode = isJokerClear ? null : state.lockedSuitCode;
+  const extensionSealed = isJokerClear ? false : state.extensionSealed;
+
+  // Forbidden go-out with a transformed Joker is decided below from the real
+  // resulting hand via evaluateGoOut, so the combination check stays hand-agnostic.
+  const numberResult: NumberPlayResult = isJokerTransform
+    ? evaluateJokerTransformPlay({
+        current,
+        realNumberCards: playedCards,
+        jokerDeclarations: play.jokerDeclarations ?? [],
+        dayNight: state.dayNight,
+        lockedSuitCode,
+        extensionSealed,
+      })
+    : evaluateNumberPlay({
+        current,
+        candidateCards: playedCards,
+        dayNight: state.dayNight,
+        lockedSuitCode,
+        extensionSealed,
+        usesRevolutionSkill,
+      });
+  if (!numberResult.legal) return reject(numberResult.reason);
+
+  const remainingHand = player.hand.filter(
+    (card) => !play.cardIds.includes(card.cardId),
+  );
+  const goOut = evaluateGoOut({
+    numberCardsInHandAfterPlay: remainingHand.length,
+    playIncludesTransformedJoker:
+      isJokerTransform && (play.jokerDeclarations?.length ?? 0) > 0,
+  });
+  if ("forbidden" in goOut && goOut.forbidden) {
+    return reject("TRANSFORM_JOKER_GO_OUT");
+  }
+  const goesOut = "goesOut" in goOut && goOut.goesOut;
+
+  const dayNightAfter = numberResult.dayNightAfter ?? state.dayNight;
+
+  const discardPile = [...state.discardPile];
+  if (isJokerClear && state.activeField) {
+    discardPile.push(...state.activeField.combination.cards);
+  }
+  if (numberResult.actionKind === "REPLACE" && state.activeField) {
+    discardPile.push(...state.activeField.combination.cards);
+  }
+
+  const players = state.players.map((p) => {
+    if (p.playerId === player.playerId) {
+      const cloned = clonePlayer(p);
+      cloned.hand = remainingHand.map((card) => ({ ...card }));
+      if (play.useSkill && cloned.skill) {
+        cloned.skill = { ...cloned.skill, used: true };
+      }
+      cloned.status = goesOut ? "OUT" : "ACTIVE";
+      cloned.consecutivePasses = 0;
+      return cloned;
+    }
+    return reactivate(p);
+  });
+
+  const winnerId = goesOut ? player.playerId : null;
+  const next = buildState(state, {
+    dayNight: dayNightAfter,
+    players,
+    activePlayerId: goesOut
+      ? player.playerId
+      : nextActivePlayerId(players, player.playerId),
+    activeField: {
+      combination: numberResult.resultingCombination,
+      lastPlayerId: player.playerId,
+    },
+    lockedSuitCode: numberResult.createsSuitLock
+      ? numberResult.lockedSuitCode ?? null
+      : lockedSuitCode,
+    extensionSealed:
+      play.useSkill === "EXTENSION_SEAL" ? true : extensionSealed,
+    discardPile,
+    consecutivePasses: 0,
+    winnerId,
+  });
+
+  return {
+    ok: true,
+    state: next,
+    outcome: {
+      actionKind: numberResult.actionKind,
+      fieldCleared: isJokerClear,
+      naturalRevolution: numberResult.naturalRevolution ?? false,
+      dayNightAfter,
+      winnerId,
+    },
+  };
 }
