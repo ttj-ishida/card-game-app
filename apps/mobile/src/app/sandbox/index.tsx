@@ -4,7 +4,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
-import { RANK_CODES, SUIT_CODES, type NumberCard } from '@card-game-app/game-core';
+import {
+  RANK_CODES,
+  SUIT_CODES,
+  isTransformedJokerCard,
+  type NumberCard,
+} from '@card-game-app/game-core';
 
 import {
   addCardToHand,
@@ -18,8 +23,6 @@ import {
   setConsecutivePasses,
   setDayNight,
   setExtensionSealed,
-  setFieldCards,
-  setFieldLastPlayer,
   setLockedSuit,
   setPlayerCount,
   setPlayerSkill,
@@ -48,27 +51,34 @@ function rankNumber(rankCode: string): string {
   return rankCode.replace('RANK_', '');
 }
 
-function CardChip({ rankCode, suitCode }: { rankCode: string; suitCode: string }) {
+function CardChip({ card }: { card: NumberCard }) {
+  const joker = isTransformedJokerCard(card);
+  const suitLabel = SUIT_LABEL[card.suitCode];
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={`${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
-      style={[styles.chip, { borderColor: SUIT_COLOR[suitCode] }]}
+      accessibilityLabel={`${rankNumber(card.rankCode)} ${suitLabel}${
+        joker ? ` ${translate('sandbox.card.joker')}` : ''
+      }`}
+      style={[styles.chip, { borderColor: SUIT_COLOR[card.suitCode] }]}
     >
-      <Text style={styles.chipRank}>{rankNumber(rankCode)}</Text>
-      <Text style={styles.chipSuit}>{SUIT_LABEL[suitCode]}</Text>
+      {joker ? <Text style={styles.chipJoker}>J</Text> : null}
+      <Text style={styles.chipRank}>{rankNumber(card.rankCode)}</Text>
+      <Text style={styles.chipSuit}>{suitLabel}</Text>
     </View>
   );
 }
 
 export default function SandboxScreen() {
   const state = useStore(ruleSandboxStore, (store) => store);
-  const { draft, playDraft, lastResult, history } = state;
+  const { draft, playDraft, fieldDraft, lastResult, history } = state;
   const activePlayer = draft.players.find((player) => player.playerId === draft.activePlayerId);
 
-  const [fieldDraftCards, setFieldDraftCards] = useState<NumberCard[]>([]);
-  const [fieldDraftLastPlayer, setFieldDraftLastPlayer] = useState('P1');
-  const fieldDraftValid = isValidFieldCards(fieldDraftCards);
+  const [addTargetPlayer, setAddTargetPlayer] = useState('P1');
+  const addTarget = draft.players.some((player) => player.playerId === addTargetPlayer)
+    ? addTargetPlayer
+    : draft.activePlayerId;
+  const fieldDraftValid = isValidFieldCards(fieldDraft.cards);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -187,7 +197,7 @@ export default function SandboxScreen() {
                         )
                       }
                     >
-                      <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+                      <CardChip card={cardEntry} />
                     </Pressable>
                   ))}
                 </View>
@@ -262,11 +272,7 @@ export default function SandboxScreen() {
             {draft.activeField ? (
               <>
                 {draft.activeField.combination.cards.map((cardEntry) => (
-                  <CardChip
-                    key={cardEntry.cardId}
-                    rankCode={cardEntry.rankCode}
-                    suitCode={cardEntry.suitCode}
-                  />
+                  <CardChip key={cardEntry.cardId} card={cardEntry} />
                 ))}
                 <Pressable
                   accessibilityRole="button"
@@ -284,26 +290,26 @@ export default function SandboxScreen() {
 
           <View style={styles.row}>
             <Text style={styles.label}>{translate('sandbox.field.edit')}</Text>
-            {fieldDraftCards.map((cardEntry) => (
+            {fieldDraft.cards.map((cardEntry) => (
               <Pressable
                 key={cardEntry.cardId}
                 accessibilityRole="button"
                 accessibilityLabel={`${translate('sandbox.field.edit')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
                 onPress={() =>
-                  setFieldDraftCards((cards) =>
-                    cards.filter((entry) => entry.cardId !== cardEntry.cardId),
+                  state.setFieldDraftCards(
+                    fieldDraft.cards.filter((entry) => entry.cardId !== cardEntry.cardId),
                   )
                 }
               >
-                <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+                <CardChip card={cardEntry} />
               </Pressable>
             ))}
-            {fieldDraftCards.length === 0 ? (
+            {fieldDraft.cards.length === 0 ? (
               <Text style={styles.muted}>{translate('sandbox.field.empty')}</Text>
             ) : null}
           </View>
 
-          {fieldDraftCards.length > 0 && !fieldDraftValid ? (
+          {fieldDraft.cards.length > 0 && !fieldDraftValid ? (
             <Text style={styles.illegal}>{translate('sandbox.field.invalid')}</Text>
           ) : null}
 
@@ -313,11 +319,8 @@ export default function SandboxScreen() {
               <Pressable
                 key={player.playerId}
                 accessibilityRole="button"
-                accessibilityState={{ selected: fieldDraftLastPlayer === player.playerId }}
-                onPress={() => {
-                  setFieldDraftLastPlayer(player.playerId);
-                  state.editRound((round) => setFieldLastPlayer(round, player.playerId));
-                }}
+                accessibilityState={{ selected: fieldDraft.lastPlayerId === player.playerId }}
+                onPress={() => state.setFieldDraftLastPlayer(player.playerId)}
                 style={styles.miniButton}
               >
                 <Text style={styles.miniButtonText}>{player.playerId}</Text>
@@ -326,23 +329,23 @@ export default function SandboxScreen() {
           </View>
 
           <View style={styles.row}>
-            <Text style={styles.label}>{translate('sandbox.field.edit')}</Text>
+            <Text style={styles.label}>{translate('sandbox.field.addCard')}</Text>
             {RANK_CODES.map((rankCode) =>
               SUIT_CODES.map((suitCode) => (
                 <Pressable
                   key={`field_${rankCode}_${suitCode}`}
                   accessibilityRole="button"
-                  accessibilityLabel={`${translate('sandbox.field.edit')} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
-                  onPress={() =>
-                    setFieldDraftCards((cards) => {
-                      const nextCard = makeSandboxCard(rankCode, suitCode);
-                      return cards.some((entry) => entry.cardId === nextCard.cardId)
-                        ? cards
-                        : [...cards, nextCard];
-                    })
-                  }
+                  accessibilityLabel={`${translate('sandbox.field.addCard')} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
+                  onPress={() => {
+                    const nextCard = makeSandboxCard(rankCode, suitCode);
+                    state.setFieldDraftCards(
+                      fieldDraft.cards.some((entry) => entry.cardId === nextCard.cardId)
+                        ? fieldDraft.cards
+                        : [...fieldDraft.cards, nextCard],
+                    );
+                  }}
                 >
-                  <CardChip rankCode={rankCode} suitCode={suitCode} />
+                  <CardChip card={makeSandboxCard(rankCode, suitCode)} />
                 </Pressable>
               )),
             )}
@@ -354,11 +357,7 @@ export default function SandboxScreen() {
               accessibilityLabel={translate('sandbox.field.commit')}
               accessibilityState={{ disabled: !fieldDraftValid }}
               disabled={!fieldDraftValid}
-              onPress={() =>
-                state.editRound((round) =>
-                  setFieldCards(round, fieldDraftCards, fieldDraftLastPlayer),
-                )
-              }
+              onPress={() => state.commitFieldDraft()}
               style={fieldDraftValid ? styles.pill : styles.miniButton}
             >
               <Text style={styles.miniButtonText}>{translate('sandbox.field.commit')}</Text>
@@ -417,19 +416,34 @@ export default function SandboxScreen() {
 
           <View style={styles.row}>
             <Text style={styles.label}>{translate('sandbox.addCard')}</Text>
+            {draft.players.map((player) => (
+              <Pressable
+                key={player.playerId}
+                accessibilityRole="button"
+                accessibilityState={{ selected: addTarget === player.playerId }}
+                onPress={() => setAddTargetPlayer(player.playerId)}
+                style={styles.miniButton}
+              >
+                <Text style={styles.miniButtonText}>{player.playerId}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>
+              {translate('sandbox.addCard')} ({addTarget})
+            </Text>
             {RANK_CODES.map((rankCode) =>
               SUIT_CODES.map((suitCode) => (
                 <Pressable
                   key={`${rankCode}_${suitCode}`}
                   accessibilityRole="button"
-                  accessibilityLabel={`${translate('sandbox.addCard')} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
+                  accessibilityLabel={`${translate('sandbox.addCard')} ${addTarget} ${rankNumber(rankCode)} ${SUIT_LABEL[suitCode]}`}
                   onPress={() =>
-                    state.editRound((round) =>
-                      addCardToHand(round, draft.activePlayerId, rankCode, suitCode),
-                    )
+                    state.editRound((round) => addCardToHand(round, addTarget, rankCode, suitCode))
                   }
                 >
-                  <CardChip rankCode={rankCode} suitCode={suitCode} />
+                  <CardChip card={makeSandboxCard(rankCode, suitCode)} />
                 </Pressable>
               )),
             )}
@@ -444,7 +458,7 @@ export default function SandboxScreen() {
                 accessibilityLabel={`${translate('sandbox.discard')} ${rankNumber(cardEntry.rankCode)} ${SUIT_LABEL[cardEntry.suitCode]}`}
                 onPress={() => state.editRound((round) => removeDiscard(round, cardEntry.cardId))}
               >
-                <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+                <CardChip card={cardEntry} />
               </Pressable>
             ))}
             {draft.discardPile.length === 0 ? (
@@ -468,7 +482,7 @@ export default function SandboxScreen() {
                     )
                   }
                 >
-                  <CardChip rankCode={rankCode} suitCode={suitCode} />
+                  <CardChip card={makeSandboxCard(rankCode, suitCode)} />
                 </Pressable>
               )),
             )}
@@ -518,7 +532,7 @@ export default function SandboxScreen() {
                       }
                       style={selected ? styles.selectedChipWrap : undefined}
                     >
-                      <CardChip rankCode={cardEntry.rankCode} suitCode={cardEntry.suitCode} />
+                      <CardChip card={cardEntry} />
                     </Pressable>
                   );
                 })}
@@ -734,6 +748,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
     backgroundColor: colors.surface.card.face,
+  },
+  chipJoker: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    fontSize: 9,
+    fontWeight: typography.weight.bold,
+    color: colors.ink.inverse,
+    backgroundColor: colors.ink.primary,
+    borderRadius: radius.control,
+    paddingHorizontal: 3,
+    overflow: 'hidden',
   },
   chipRank: {
     fontSize: typography.size.body,

@@ -76,6 +76,7 @@ test('every preset resolves to the outcome encoded in its id', () => {
   const revolutionCard = run('revolution-card');
   assert.equal(revolutionCard.ok, true);
   assert.equal(revolutionCard.ok && revolutionCard.outcome.actionKind, 'REPLACE');
+  assert.equal(revolutionCard.ok && revolutionCard.state.dayNight, 'NIGHT');
 
   const jokerClearWin = run('joker-clear-win');
   assert.equal(jokerClearWin.ok, true);

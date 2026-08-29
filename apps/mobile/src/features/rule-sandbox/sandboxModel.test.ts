@@ -162,6 +162,9 @@ test('setPlayerSkill adds, replaces, and clears a skill card', () => {
   assert.equal(round.players[0].skill?.used, false);
   round = setPlayerSkillUsed(round, 'P1', true);
   assert.equal(round.players[0].skill?.used, true);
+  round = setPlayerSkill(round, 'P1', 'SKILL_JOKER_HERO');
+  assert.equal(round.players[0].skill?.effectCode, 'SKILL_JOKER_HERO');
+  assert.equal(round.players[0].skill?.used, false);
   round = setPlayerSkill(round, 'P1', null);
   assert.equal(round.players[0].skill, null);
 });
@@ -270,6 +273,48 @@ test('describeResolution maps a legal result to an action key and badges', () =>
   assert.equal(view.ok, true);
   assert.equal(view.actionKey, 'sandbox.action.REPLACE');
   assert.doesNotThrow(() => translate(view.actionKey as string));
+});
+
+test('describeResolution surfaces a naturalRevolution badge from a real legal play', () => {
+  let round = createInitialRound();
+  round = setFieldCards(
+    round,
+    [
+      makeSandboxCard('RANK_2', 'SUIT_FIRE'),
+      makeSandboxCard('RANK_3', 'SUIT_WATER'),
+      makeSandboxCard('RANK_4', 'SUIT_WIND'),
+    ],
+    'P2',
+  );
+  round = addCardToHand(round, 'P1', 'RANK_5', 'SUIT_FIRE');
+  round = addCardToHand(round, 'P1', 'RANK_6', 'SUIT_WATER');
+  const view = describeResolution(
+    resolvePlay(round, {
+      kind: 'PLAY',
+      playerId: 'P1',
+      cardIds: ['SBX_RANK_5_SUIT_FIRE', 'SBX_RANK_6_SUIT_WATER'],
+    }),
+  );
+  assert.equal(view.ok, true);
+  assert.ok(view.badges.includes('naturalRevolution'));
+  assert.doesNotThrow(() => translate('sandbox.badge.naturalRevolution'));
+});
+
+test('describeResolution surfaces a fieldCleared badge from a joker-clear play', () => {
+  let round = createInitialRound();
+  round = setPlayerSkill(round, 'P1', 'SKILL_JOKER_SAINT');
+  round = setFieldCards(round, [makeSandboxCard('RANK_9', 'SUIT_EARTH')], 'P2');
+  const view = describeResolution(
+    resolvePlay(round, {
+      kind: 'PLAY',
+      playerId: 'P1',
+      cardIds: ['SBX_RANK_3_SUIT_FIRE'],
+      useSkill: 'JOKER_CLEAR',
+    }),
+  );
+  assert.equal(view.ok, true);
+  assert.ok(view.badges.includes('fieldCleared'));
+  assert.doesNotThrow(() => translate('sandbox.badge.fieldCleared'));
 });
 
 test('describeResolution reports a winner badge and id', () => {

@@ -1,7 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { type PlayRejectionReason } from '@card-game-app/game-core';
+
 import { jaDictionary, translate, type TranslationKey } from './translate';
+
+// Exhaustive map of every game-core rejection reason. `satisfies` makes `tsc`
+// fail here (not at render time inside describeResolution -> translate) if
+// game-core adds or renames a PlayRejectionReason member.
+const REASON_CODES = {
+  INVALID_COMBINATION: true,
+  SHAPE_MISMATCH: true,
+  NOT_STRONGER: true,
+  EXTENSION_SEALED: true,
+  SUIT_LOCKED: true,
+  NATURAL_REVOLUTION_WITH_REVOLUTION_SKILL: true,
+  DUPLICATE_JOKER_DECLARATION: true,
+  JOKER_TRANSFORM_LAST_NUMBER_WIN: true,
+  ROUND_FINISHED: true,
+  NOT_ACTIVE_PLAYER: true,
+  CARD_NOT_IN_HAND: true,
+  SKILL_NOT_AVAILABLE: true,
+  FIELD_EMPTY: true,
+  MUST_LEAD: true,
+  NO_FIELD_TO_CLEAR: true,
+  TRANSFORM_JOKER_GO_OUT: true,
+} satisfies Record<PlayRejectionReason, true>;
 
 test('translate returns Japanese text for an existing key', () => {
   assert.equal(translate('app.title'), '大貧民2000');
@@ -28,24 +52,7 @@ test('jaDictionary includes M0 screen and card catalog keys', () => {
 });
 
 test('jaDictionary includes rule sandbox keys for every reason and action code', () => {
-  const reasonCodes = [
-    'INVALID_COMBINATION',
-    'SHAPE_MISMATCH',
-    'NOT_STRONGER',
-    'EXTENSION_SEALED',
-    'SUIT_LOCKED',
-    'NATURAL_REVOLUTION_WITH_REVOLUTION_SKILL',
-    'DUPLICATE_JOKER_DECLARATION',
-    'JOKER_TRANSFORM_LAST_NUMBER_WIN',
-    'ROUND_FINISHED',
-    'NOT_ACTIVE_PLAYER',
-    'CARD_NOT_IN_HAND',
-    'SKILL_NOT_AVAILABLE',
-    'FIELD_EMPTY',
-    'MUST_LEAD',
-    'NO_FIELD_TO_CLEAR',
-    'TRANSFORM_JOKER_GO_OUT',
-  ];
+  const reasonCodes = Object.keys(REASON_CODES);
   const actionCodes = ['LEAD', 'EXTEND', 'REPLACE', 'PASS'];
 
   for (const code of reasonCodes) {

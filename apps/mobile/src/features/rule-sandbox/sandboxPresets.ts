@@ -5,8 +5,10 @@ import {
   parseNumberCombination,
   type ActiveField,
   type NumberCard,
+  type RankCode,
   type RoundState,
   type SkillEffectCode,
+  type SuitCode,
 } from '@card-game-app/game-core';
 
 import { makeSandboxCard, type PlayDraft } from './sandboxModel';
@@ -20,8 +22,8 @@ export type SandboxPreset = {
 
 type Suit = 'FIRE' | 'WATER' | 'WIND' | 'EARTH';
 
-const card = (rank: number, suit: Suit): NumberCard =>
-  makeSandboxCard(`RANK_${rank}` as never, `SUIT_${suit}` as never);
+const card = (rank: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, suit: Suit): NumberCard =>
+  makeSandboxCard(`RANK_${rank}` as RankCode, `SUIT_${suit}` as SuitCode);
 
 const field = (cards: NumberCard[], lastPlayerId: string): ActiveField => {
   const combination = parseNumberCombination(cards);
