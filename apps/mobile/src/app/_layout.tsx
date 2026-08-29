@@ -13,6 +13,7 @@ export default function RootLayout() {
     >
       <Stack.Screen name="index" options={{ title: translate('app.title') }} />
       <Stack.Screen name="catalog/index" options={{ title: translate('catalog.title') }} />
+      <Stack.Screen name="sandbox/index" options={{ title: translate('sandbox.title') }} />
     </Stack>
   );
 }

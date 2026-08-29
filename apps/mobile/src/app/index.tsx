@@ -13,6 +13,13 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
         </Pressable>
       </Link>
+      <Link href="/sandbox" asChild>
+        <Pressable accessibilityRole="button" style={styles.button}>
+          <Text style={styles.buttonText}>
+            {translate('sandbox.title')} ({translate('sandbox.devLabel')})
+          </Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
