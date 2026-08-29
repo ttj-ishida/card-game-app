@@ -69,6 +69,9 @@ test('jaDictionary includes rule sandbox keys for every reason and action code',
     'sandbox.field.empty',
     'sandbox.field.invalid',
     'sandbox.history.empty',
+    'sandbox.preset.replace-stronger',
+    'sandbox.preset.forbidden-joker-go-out',
+    'sandbox.preset.pass-clears-field',
   ] as TranslationKey[]) {
     assert.notEqual(jaDictionary[key].length, 0);
   }

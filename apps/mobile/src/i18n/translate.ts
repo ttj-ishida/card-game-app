@@ -90,6 +90,16 @@ export const jaDictionary = {
   'sandbox.button.undo': '1手戻す',
   'sandbox.button.reset': '初期化',
   'sandbox.preset.label': 'プリセット',
+  'sandbox.preset.replace-stronger': '昼 66→77 更新',
+  'sandbox.preset.night-weaker-wins': '夜 66→55 更新',
+  'sandbox.preset.extend-to-666': '昼 単体6→66 追加',
+  'sandbox.preset.sequence-natural-revolution': '昼 234+56 で自然革命',
+  'sandbox.preset.suit-lock': '同属性34+Joker5 で属性ロック',
+  'sandbox.preset.extension-sealed': '追加封印中の同数字追加は不正',
+  'sandbox.preset.revolution-card': '昼77+革命+66 反転後合法',
+  'sandbox.preset.joker-clear-win': '場流しJoker→最後の数字で上がり',
+  'sandbox.preset.forbidden-joker-go-out': '最後の数字+変化Joker は上がり禁止',
+  'sandbox.preset.pass-clears-field': '全員パスで場流し',
 } as const satisfies Record<string, string>;
 
 export function translate(key: string): string {
