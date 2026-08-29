@@ -533,6 +533,79 @@ export function detectNaturalRevolution(
   return actionKind === "EXTEND" && (current?.cards.length ?? 0) < 4;
 }
 
+export type PassEvaluation =
+  | { legal: true; consecutivePasses: number; clearsField: boolean }
+  | { legal: false; reason: "FIELD_EMPTY" | "MUST_LEAD" };
+
+export function evaluatePass(input: {
+  activeField: ActiveField | null;
+  consecutivePassesBefore: number;
+  activePlayerCount: number;
+  lastPlayerActive: boolean;
+  mustLead?: boolean;
+}): PassEvaluation {
+  if (input.mustLead) return { legal: false, reason: "MUST_LEAD" };
+  if (!input.activeField) return { legal: false, reason: "FIELD_EMPTY" };
+
+  const consecutivePasses = input.consecutivePassesBefore + 1;
+  const responderCount = input.lastPlayerActive
+    ? input.activePlayerCount - 1
+    : input.activePlayerCount;
+
+  return {
+    legal: true,
+    consecutivePasses,
+    clearsField: responderCount > 0 && consecutivePasses >= responderCount,
+  };
+}
+
+export type FieldClearResult = {
+  clearedCards: NumberCard[];
+  lockedSuitCode: null;
+  extensionSealed: false;
+  dayNightAfter: DayNight;
+  nextLeaderId: string;
+};
+
+export function resolveFieldClear(input: {
+  currentField: ActiveField;
+  dayNight: DayNight;
+  lastPlayerActive: boolean;
+  fallbackLeaderId: string;
+}): FieldClearResult {
+  return {
+    clearedCards: [...input.currentField.combination.cards],
+    lockedSuitCode: null,
+    extensionSealed: false,
+    dayNightAfter: input.dayNight,
+    nextLeaderId: input.lastPlayerActive
+      ? input.currentField.lastPlayerId
+      : input.fallbackLeaderId,
+  };
+}
+
+export type GoOutResult =
+  | { goesOut: true }
+  | { goesOut: false }
+  | { goesOut: false; forbidden: true; reason: "TRANSFORM_JOKER_GO_OUT" };
+
+export function evaluateGoOut(input: {
+  numberCardsInHandAfterPlay: number;
+  playIncludesTransformedJoker: boolean;
+}): GoOutResult {
+  if (input.numberCardsInHandAfterPlay > 0) return { goesOut: false };
+  if (input.playIncludesTransformedJoker) {
+    return { goesOut: false, forbidden: true, reason: "TRANSFORM_JOKER_GO_OUT" };
+  }
+  return { goesOut: true };
+}
+
+export function determineRoundWinner(
+  players: { playerId: string; numberCardCount: number }[],
+): string | null {
+  return players.find((player) => player.numberCardCount === 0)?.playerId ?? null;
+}
+
 function completeLegalResult(
   current: NumberCombination | null,
   actionKind: PlayActionKind,
