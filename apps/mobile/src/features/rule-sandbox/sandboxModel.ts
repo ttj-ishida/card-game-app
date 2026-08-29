@@ -6,8 +6,11 @@ import {
   parseNumberCombination,
   type DayNight,
   type NumberCard,
+  type PlayerState,
+  type PlayerStatus,
   type RankCode,
   type RoundState,
+  type SkillEffectCode,
   type SuitCode,
 } from '@card-game-app/game-core';
 
@@ -156,4 +159,93 @@ export function removeDiscard(round: RoundState, cardId: string): RoundState {
   const next = cloneRound(round);
   next.discardPile = next.discardPile.filter((card) => card.cardId !== cardId);
   return next;
+}
+
+export function setPlayerCount(round: RoundState, count: number): RoundState {
+  const target = Math.min(
+    SANDBOX_MAX_PLAYERS,
+    Math.max(SANDBOX_MIN_PLAYERS, Math.floor(Number.isFinite(count) ? count : SANDBOX_MIN_PLAYERS)),
+  );
+  const next = cloneRound(round);
+  const current = next.players;
+  let players: PlayerState[];
+  if (target <= current.length) {
+    players = current.slice(0, target);
+  } else {
+    players = [...current];
+    for (let index = current.length; index < target; index += 1) {
+      players.push(createPlayerState(`P${index + 1}`, []));
+    }
+  }
+  next.players = players;
+  if (!players.some((player) => player.playerId === next.activePlayerId)) {
+    next.activePlayerId = players[0].playerId;
+  }
+  return next;
+}
+
+function mapPlayer(
+  round: RoundState,
+  playerId: string,
+  fn: (player: PlayerState) => PlayerState,
+): RoundState {
+  if (!round.players.some((player) => player.playerId === playerId)) return round;
+  const next = cloneRound(round);
+  next.players = next.players.map((player) =>
+    player.playerId === playerId ? fn({ ...player }) : player,
+  );
+  return next;
+}
+
+export function setPlayerSkill(
+  round: RoundState,
+  playerId: string,
+  effectCode: SkillEffectCode | null,
+): RoundState {
+  return mapPlayer(round, playerId, (player) => ({
+    ...player,
+    skill: effectCode
+      ? { kind: 'SKILL', skillId: `SBX_SKILL_${playerId}`, effectCode, used: false }
+      : null,
+  }));
+}
+
+export function setPlayerSkillUsed(round: RoundState, playerId: string, used: boolean): RoundState {
+  return mapPlayer(round, playerId, (player) =>
+    player.skill ? { ...player, skill: { ...player.skill, used } } : player,
+  );
+}
+
+export function setPlayerStatus(
+  round: RoundState,
+  playerId: string,
+  status: PlayerStatus,
+): RoundState {
+  return mapPlayer(round, playerId, (player) => ({ ...player, status }));
+}
+
+export function addCardToHand(
+  round: RoundState,
+  playerId: string,
+  rankCode: RankCode,
+  suitCode: SuitCode,
+): RoundState {
+  if (!round.players.some((player) => player.playerId === playerId)) return round;
+  const card = makeSandboxCard(rankCode, suitCode);
+  const cleared = cloneRound(withoutCardId(round, card.cardId));
+  cleared.players = cleared.players.map((player) =>
+    player.playerId === playerId ? { ...player, hand: [...player.hand, card] } : player,
+  );
+  return cleared;
+}
+
+export function removeCardFromHand(
+  round: RoundState,
+  playerId: string,
+  cardId: string,
+): RoundState {
+  return mapPlayer(round, playerId, (player) => ({
+    ...player,
+    hand: player.hand.filter((card) => card.cardId !== cardId),
+  }));
 }

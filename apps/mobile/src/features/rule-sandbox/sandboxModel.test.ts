@@ -4,11 +4,13 @@ import test from 'node:test';
 import {
   SANDBOX_MAX_PLAYERS,
   SANDBOX_MIN_PLAYERS,
+  addCardToHand,
   addDiscard,
   clearField,
   createInitialRound,
   isValidFieldCards,
   makeSandboxCard,
+  removeCardFromHand,
   removeDiscard,
   sandboxCardId,
   setActivePlayer,
@@ -18,6 +20,10 @@ import {
   setFieldCards,
   setFieldLastPlayer,
   setLockedSuit,
+  setPlayerCount,
+  setPlayerSkill,
+  setPlayerSkillUsed,
+  setPlayerStatus,
 } from './sandboxModel';
 
 test('sandboxCardId is stable and encodes rank and suit', () => {
@@ -125,4 +131,73 @@ test('addDiscard moves a card into the discard pile and out of every other zone'
       ?.hand.every((c) => c.cardId !== 'SBX_RANK_3_SUIT_FIRE'),
   );
   assert.equal(removeDiscard(round, 'SBX_RANK_3_SUIT_FIRE').discardPile.length, 0);
+});
+
+test('setPlayerCount clamps and keeps the active player valid', () => {
+  const round = setActivePlayer(createInitialRound(), 'P2');
+  const grown = setPlayerCount(round, 4);
+  assert.deepEqual(
+    grown.players.map((p) => p.playerId),
+    ['P1', 'P2', 'P3', 'P4'],
+  );
+  assert.equal(grown.players[2].hand.length, 0);
+
+  const shrunk = setPlayerCount(grown, 1);
+  assert.equal(shrunk.players.length, 2);
+  assert.equal(shrunk.activePlayerId, 'P2');
+
+  const shrunkPastActive = setPlayerCount(setActivePlayer(grown, 'P4'), 2);
+  assert.equal(shrunkPastActive.activePlayerId, 'P1');
+});
+
+test('setPlayerSkill adds, replaces, and clears a skill card', () => {
+  let round = setPlayerSkill(createInitialRound(), 'P1', 'SKILL_REVOLUTION');
+  assert.equal(round.players[0].skill?.effectCode, 'SKILL_REVOLUTION');
+  assert.equal(round.players[0].skill?.used, false);
+  round = setPlayerSkillUsed(round, 'P1', true);
+  assert.equal(round.players[0].skill?.used, true);
+  round = setPlayerSkill(round, 'P1', null);
+  assert.equal(round.players[0].skill, null);
+});
+
+test('setPlayerStatus sets the status enum', () => {
+  const round = setPlayerStatus(createInitialRound(), 'P2', 'PASSED');
+  assert.equal(round.players[1].status, 'PASSED');
+});
+
+test('addCardToHand keeps each card id in exactly one zone', () => {
+  let round = createInitialRound();
+  round = addCardToHand(round, 'P2', 'RANK_3', 'SUIT_FIRE');
+  assert.ok(round.players[1].hand.some((c) => c.cardId === 'SBX_RANK_3_SUIT_FIRE'));
+  assert.ok(round.players[0].hand.every((c) => c.cardId !== 'SBX_RANK_3_SUIT_FIRE'));
+  const ids = round.players.flatMap((p) => p.hand.map((c) => c.cardId));
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test('removeCardFromHand drops the card', () => {
+  const round = removeCardFromHand(createInitialRound(), 'P1', 'SBX_RANK_3_SUIT_FIRE');
+  assert.ok(round.players[0].hand.every((c) => c.cardId !== 'SBX_RANK_3_SUIT_FIRE'));
+});
+
+test('moving a field card into a hand collapses or shrinks the field', () => {
+  let round = createInitialRound();
+  round = setFieldCards(
+    round,
+    [
+      makeSandboxCard('RANK_3', 'SUIT_FIRE'),
+      makeSandboxCard('RANK_4', 'SUIT_WATER'),
+      makeSandboxCard('RANK_5', 'SUIT_WIND'),
+    ],
+    'P2',
+  );
+  assert.equal(round.activeField?.combination.kind, 'SEQUENCE');
+
+  const moved = addCardToHand(round, 'P1', 'RANK_4', 'SUIT_WATER');
+  assert.ok(moved.players[0].hand.some((c) => c.cardId === 'SBX_RANK_4_SUIT_WATER'));
+
+  const fieldIds = moved.activeField?.combination.cards.map((c) => c.cardId) ?? [];
+  assert.ok(!fieldIds.includes('SBX_RANK_4_SUIT_WATER'));
+  // Observed real behavior: removing the middle card of a 3-card sequence leaves
+  // [3-fire, 5-wind], which is not a valid combination, so the field collapses to null.
+  assert.equal(moved.activeField, null);
 });
