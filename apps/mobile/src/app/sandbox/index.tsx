@@ -23,6 +23,9 @@ import {
   setConsecutivePasses,
   setDayNight,
   setExtensionSealed,
+  setFieldCountLocked,
+  setFieldSuitFixed,
+  setFieldSuitUniform,
   setPlayerCount,
   setPlayerSkill,
   setPlayerSkillUsed,
@@ -326,6 +329,71 @@ export default function SandboxScreen() {
               </Pressable>
             ))}
           </View>
+
+          {draft.activeField ? (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.label}>{translate('sandbox.fieldLock.count')}</Text>
+                <Pressable
+                  accessibilityRole="switch"
+                  accessibilityLabel={translate('sandbox.fieldLock.count')}
+                  accessibilityState={{ checked: draft.activeField.lock.countLocked }}
+                  onPress={() =>
+                    state.editRound((r) => setFieldCountLocked(r, !r.activeField!.lock.countLocked))
+                  }
+                  style={draft.activeField.lock.countLocked ? styles.pill : styles.miniButton}
+                >
+                  <Text style={styles.miniButtonText}>
+                    {translate('sandbox.fieldLock.count')}
+                    {draft.activeField.lock.countLocked ? ' ✓' : ''}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.row}>
+                <Text style={styles.label}>{translate('sandbox.fieldLock.suitUniform')}</Text>
+                <Pressable
+                  accessibilityRole="switch"
+                  accessibilityLabel={translate('sandbox.fieldLock.suitUniform')}
+                  accessibilityState={{ checked: draft.activeField.lock.suitUniform }}
+                  onPress={() =>
+                    state.editRound((r) => setFieldSuitUniform(r, !r.activeField!.lock.suitUniform))
+                  }
+                  style={draft.activeField.lock.suitUniform ? styles.pill : styles.miniButton}
+                >
+                  <Text style={styles.miniButtonText}>
+                    {translate('sandbox.fieldLock.suitUniform')}
+                    {draft.activeField.lock.suitUniform ? ' ✓' : ''}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.row}>
+                <Text style={styles.label}>{translate('sandbox.fieldLock.suitFixed')}</Text>
+                {SUIT_CODES.map((suit) => {
+                  const selected = draft.activeField!.lock.suitFixed?.includes(suit) ?? false;
+                  return (
+                    <Pressable
+                      key={suit}
+                      accessibilityRole="button"
+                      accessibilityLabel={translate(`sandbox.suit.${suit}`)}
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        const current = draft.activeField!.lock.suitFixed ?? [];
+                        const next = current.includes(suit)
+                          ? current.filter((entry) => entry !== suit)
+                          : [...current, suit];
+                        state.editRound((r) => setFieldSuitFixed(r, next.length > 0 ? next : null));
+                      }}
+                      style={selected ? styles.pill : styles.miniButton}
+                    >
+                      <Text style={styles.miniButtonText}>{SUIT_LABEL[suit]}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : null}
 
           <View style={styles.row}>
             <Text style={styles.label}>{translate('sandbox.field.addCard')}</Text>
