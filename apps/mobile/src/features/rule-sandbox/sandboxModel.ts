@@ -1,5 +1,6 @@
 import {
   INITIAL_RULESET_VERSION,
+  createActiveField,
   createNumberCard,
   createPlayerState,
   createRoundState,
@@ -56,10 +57,11 @@ function cloneRound(round: RoundState): RoundState {
     players: round.players,
     activePlayerId: round.activePlayerId,
     activeField: round.activeField
-      ? {
-          combination: round.activeField.combination,
-          lastPlayerId: round.activeField.lastPlayerId,
-        }
+      ? createActiveField(
+          round.activeField.combination,
+          round.activeField.lastPlayerId,
+          round.activeField.lock,
+        )
       : null,
     lockedSuitCode: round.lockedSuitCode,
     extensionSealed: round.extensionSealed,
@@ -80,7 +82,7 @@ function withoutCardId(round: RoundState, cardId: string): RoundState {
     const cards = next.activeField.combination.cards.filter((card) => card.cardId !== cardId);
     const combination = parseNumberCombination(cards);
     next.activeField = combination
-      ? { combination, lastPlayerId: next.activeField.lastPlayerId }
+      ? createActiveField(combination, next.activeField.lastPlayerId, next.activeField.lock)
       : null;
   }
   return next;
@@ -137,17 +139,18 @@ export function setFieldCards(
   let next = round;
   for (const card of cards) next = withoutCardId(next, card.cardId);
   next = cloneRound(next);
-  next.activeField = { combination, lastPlayerId };
+  next.activeField = createActiveField(combination, lastPlayerId);
   return next;
 }
 
 export function setFieldLastPlayer(round: RoundState, playerId: string): RoundState {
   if (!round.activeField) return round;
   const next = cloneRound(round);
-  next.activeField = {
-    combination: round.activeField.combination,
-    lastPlayerId: playerId,
-  };
+  next.activeField = createActiveField(
+    round.activeField.combination,
+    playerId,
+    round.activeField.lock,
+  );
   return next;
 }
 

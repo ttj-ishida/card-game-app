@@ -1,5 +1,6 @@
 import {
   INITIAL_RULESET_VERSION,
+  createActiveField,
   createPlayerState,
   createRoundState,
   parseNumberCombination,
@@ -28,7 +29,7 @@ const card = (rank: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, suit: Suit): NumberCard =
 const field = (cards: NumberCard[], lastPlayerId: string): ActiveField => {
   const combination = parseNumberCombination(cards);
   if (!combination) throw new Error('preset field is not a valid combination');
-  return { combination, lastPlayerId };
+  return createActiveField(combination, lastPlayerId);
 };
 
 function round(input: {

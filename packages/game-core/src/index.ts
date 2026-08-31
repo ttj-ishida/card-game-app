@@ -64,9 +64,34 @@ export type NumberCombination = {
   ranks: number[];
 };
 
+export type FieldLock = {
+  countLocked: boolean;
+  suitFixed: SuitCode[] | null;
+  suitUniform: boolean;
+};
+
+export const UNLOCKED_FIELD: FieldLock = {
+  countLocked: false,
+  suitFixed: null,
+  suitUniform: false,
+};
+
+export type RulesetOptions = {
+  countLock: boolean;
+  suitFixedLock: boolean;
+  suitUniformLock: boolean;
+};
+
+export const RULESET_INITIAL: RulesetOptions = {
+  countLock: true,
+  suitFixedLock: true,
+  suitUniformLock: true,
+};
+
 export type ActiveField = {
   combination: NumberCombination;
   lastPlayerId: string;
+  lock: FieldLock;
 };
 
 export type RoundState = {
@@ -167,6 +192,34 @@ export function createRoundState(input: {
     consecutivePasses: input.consecutivePasses ?? 0,
     winnerId: input.winnerId ?? null,
   };
+}
+
+export function createActiveField(
+  combination: NumberCombination,
+  lastPlayerId: string,
+  lock: Partial<FieldLock> = {},
+): ActiveField {
+  return {
+    combination,
+    lastPlayerId,
+    lock: { ...UNLOCKED_FIELD, ...lock },
+  };
+}
+
+export function suitsOf(cards: NumberCard[]): SuitCode[] {
+  return cards.map((card) => card.suitCode).sort();
+}
+
+export function multisetEqual(left: SuitCode[], right: SuitCode[]): boolean {
+  if (left.length !== right.length) return false;
+  const a = [...left].sort();
+  const b = [...right].sort();
+  return a.every((suit, index) => suit === b[index]);
+}
+
+export function allSameSuit(cards: NumberCard[]): boolean {
+  if (cards.length === 0) return true;
+  return cards.every((card) => card.suitCode === cards[0].suitCode);
 }
 
 export function rankNumber(rankCode: RankCode): number {
@@ -942,10 +995,10 @@ function resolveCardPlay(
     activePlayerId: goesOut
       ? player.playerId
       : nextActivePlayerId(players, player.playerId),
-    activeField: {
-      combination: numberResult.resultingCombination,
-      lastPlayerId: player.playerId,
-    },
+    activeField: createActiveField(
+      numberResult.resultingCombination,
+      player.playerId,
+    ),
     lockedSuitCode: numberResult.createsSuitLock
       ? numberResult.lockedSuitCode ?? null
       : lockedSuitCode,

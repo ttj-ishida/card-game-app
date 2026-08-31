@@ -5,6 +5,7 @@ import { test } from "node:test";
 
 import {
   INITIAL_RULESET_VERSION,
+  createActiveField,
   createNumberCard,
   createPlayerState,
   createRoundState,
@@ -31,7 +32,7 @@ const c = (rank: number, suit: Suit = "FIRE"): NumberCard =>
 const fieldOf = (cards: NumberCard[], by: string): ActiveField => {
   const combination = parseNumberCombination(cards);
   assert.ok(combination);
-  return { combination, lastPlayerId: by };
+  return createActiveField(combination, by);
 };
 
 function makeRound(opts: {

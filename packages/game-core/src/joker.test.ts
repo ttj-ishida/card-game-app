@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  createActiveField,
   createNumberCard,
   createTransformedJokerCard,
   evaluateJokerClear,
@@ -132,10 +133,10 @@ test("evaluateJokerClear requires a field and returns continued-play constraints
 
   assert.deepEqual(
     evaluateJokerClear({
-      currentField: {
-        combination: combo([c(6, "FIRE"), c(6, "WATER")]),
-        lastPlayerId: "player-2",
-      },
+      currentField: createActiveField(
+        combo([c(6, "FIRE"), c(6, "WATER")]),
+        "player-2",
+      ),
       dayNight: "NIGHT",
     }),
     {

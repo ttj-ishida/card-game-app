@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  createActiveField,
   createNumberCard,
   determineRoundWinner,
   evaluateGoOut,
@@ -23,10 +24,8 @@ function combo(cards: ReturnType<typeof c>[]) {
   return parsed;
 }
 
-const field = (cards: ReturnType<typeof c>[], lastPlayerId = "player-1") => ({
-  combination: combo(cards),
-  lastPlayerId,
-});
+const field = (cards: ReturnType<typeof c>[], lastPlayerId = "player-1") =>
+  createActiveField(combo(cards), lastPlayerId);
 
 test("evaluatePass rejects a pass while the field is empty", () => {
   assert.deepEqual(

@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   INITIAL_RULESET_VERSION,
+  createActiveField,
   createNumberCard,
   createPlayerState,
   createRoundState,
@@ -28,7 +29,7 @@ const field = (
 ): ActiveField => {
   const combination = parseNumberCombination(cards);
   assert.ok(combination);
-  return { combination, lastPlayerId };
+  return createActiveField(combination, lastPlayerId);
 };
 
 function round(overrides: Partial<Parameters<typeof createRoundState>[0]> = {}) {
