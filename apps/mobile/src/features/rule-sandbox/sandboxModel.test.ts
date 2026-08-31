@@ -24,7 +24,10 @@ import {
   setDayNight,
   setExtensionSealed,
   setFieldCards,
+  setFieldCountLocked,
   setFieldLastPlayer,
+  setFieldSuitFixed,
+  setFieldSuitUniform,
   setPlayerCount,
   setPlayerSkill,
   setPlayerSkillUsed,
@@ -119,6 +122,21 @@ test('clearField and setFieldLastPlayer operate on the field', () => {
   let round = setFieldCards(createInitialRound(), [makeSandboxCard('RANK_6', 'SUIT_FIRE')], 'P2');
   assert.equal(setFieldLastPlayer(round, 'P1').activeField?.lastPlayerId, 'P1');
   assert.equal(clearField(round).activeField, null);
+});
+
+test('field lock editors set the lock on an existing field only', () => {
+  const noField = createInitialRound();
+  assert.equal(setFieldCountLocked(noField, true), noField);
+
+  let round = setFieldCards(createInitialRound(), [makeSandboxCard('RANK_6', 'SUIT_FIRE')], 'P2');
+  round = setFieldCountLocked(round, true);
+  assert.equal(round.activeField?.lock.countLocked, true);
+  round = setFieldSuitUniform(round, true);
+  assert.equal(round.activeField?.lock.suitUniform, true);
+  round = setFieldSuitFixed(round, ['SUIT_WATER', 'SUIT_FIRE']);
+  assert.deepEqual(round.activeField?.lock.suitFixed, ['SUIT_FIRE', 'SUIT_WATER']);
+  round = setFieldSuitFixed(round, []);
+  assert.equal(round.activeField?.lock.suitFixed, null);
 });
 
 test('addDiscard moves a card into the discard pile and out of every other zone', () => {

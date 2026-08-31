@@ -6,6 +6,7 @@ import {
   createRoundState,
   parseNumberCombination,
   type DayNight,
+  type FieldLock,
   type NumberCard,
   type PlayerState,
   type PlayerStatus,
@@ -145,6 +146,30 @@ export function setFieldLastPlayer(round: RoundState, playerId: string): RoundSt
     round.activeField.lock,
   );
   return next;
+}
+
+function mapFieldLock(round: RoundState, fn: (lock: FieldLock) => FieldLock): RoundState {
+  if (!round.activeField) return round;
+  const next = cloneRound(round);
+  next.activeField = {
+    combination: round.activeField.combination,
+    lastPlayerId: round.activeField.lastPlayerId,
+    lock: fn(round.activeField.lock),
+  };
+  return next;
+}
+
+export function setFieldCountLocked(round: RoundState, locked: boolean): RoundState {
+  return mapFieldLock(round, (lock) => ({ ...lock, countLocked: locked }));
+}
+
+export function setFieldSuitUniform(round: RoundState, uniform: boolean): RoundState {
+  return mapFieldLock(round, (lock) => ({ ...lock, suitUniform: uniform }));
+}
+
+export function setFieldSuitFixed(round: RoundState, suits: SuitCode[] | null): RoundState {
+  const normalized = suits && suits.length > 0 ? [...suits].sort() : null;
+  return mapFieldLock(round, (lock) => ({ ...lock, suitFixed: normalized }));
 }
 
 export function addDiscard(round: RoundState, card: NumberCard): RoundState {
