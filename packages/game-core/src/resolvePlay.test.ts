@@ -163,7 +163,7 @@ test("resolvePlay moves the replaced set to the discard pile", () => {
   );
 });
 
-test("resolvePlay locks the count on the first replace and then rejects an add", () => {
+test("resolvePlay locks the count on the first replace", () => {
   const state = round({
     players: [
       createPlayerState("P1", [c(9, "FIRE"), c(9, "WATER")]),

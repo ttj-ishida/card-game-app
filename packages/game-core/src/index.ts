@@ -70,11 +70,11 @@ export type FieldLock = {
   suitUniform: boolean;
 };
 
-export const UNLOCKED_FIELD: FieldLock = {
+export const UNLOCKED_FIELD: FieldLock = Object.freeze({
   countLocked: false,
   suitFixed: null,
   suitUniform: false,
-};
+}) as FieldLock;
 
 export type RulesetOptions = {
   countLock: boolean;
@@ -82,11 +82,11 @@ export type RulesetOptions = {
   suitUniformLock: boolean;
 };
 
-export const RULESET_INITIAL: RulesetOptions = {
+export const RULESET_INITIAL: RulesetOptions = Object.freeze({
   countLock: true,
   suitFixedLock: true,
   suitUniformLock: true,
-};
+}) as RulesetOptions;
 
 export type ActiveField = {
   combination: NumberCombination;
@@ -196,10 +196,14 @@ export function createActiveField(
   lastPlayerId: string,
   lock: Partial<FieldLock> = {},
 ): ActiveField {
+  const merged = { ...UNLOCKED_FIELD, ...lock };
   return {
     combination,
     lastPlayerId,
-    lock: { ...UNLOCKED_FIELD, ...lock },
+    lock: {
+      ...merged,
+      suitFixed: merged.suitFixed ? [...merged.suitFixed] : null,
+    },
   };
 }
 
@@ -436,40 +440,52 @@ export function evaluateNumberPlay(input: {
     input.candidateCards,
     effectiveDayNight,
   );
+  // When the candidate parses as a valid extension but a lock blocks it, the
+  // same cards may still form a legal same-kind/same-count stronger REPLACE
+  // (spec SEAL-005 / §2.1 / §2.3). Remember the block reason and fall through
+  // to the REPLACE evaluation instead of returning immediately.
+  let extensionBlockReason: IllegalPlayReason | null = null;
   if (extension) {
-    if (input.extensionSealed)
-      return { legal: false, reason: "EXTENSION_SEALED" };
-    if (ruleset.countLock && fieldLock.countLocked)
-      return { legal: false, reason: "COUNT_LOCKED" };
-    if (
+    if (input.extensionSealed) {
+      extensionBlockReason = "EXTENSION_SEALED";
+    } else if (ruleset.countLock && fieldLock.countLocked) {
+      extensionBlockReason = "COUNT_LOCKED";
+    } else if (
       ruleset.suitUniformLock &&
       fieldLock.suitUniform &&
       input.candidateCards.some(
         (card) => card.suitCode !== input.current!.cards[0].suitCode,
       )
-    )
-      return { legal: false, reason: "SUIT_UNIFORM_REQUIRED" };
-    return completeLegalResult(
-      input.current,
-      "EXTEND",
-      extension.playedCombination,
-      extension.resultingCombination,
-      input.dayNight,
-      effectiveDayNight,
-      input.usesRevolutionSkill ?? false,
-    );
+    ) {
+      extensionBlockReason = "SUIT_UNIFORM_REQUIRED";
+    }
+    if (!extensionBlockReason) {
+      return completeLegalResult(
+        input.current,
+        "EXTEND",
+        extension.playedCombination,
+        extension.resultingCombination,
+        input.dayNight,
+        effectiveDayNight,
+        input.usesRevolutionSkill ?? false,
+      );
+    }
   }
 
   const candidate = parseNumberCombination(input.candidateCards);
-  if (!candidate) return { legal: false, reason: "INVALID_COMBINATION" };
+  if (!candidate)
+    return {
+      legal: false,
+      reason: extensionBlockReason ?? "INVALID_COMBINATION",
+    };
   if (
     candidate.kind !== input.current.kind ||
     candidate.cards.length !== input.current.cards.length
   ) {
-    return { legal: false, reason: "SHAPE_MISMATCH" };
+    return { legal: false, reason: extensionBlockReason ?? "SHAPE_MISMATCH" };
   }
   if (compareCombinations(candidate, input.current, effectiveDayNight) !== 1) {
-    return { legal: false, reason: "NOT_STRONGER" };
+    return { legal: false, reason: extensionBlockReason ?? "NOT_STRONGER" };
   }
 
   if (
@@ -616,9 +632,11 @@ export function deriveFieldLock(input: {
   }
 
   if (input.actionKind === "EXTEND") {
+    // In M1 a locked field cannot be extended, so these are always false/null
+    // here; carrying them keeps the ruleset toggle seam consistent.
     return {
-      countLocked: false,
-      suitFixed: null,
+      countLocked: previous.lock.countLocked,
+      suitFixed: previous.lock.suitFixed,
       suitUniform: previous.lock.suitUniform,
     };
   }

@@ -36,7 +36,7 @@ test("createTransformedJokerCard exposes the declared rank and suit as a number 
   );
 });
 
-test("evaluateJokerTransformPlay lets two distinct Jokers complete a sequence and trigger lock plus natural revolution", () => {
+test("evaluateJokerTransformPlay lets two distinct Jokers complete a sequence and trigger natural revolution", () => {
   const result = evaluateJokerTransformPlay({
     current: null,
     realNumberCards: [c(3), c(4)],

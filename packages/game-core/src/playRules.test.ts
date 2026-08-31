@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  RULESET_INITIAL,
   createNumberCard,
   evaluateNumberPlay,
   parseNumberCombination,
@@ -183,4 +184,110 @@ test("evaluateNumberPlay enforces suit-uniform on both extension and replace", (
     }),
     { legal: false, reason: "SUIT_UNIFORM_REQUIRED" },
   );
+});
+
+test("a count-locked sequence still accepts the same-count stronger replace that abuts the growth edge", () => {
+  const result = evaluateNumberPlay({
+    current: combo([c(4, "WATER"), c(5, "WATER"), c(6, "WATER")]),
+    candidateCards: [c(7, "WATER"), c(8, "WATER"), c(9, "WATER")],
+    dayNight: "DAY",
+    fieldLock: { countLocked: true, suitFixed: null, suitUniform: false },
+  });
+  assert.equal(result.legal, true);
+  assert.equal(result.legal && result.actionKind, "REPLACE");
+});
+
+test("a suit-uniform sequence accepts a suit-changing replace even when the cards abut the growth edge", () => {
+  const result = evaluateNumberPlay({
+    current: combo([c(3), c(4), c(5)]),
+    candidateCards: [c(6, "WATER"), c(7, "WATER"), c(8, "WATER")],
+    dayNight: "DAY",
+    fieldLock: { countLocked: false, suitFixed: null, suitUniform: true },
+  });
+  assert.equal(result.legal, true);
+  assert.equal(result.legal && result.actionKind, "REPLACE");
+});
+
+test("an edge-abutting replace under a count+uniform lock still fails the replace's own uniform check", () => {
+  assert.deepEqual(
+    evaluateNumberPlay({
+      current: combo([c(3), c(4), c(5)]),
+      candidateCards: [c(6, "WATER"), c(7, "WIND"), c(8, "EARTH")],
+      dayNight: "DAY",
+      fieldLock: { countLocked: true, suitFixed: null, suitUniform: true },
+    }),
+    { legal: false, reason: "SUIT_UNIFORM_REQUIRED" },
+  );
+});
+
+test("SEAL-005 regression: a sealed sequence still accepts a same-shape stronger replace at the edge", () => {
+  const result = evaluateNumberPlay({
+    current: combo([c(3), c(4), c(5)]),
+    candidateCards: [c(6), c(7), c(8)],
+    dayNight: "DAY",
+    extensionSealed: true,
+  });
+  assert.equal(result.legal, true);
+  assert.equal(result.legal && result.actionKind, "REPLACE");
+});
+
+test("a blocked extension with no legal replace still reports the extension block reason", () => {
+  assert.deepEqual(
+    evaluateNumberPlay({
+      current: combo([c(3), c(4), c(5)]),
+      candidateCards: [c(6)],
+      dayNight: "DAY",
+      fieldLock: { countLocked: true, suitFixed: null, suitUniform: false },
+    }),
+    { legal: false, reason: "COUNT_LOCKED" },
+  );
+});
+
+test("the unlocked sequence extension and its natural revolution are unaffected", () => {
+  const extend = evaluateNumberPlay({
+    current: combo([c(2), c(3), c(4)]),
+    candidateCards: [c(5), c(6)],
+    dayNight: "DAY",
+  });
+  assert.equal(extend.legal && extend.actionKind, "EXTEND");
+  assert.equal(extend.legal && extend.naturalRevolution, true);
+});
+
+test("enforcement-side ruleset toggles suppress each lock check independently", () => {
+  // suitUniformLock OFF: a mixed-suit extension of a uniform field is allowed
+  const uniformOff = evaluateNumberPlay({
+    current: combo([c(3), c(4), c(5)]),
+    candidateCards: [c(6, "WATER")],
+    dayNight: "DAY",
+    fieldLock: { countLocked: false, suitFixed: null, suitUniform: true },
+    ruleset: { countLock: true, suitFixedLock: true, suitUniformLock: false },
+  });
+  assert.equal(uniformOff.legal, true);
+  assert.equal(uniformOff.legal && uniformOff.actionKind, "EXTEND");
+
+  // countLock OFF: a count-locked field can still be extended
+  const countOff = evaluateNumberPlay({
+    current: combo([c(6), c(6, "WATER")]),
+    candidateCards: [c(6, "WIND")],
+    dayNight: "DAY",
+    fieldLock: { countLocked: true, suitFixed: null, suitUniform: false },
+    ruleset: { ...RULESET_INITIAL, countLock: false },
+  });
+  assert.equal(countOff.legal, true);
+  assert.equal(countOff.legal && countOff.actionKind, "EXTEND");
+
+  // suitFixedLock OFF: a mismatched suit multiset replace is allowed
+  const fixedOff = evaluateNumberPlay({
+    current: combo([c(6), c(6, "WATER")]),
+    candidateCards: [c(7), c(7, "WIND")],
+    dayNight: "DAY",
+    fieldLock: {
+      countLocked: true,
+      suitFixed: ["SUIT_FIRE", "SUIT_WATER"],
+      suitUniform: false,
+    },
+    ruleset: { ...RULESET_INITIAL, suitFixedLock: false },
+  });
+  assert.equal(fixedOff.legal, true);
+  assert.equal(fixedOff.legal && fixedOff.actionKind, "REPLACE");
 });

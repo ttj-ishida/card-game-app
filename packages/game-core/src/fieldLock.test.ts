@@ -63,7 +63,6 @@ test("EXTEND preserves suitUniform and never locks count or suitFixed", () => {
   const previous = createActiveField(combo([c(3), c(4), c(5)]), "P1", {
     suitUniform: true,
   });
-  const added = combo([c(6), c(7), c(8)]);
   const resulting = combo([c(3), c(4), c(5), c(6)]);
   assert.deepEqual(
     deriveFieldLock({
@@ -74,7 +73,23 @@ test("EXTEND preserves suitUniform and never locks count or suitFixed", () => {
     }),
     { countLocked: false, suitFixed: null, suitUniform: true },
   );
-  void added;
+});
+
+test("EXTEND carries forward whatever locks the previous field held (toggle seam)", () => {
+  const previous = createActiveField(combo([c(3), c(4), c(5)]), "P1", {
+    countLocked: true,
+    suitFixed: ["SUIT_FIRE"],
+    suitUniform: true,
+  });
+  assert.deepEqual(
+    deriveFieldLock({
+      previous,
+      actionKind: "EXTEND",
+      playedCombination: combo([c(6)]),
+      resultingCombination: combo([c(3), c(4), c(5), c(6)]),
+    }),
+    { countLocked: true, suitFixed: ["SUIT_FIRE"], suitUniform: true },
+  );
 });
 
 test("first REPLACE always locks count; locks suitFixed only when suits match", () => {
@@ -111,6 +126,23 @@ test("a later REPLACE keeps the suitFixed established by the first REPLACE", () 
     resultingCombination: combo([c(9), c(9, "WATER")]),
   });
   assert.deepEqual(next.suitFixed, ["SUIT_FIRE", "SUIT_WATER"]);
+});
+
+test("a later REPLACE never re-evaluates suitFixed even when the played suits now match (§2.2)", () => {
+  // The first replace already mismatched: countLocked is set, suitFixed stayed null.
+  const previous = createActiveField(combo([c(8), c(8, "WATER")]), "P2", {
+    countLocked: true,
+    suitFixed: null,
+    suitUniform: false,
+  });
+  const next = deriveFieldLock({
+    previous,
+    actionKind: "REPLACE",
+    // suits now match previous.combination's {FIRE, WATER} multiset
+    playedCombination: combo([c(9), c(9, "WATER")]),
+    resultingCombination: combo([c(9), c(9, "WATER")]),
+  });
+  assert.equal(next.suitFixed, null);
 });
 
 test("ruleset toggles gate each lock independently", () => {
