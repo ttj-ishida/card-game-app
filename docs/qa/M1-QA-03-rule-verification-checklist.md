@@ -46,7 +46,7 @@
 | D-2 | 混色連番・同数セットのリードは統一ロックなし | LOCK-001 | `炎3水4風5` / `炎6水6` をリード | `lock.suitUniform = false` | `LEAD of a mixed sequence or a rank set does not set suitUniform` |
 | D-3 | 統一ロック中の異属性追加を拒否 | LOCK-003 | 場 `炎3炎4炎5`（統一）に `水6` を追加 | `SUIT_UNIFORM_REQUIRED` | `evaluateNumberPlay enforces suit-uniform on both extension and replace` |
 | D-4 | 統一ロック中の更新は別属性の統一連番なら可 | LOCK-001/004 | 場 `炎3炎4炎5`（統一）に `水4水5水6` で更新 | REPLACE で合法（属性変更可） | `T-RULE-025` |
-| D-5 | 初回更新で枚数ロック発生 | FIELD-006 | 場 `炎7水7` を `炎8水8` で更新 | `lock.countLocked = true` | `resolvePlay locks the count on the first replace and then rejects an add` / `first REPLACE always locks count; locks suitFixed only when suits match` |
+| D-5 | 初回更新で枚数ロック発生 | FIELD-006 | 場 `炎7水7` を `炎8水8` で更新 | `lock.countLocked = true` | `resolvePlay locks the count on the first replace` / `first REPLACE always locks count; locks suitFixed only when suits match` |
 | D-6 | 枚数ロック中は追加/拡張を拒否 | FIELD-006 / RANKSET-007 / SEQ-009 | `77`→`88` 更新後に `8` を追加 | `COUNT_LOCKED` | `T-RULE-023` / `evaluateNumberPlay rejects an extension while the field's count is locked` |
 | D-7 | 初回更新の属性一致で属性固定ロック | RANKSET-008 / SEQ-010 | 場 `炎7水7` を `炎8水8` で更新 | `lock.suitFixed = {炎,水}` | `first REPLACE always locks count; locks suitFixed only when suits match` |
 | D-8 | 属性固定ロックと不一致な更新を拒否 | RANKSET-008 / LOCK-006 | `{炎}` 固定の場 `炎8` を `水9` で更新 | `SUIT_FIXED_MISMATCH` | `T-RULE-024` / `evaluateNumberPlay rejects a replace whose suit multiset misses the fixed lock` |
@@ -54,7 +54,7 @@
 | D-10 | 属性固定ロックは初回更新でのみ判定 | LOCK-006 | 2回目以降の更新 | 初回の `suitFixed` を保持し再判定しない | `a later REPLACE keeps the suitFixed established by the first REPLACE` |
 | D-11 | EXTEND は属性統一ロックのみ継承し枚数・属性固定は増やさない | LOCK-004 | 統一連番へ同属性追加 | `countLocked=false` / `suitFixed=null` / `suitUniform=true` を維持 | `EXTEND preserves suitUniform and never locks count or suitFixed` |
 | D-12 | 場流しで3ロックすべて解除 | LOCK-005 | 全員パスで場流し | `activeField = null`（ロック消滅） | `T-RULE-020` / `resolvePlay clears the field once every responder passed and hands the lead to the last player` |
-| D-13 | ルールセットトグルで各ロックを個別に無効化 | spec §4.2 | `RULESET_INITIAL` の各フラグを false | 対応するロックが導出・判定されない | `ruleset toggles gate each lock independently` |
+| D-13 | ルールセットトグルで各ロックを個別に無効化（導出・判定の両面） | spec §4.2 | `RULESET_INITIAL` の各フラグを false | 対応するロックが導出も判定もされない | `ruleset toggles gate each lock independently` / `enforcement-side ruleset toggles suppress each lock check independently` |
 
 ## E. 追加封印（§10.2、SEAL-001〜008）
 
@@ -81,8 +81,8 @@
 
 | # | 確認項目 | 要件ID | 代表ケース | 期待結果 | 自動テスト |
 |---|---|---|---|---|---|
-| G-1 | 変化Jokerを組み合わせに含める | JTR-002/005 | `🔥3・🔥4`＋Joker `🔥5`宣言 | `🔥345` として成立 | `T-RULE-017` / `evaluateJokerTransformPlay lets two distinct Jokers complete a sequence and trigger lock plus natural revolution` |
-| G-2 | 2枚Jokerは別宣言なら合法 | JTR-007/008 | Joker `🔥5` ＋ Joker `🔥6` | 連番成立 | `T-RULE-017` / `evaluateJokerTransformPlay lets two distinct Jokers ...` |
+| G-1 | 変化Jokerを組み合わせに含める | JTR-002/005 | `🔥3・🔥4`＋Joker `🔥5`宣言 | `🔥345` として成立 | `T-RULE-017` / `evaluateJokerTransformPlay lets two distinct Jokers complete a sequence and trigger natural revolution` |
+| G-2 | 2枚Jokerは別宣言なら合法 | JTR-007/008 | Joker `🔥5` ＋ Joker `🔥6` | 連番成立 | `T-RULE-017` / `evaluateJokerTransformPlay lets two distinct Jokers complete a sequence and trigger natural revolution` |
 | G-3 | 実カード／別Jokerとの完全重複を拒否 | JTR-006 / DUP-002/003 | 実 `🔥5` ＋ Joker `🔥5`宣言 | `DUPLICATE_JOKER_DECLARATION` | `T-RULE-018` / `evaluateJokerTransformPlay rejects duplicate declared identity ...` |
 | G-4 | 場流しJokerは場がある時だけ | JCLR-001/002 | 場空で場流しJoker | `NO_FIELD_TO_CLEAR` | `resolvePlay rejects a Joker clear when there is no field` |
 | G-5 | 場流し後は同一手番でリード、パス不可 | JCLR-006/007 | Joker場流し→続けてリード | 1プレイで場流し＋新しい場、`fieldCleared = true` | `resolvePlay clears the field with a Joker then leads in the same play` |
@@ -122,7 +122,7 @@
 
 | コマンド | 結果 |
 |---|---|
-| `npm run game-core:test` | PASS（105件） |
+| `npm run game-core:test` | PASS（114件） |
 | `npm run game-core:typecheck` | PASS |
 
 ## 不具合・回帰登録
