@@ -25,7 +25,6 @@ import {
   setExtensionSealed,
   setFieldCards,
   setFieldLastPlayer,
-  setLockedSuit,
   setPlayerCount,
   setPlayerSkill,
   setPlayerSkillUsed,
@@ -78,10 +77,8 @@ test('setConsecutivePasses clamps to a non-negative integer', () => {
   assert.equal(setConsecutivePasses(round, 2.9).consecutivePasses, 2);
 });
 
-test('setLockedSuit and setExtensionSealed set the field effects', () => {
+test('setExtensionSealed sets the field effect', () => {
   const round = createInitialRound();
-  assert.equal(setLockedSuit(round, 'SUIT_WATER').lockedSuitCode, 'SUIT_WATER');
-  assert.equal(setLockedSuit(round, null).lockedSuitCode, null);
   assert.equal(setExtensionSealed(round, true).extensionSealed, true);
 });
 

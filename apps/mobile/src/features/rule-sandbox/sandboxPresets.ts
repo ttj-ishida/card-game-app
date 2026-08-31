@@ -38,7 +38,6 @@ function round(input: {
   skills?: (SkillEffectCode | null)[];
   activePlayerId?: string;
   activeField?: ActiveField | null;
-  lockedSuitCode?: 'SUIT_FIRE' | 'SUIT_WATER' | 'SUIT_WIND' | 'SUIT_EARTH' | null;
   extensionSealed?: boolean;
   consecutivePasses?: number;
 }): RoundState {
@@ -57,7 +56,6 @@ function round(input: {
     players,
     activePlayerId: input.activePlayerId ?? 'P1',
     activeField: input.activeField ?? null,
-    lockedSuitCode: input.lockedSuitCode ?? null,
     extensionSealed: input.extensionSealed ?? false,
     consecutivePasses: input.consecutivePasses ?? 0,
   });

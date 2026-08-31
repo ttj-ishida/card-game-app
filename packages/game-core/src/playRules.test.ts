@@ -114,23 +114,73 @@ test("evaluateNumberPlay rejects wrong shape, weak replacement, and sealed exten
   );
 });
 
-test("evaluateNumberPlay enforces suit lock and detects new lock after reflection", () => {
+test("evaluateNumberPlay rejects an extension while the field's count is locked", () => {
   assert.deepEqual(
     evaluateNumberPlay({
-      current: combo([c(6)]),
-      candidateCards: [c(7, "WATER")],
+      current: combo([c(6), c(6, "WATER")]),
+      candidateCards: [c(6, "WIND")],
       dayNight: "DAY",
-      lockedSuitCode: "SUIT_FIRE",
+      fieldLock: { countLocked: true, suitFixed: null, suitUniform: false },
     }),
-    { legal: false, reason: "SUIT_LOCKED" },
+    { legal: false, reason: "COUNT_LOCKED" },
   );
+});
 
-  const result = evaluateNumberPlay({
-    current: combo([c(6)]),
-    candidateCards: [c(6, "FIRE"), c(6, "FIRE")],
-    dayNight: "DAY",
-  });
-  assert.equal(result.legal, true);
-  assert.equal(result.createsSuitLock, true);
-  assert.equal(result.lockedSuitCode, "SUIT_FIRE");
+test("evaluateNumberPlay rejects a replace whose suit multiset misses the fixed lock", () => {
+  assert.deepEqual(
+    evaluateNumberPlay({
+      current: combo([c(6), c(6, "WATER")]),
+      candidateCards: [c(7), c(7, "WIND")],
+      dayNight: "DAY",
+      fieldLock: {
+        countLocked: true,
+        suitFixed: ["SUIT_FIRE", "SUIT_WATER"],
+        suitUniform: false,
+      },
+    }),
+    { legal: false, reason: "SUIT_FIXED_MISMATCH" },
+  );
+  assert.equal(
+    evaluateNumberPlay({
+      current: combo([c(6), c(6, "WATER")]),
+      candidateCards: [c(7), c(7, "WATER")],
+      dayNight: "DAY",
+      fieldLock: {
+        countLocked: true,
+        suitFixed: ["SUIT_FIRE", "SUIT_WATER"],
+        suitUniform: false,
+      },
+    }).legal,
+    true,
+  );
+});
+
+test("evaluateNumberPlay enforces suit-uniform on both extension and replace", () => {
+  assert.equal(
+    evaluateNumberPlay({
+      current: combo([c(3), c(4), c(5)]),
+      candidateCards: [c(6, "WATER")],
+      dayNight: "DAY",
+      fieldLock: { countLocked: false, suitFixed: null, suitUniform: true },
+    }).legal === false,
+    true,
+  );
+  assert.equal(
+    evaluateNumberPlay({
+      current: combo([c(3), c(4), c(5)]),
+      candidateCards: [c(4, "WATER"), c(5, "WATER"), c(6, "WATER")],
+      dayNight: "DAY",
+      fieldLock: { countLocked: true, suitFixed: null, suitUniform: true },
+    }).legal,
+    true,
+  );
+  assert.deepEqual(
+    evaluateNumberPlay({
+      current: combo([c(3), c(4), c(5)]),
+      candidateCards: [c(4, "WATER"), c(5, "WIND"), c(6, "EARTH")],
+      dayNight: "DAY",
+      fieldLock: { countLocked: true, suitFixed: null, suitUniform: true },
+    }),
+    { legal: false, reason: "SUIT_UNIFORM_REQUIRED" },
+  );
 });

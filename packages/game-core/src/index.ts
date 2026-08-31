@@ -101,7 +101,6 @@ export type RoundState = {
   players: PlayerState[];
   activePlayerId: string;
   activeField: ActiveField | null;
-  lockedSuitCode: SuitCode | null;
   extensionSealed: boolean;
   discardPile: NumberCard[];
   consecutivePasses: number;
@@ -169,7 +168,6 @@ export function createRoundState(input: {
   players: PlayerState[];
   activePlayerId: string;
   activeField?: ActiveField | null;
-  lockedSuitCode?: SuitCode | null;
   extensionSealed?: boolean;
   discardPile?: NumberCard[];
   consecutivePasses?: number;
@@ -186,7 +184,6 @@ export function createRoundState(input: {
     })),
     activePlayerId: input.activePlayerId,
     activeField: input.activeField ?? null,
-    lockedSuitCode: input.lockedSuitCode ?? null,
     extensionSealed: input.extensionSealed ?? false,
     discardPile: [...(input.discardPile ?? [])],
     consecutivePasses: input.consecutivePasses ?? 0,
@@ -295,7 +292,9 @@ export type IllegalPlayReason =
   | "SHAPE_MISMATCH"
   | "NOT_STRONGER"
   | "EXTENSION_SEALED"
-  | "SUIT_LOCKED"
+  | "COUNT_LOCKED"
+  | "SUIT_FIXED_MISMATCH"
+  | "SUIT_UNIFORM_REQUIRED"
   | "NATURAL_REVOLUTION_WITH_REVOLUTION_SKILL"
   | "DUPLICATE_JOKER_DECLARATION"
   | "JOKER_TRANSFORM_LAST_NUMBER_WIN";
@@ -305,8 +304,6 @@ export type LegalNumberPlayResult = {
   actionKind: PlayActionKind;
   combination: NumberCombination;
   resultingCombination: NumberCombination;
-  createsSuitLock?: boolean;
-  lockedSuitCode?: SuitCode;
   naturalRevolution?: boolean;
   dayNightAfter?: DayNight;
 };
@@ -329,7 +326,8 @@ export function evaluateJokerTransformPlay(input: {
   realNumberCards: NumberCard[];
   jokerDeclarations: JokerDeclaration[];
   dayNight: DayNight;
-  lockedSuitCode?: SuitCode | null;
+  fieldLock?: FieldLock;
+  ruleset?: RulesetOptions;
   extensionSealed?: boolean;
   usesRevolutionSkill?: boolean;
   remainingNumberCardCount?: number;
@@ -359,7 +357,8 @@ export function evaluateJokerTransformPlay(input: {
     current: input.current,
     candidateCards,
     dayNight: input.dayNight,
-    lockedSuitCode: input.lockedSuitCode,
+    fieldLock: input.fieldLock,
+    ruleset: input.ruleset,
     extensionSealed: input.extensionSealed,
     usesRevolutionSkill: input.usesRevolutionSkill,
   });
@@ -369,7 +368,6 @@ export type JokerClearResult =
   | {
       legal: true;
       clearedCards: NumberCard[];
-      lockedSuitCode: null;
       extensionSealed: false;
       dayNightAfter: DayNight;
       mustLead: true;
@@ -387,7 +385,6 @@ export function evaluateJokerClear(input: {
   return {
     legal: true,
     clearedCards: [...input.currentField.combination.cards],
-    lockedSuitCode: null,
     extensionSealed: false,
     dayNightAfter: input.dayNight,
     mustLead: true,
@@ -409,20 +406,16 @@ export function evaluateNumberPlay(input: {
   current: NumberCombination | null;
   candidateCards: NumberCard[];
   dayNight: DayNight;
-  lockedSuitCode?: SuitCode | null;
+  fieldLock?: FieldLock;
+  ruleset?: RulesetOptions;
   extensionSealed?: boolean;
   usesRevolutionSkill?: boolean;
 }): NumberPlayResult {
+  const fieldLock = input.fieldLock ?? UNLOCKED_FIELD;
+  const ruleset = input.ruleset ?? RULESET_INITIAL;
   const effectiveDayNight = input.usesRevolutionSkill
     ? nextDayNight(input.dayNight)
     : input.dayNight;
-
-  if (
-    input.lockedSuitCode &&
-    input.candidateCards.some((card) => card.suitCode !== input.lockedSuitCode)
-  ) {
-    return { legal: false, reason: "SUIT_LOCKED" };
-  }
 
   if (!input.current) {
     const candidate = parseNumberCombination(input.candidateCards);
@@ -446,6 +439,16 @@ export function evaluateNumberPlay(input: {
   if (extension) {
     if (input.extensionSealed)
       return { legal: false, reason: "EXTENSION_SEALED" };
+    if (ruleset.countLock && fieldLock.countLocked)
+      return { legal: false, reason: "COUNT_LOCKED" };
+    if (
+      ruleset.suitUniformLock &&
+      fieldLock.suitUniform &&
+      input.candidateCards.some(
+        (card) => card.suitCode !== input.current!.cards[0].suitCode,
+      )
+    )
+      return { legal: false, reason: "SUIT_UNIFORM_REQUIRED" };
     return completeLegalResult(
       input.current,
       "EXTEND",
@@ -469,6 +472,21 @@ export function evaluateNumberPlay(input: {
     return { legal: false, reason: "NOT_STRONGER" };
   }
 
+  if (
+    ruleset.suitFixedLock &&
+    fieldLock.suitFixed &&
+    !multisetEqual(suitsOf(candidate.cards), fieldLock.suitFixed)
+  ) {
+    return { legal: false, reason: "SUIT_FIXED_MISMATCH" };
+  }
+  if (
+    ruleset.suitUniformLock &&
+    fieldLock.suitUniform &&
+    !allSameSuit(candidate.cards)
+  ) {
+    return { legal: false, reason: "SUIT_UNIFORM_REQUIRED" };
+  }
+
   return completeLegalResult(
     input.current,
     "REPLACE",
@@ -488,13 +506,11 @@ function legalResult(
     Pick<LegalNumberPlayResult, "naturalRevolution" | "dayNightAfter">
   > = {},
 ): LegalNumberPlayResult {
-  const lockSuit = detectSuitLock(resultingCombination);
   return {
     legal: true,
     actionKind,
     combination,
     resultingCombination,
-    ...(lockSuit ? { createsSuitLock: true, lockedSuitCode: lockSuit } : {}),
     ...extras,
   };
 }
@@ -568,14 +584,6 @@ function tryBuildExtension(
       ranks: resultingRanks,
     },
   };
-}
-
-function detectSuitLock(combination: NumberCombination): SuitCode | null {
-  if (combination.cards.length < 3) return null;
-  const [firstSuit] = combination.cards.map((card) => card.suitCode);
-  return combination.cards.every((card) => card.suitCode === firstSuit)
-    ? firstSuit
-    : null;
 }
 
 export function nextDayNight(dayNight: DayNight): DayNight {
@@ -676,7 +684,6 @@ export function evaluatePass(input: {
 
 export type FieldClearResult = {
   clearedCards: NumberCard[];
-  lockedSuitCode: null;
   extensionSealed: false;
   dayNightAfter: DayNight;
   nextLeaderId: string;
@@ -690,7 +697,6 @@ export function resolveFieldClear(input: {
 }): FieldClearResult {
   return {
     clearedCards: [...input.currentField.combination.cards],
-    lockedSuitCode: null,
     extensionSealed: false,
     dayNightAfter: input.dayNight,
     nextLeaderId: input.lastPlayerActive
@@ -852,10 +858,6 @@ function buildState(
     activePlayerId: patch.activePlayerId ?? base.activePlayerId,
     activeField:
       patch.activeField !== undefined ? patch.activeField : base.activeField,
-    lockedSuitCode:
-      patch.lockedSuitCode !== undefined
-        ? patch.lockedSuitCode
-        : base.lockedSuitCode,
     extensionSealed: patch.extensionSealed ?? base.extensionSealed,
     discardPile: patch.discardPile ?? [...base.discardPile],
     consecutivePasses: patch.consecutivePasses ?? base.consecutivePasses,
@@ -886,7 +888,6 @@ function resolvePassPlay(
       players: state.players.map(reactivate),
       activePlayerId: clear.nextLeaderId,
       activeField: null,
-      lockedSuitCode: null,
       extensionSealed: false,
       discardPile: [...state.discardPile, ...clear.clearedCards],
       consecutivePasses: 0,
@@ -983,7 +984,9 @@ function resolveCardPlay(
   const current = isJokerClear
     ? null
     : state.activeField?.combination ?? null;
-  const lockedSuitCode = isJokerClear ? null : state.lockedSuitCode;
+  const fieldLock = isJokerClear
+    ? UNLOCKED_FIELD
+    : state.activeField?.lock ?? UNLOCKED_FIELD;
   const extensionSealed = isJokerClear ? false : state.extensionSealed;
 
   // Forbidden go-out with a transformed Joker is decided below from the real
@@ -994,14 +997,16 @@ function resolveCardPlay(
         realNumberCards: playedCards,
         jokerDeclarations: play.jokerDeclarations ?? [],
         dayNight: state.dayNight,
-        lockedSuitCode,
+        fieldLock,
+        ruleset: RULESET_INITIAL,
         extensionSealed,
       })
     : evaluateNumberPlay({
         current,
         candidateCards: playedCards,
         dayNight: state.dayNight,
-        lockedSuitCode,
+        fieldLock,
+        ruleset: RULESET_INITIAL,
         extensionSealed,
         usesRevolutionSkill,
       });
@@ -1054,10 +1059,14 @@ function resolveCardPlay(
     activeField: createActiveField(
       numberResult.resultingCombination,
       player.playerId,
+      deriveFieldLock({
+        previous: isJokerClear ? null : state.activeField,
+        actionKind: numberResult.actionKind,
+        playedCombination: numberResult.combination,
+        resultingCombination: numberResult.resultingCombination,
+        ruleset: RULESET_INITIAL,
+      }),
     ),
-    lockedSuitCode: numberResult.createsSuitLock
-      ? numberResult.lockedSuitCode ?? null
-      : lockedSuitCode,
     extensionSealed:
       play.useSkill === "EXTENSION_SEAL" ? true : extensionSealed,
     discardPile,

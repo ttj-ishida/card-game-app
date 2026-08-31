@@ -63,7 +63,6 @@ function cloneRound(round: RoundState): RoundState {
           round.activeField.lock,
         )
       : null,
-    lockedSuitCode: round.lockedSuitCode,
     extensionSealed: round.extensionSealed,
     discardPile: round.discardPile,
     consecutivePasses: round.consecutivePasses,
@@ -98,12 +97,6 @@ export function setActivePlayer(round: RoundState, playerId: string): RoundState
   if (!round.players.some((player) => player.playerId === playerId)) return round;
   const next = cloneRound(round);
   next.activePlayerId = playerId;
-  return next;
-}
-
-export function setLockedSuit(round: RoundState, suit: SuitCode | null): RoundState {
-  const next = cloneRound(round);
-  next.lockedSuitCode = suit;
   return next;
 }
 

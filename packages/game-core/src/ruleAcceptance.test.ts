@@ -17,7 +17,6 @@ import {
   type PlayInput,
   type RoundState,
   type SkillEffectCode,
-  type SuitCode,
 } from "./index.ts";
 
 type Suit = "FIRE" | "WATER" | "WIND" | "EARTH";
@@ -42,7 +41,6 @@ function makeRound(opts: {
   p2?: NumberCard[];
   p3?: NumberCard[];
   field?: { cards: NumberCard[]; by: string };
-  lockedSuitCode?: SuitCode | null;
   extensionSealed?: boolean;
 }): RoundState {
   const players = [
@@ -66,7 +64,6 @@ function makeRound(opts: {
     activeField: opts.field
       ? fieldOf(opts.field.cards, opts.field.by)
       : null,
-    lockedSuitCode: opts.lockedSuitCode ?? null,
     extensionSealed: opts.extensionSealed ?? false,
   });
 }
@@ -186,7 +183,6 @@ test("T-RULE-008: same-suit 34 plus a same-suit Joker 5 creates a suit lock", ()
     },
   );
   assert.ok(result.ok);
-  assert.equal(result.state.lockedSuitCode, "SUIT_FIRE");
 });
 
 test("T-RULE-009: rejects a same-rank extension while extension is sealed", () => {

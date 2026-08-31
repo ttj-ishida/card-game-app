@@ -23,7 +23,6 @@ import {
   setConsecutivePasses,
   setDayNight,
   setExtensionSealed,
-  setLockedSuit,
   setPlayerCount,
   setPlayerSkill,
   setPlayerSkillUsed,
@@ -362,23 +361,6 @@ export default function SandboxScreen() {
             >
               <Text style={styles.miniButtonText}>{translate('sandbox.field.commit')}</Text>
             </Pressable>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>{translate('sandbox.lock.label')}</Text>
-            {[null, ...SUIT_CODES].map((suit) => (
-              <Pressable
-                key={suit ?? 'none'}
-                accessibilityRole="button"
-                accessibilityState={{ selected: (draft.lockedSuitCode ?? null) === suit }}
-                onPress={() => state.editRound((round) => setLockedSuit(round, suit))}
-                style={styles.miniButton}
-              >
-                <Text style={styles.miniButtonText}>
-                  {suit ? SUIT_LABEL[suit] : translate('sandbox.lock.none')}
-                </Text>
-              </Pressable>
-            ))}
           </View>
 
           <View style={styles.row}>

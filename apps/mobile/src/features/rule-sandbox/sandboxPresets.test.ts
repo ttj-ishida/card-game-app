@@ -67,7 +67,7 @@ test('every preset resolves to the outcome encoded in its id', () => {
 
   const suitLock = run('suit-lock');
   assert.equal(suitLock.ok, true);
-  assert.equal(suitLock.ok && suitLock.state.lockedSuitCode, 'SUIT_FIRE');
+  assert.equal(suitLock.ok && suitLock.state.activeField?.lock.suitUniform, true);
 
   const extensionSealed = run('extension-sealed');
   assert.equal(extensionSealed.ok, false);

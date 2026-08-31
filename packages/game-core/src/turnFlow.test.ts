@@ -98,7 +98,6 @@ test("resolveFieldClear discards the set, drops lock and seal, keeps day/night, 
     }),
     {
       clearedCards: [c(3, "FIRE"), c(4, "FIRE"), c(5, "FIRE")],
-      lockedSuitCode: null,
       extensionSealed: false,
       dayNightAfter: "NIGHT",
       nextLeaderId: "player-2",

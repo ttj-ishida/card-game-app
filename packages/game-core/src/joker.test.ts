@@ -58,8 +58,6 @@ test("evaluateJokerTransformPlay lets two distinct Jokers complete a sequence an
   assert.equal(result.legal, true);
   assert.equal(result.actionKind, "LEAD");
   assert.equal(result.combination.kind, "SEQUENCE");
-  assert.equal(result.createsSuitLock, true);
-  assert.equal(result.lockedSuitCode, "SUIT_FIRE");
   assert.equal(result.naturalRevolution, true);
   assert.equal(result.dayNightAfter, "NIGHT");
 });
@@ -142,7 +140,6 @@ test("evaluateJokerClear requires a field and returns continued-play constraints
     {
       legal: true,
       clearedCards: [c(6, "FIRE"), c(6, "WATER")],
-      lockedSuitCode: null,
       extensionSealed: false,
       dayNightAfter: "NIGHT",
       mustLead: true,

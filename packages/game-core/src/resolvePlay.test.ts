@@ -88,7 +88,6 @@ test("resolvePlay records a pass and advances to the next player", () => {
 test("resolvePlay clears the field once every responder passed and hands the lead to the last player", () => {
   const state = round({
     activeField: field([c(9, "WATER")], "P3"),
-    lockedSuitCode: "SUIT_WATER",
     extensionSealed: true,
   });
   const first = resolvePlay(state, { kind: "PASS", playerId: "P1" });
@@ -98,7 +97,6 @@ test("resolvePlay clears the field once every responder passed and hands the lea
   assert.equal(second.outcome.fieldCleared, true);
   assert.equal(second.state.activeField, null);
   assert.equal(second.state.activePlayerId, "P3");
-  assert.equal(second.state.lockedSuitCode, null);
   assert.equal(second.state.extensionSealed, false);
   assert.equal(second.state.dayNight, "DAY");
   assert.equal(second.state.consecutivePasses, 0);
@@ -163,6 +161,24 @@ test("resolvePlay moves the replaced set to the discard pile", () => {
     result.state.discardPile.map((card) => card.cardId),
     ["N_6_WATER"],
   );
+});
+
+test("resolvePlay locks the count on the first replace and then rejects an add", () => {
+  const state = round({
+    players: [
+      createPlayerState("P1", [c(9, "FIRE"), c(9, "WATER")]),
+      createPlayerState("P2", [c(1, "EARTH")]),
+    ],
+    activePlayerId: "P1",
+    activeField: field([c(8, "FIRE"), c(8, "WATER")], "P2"),
+  });
+  const replaced = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_9_FIRE", "N_9_WATER"],
+  });
+  assert.ok(replaced.ok);
+  assert.equal(replaced.state.activeField?.lock.countLocked, true);
 });
 
 test("resolvePlay applies extension seal after the number card lands", () => {
@@ -248,7 +264,7 @@ test("resolvePlay resolves a transform Joker play and records natural revolution
     ],
   });
   assert.ok(result.ok);
-  assert.equal(result.state.lockedSuitCode, "SUIT_FIRE");
+  assert.equal(result.state.activeField?.lock.suitUniform, true);
   assert.equal(result.state.dayNight, "NIGHT");
   assert.equal(result.outcome.naturalRevolution, true);
 });
@@ -284,7 +300,6 @@ test("resolvePlay clears the field with a Joker then leads in the same play", ()
     ],
     activePlayerId: "P1",
     activeField: field([c(9, "WATER")], "P2"),
-    lockedSuitCode: "SUIT_WATER",
     extensionSealed: true,
   });
   const result = resolvePlay(state, {
@@ -295,7 +310,6 @@ test("resolvePlay clears the field with a Joker then leads in the same play", ()
   });
   assert.ok(result.ok);
   assert.equal(result.outcome.fieldCleared, true);
-  assert.equal(result.state.lockedSuitCode, null);
   assert.equal(result.state.extensionSealed, false);
   assert.equal(result.state.dayNight, "DAY");
   assert.equal(result.state.activeField?.combination.ranks[0], 2);
