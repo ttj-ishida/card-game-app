@@ -582,6 +582,62 @@ export function nextDayNight(dayNight: DayNight): DayNight {
   return dayNight === "DAY" ? "NIGHT" : "DAY";
 }
 
+export function deriveFieldLock(input: {
+  previous: ActiveField | null;
+  actionKind: PlayActionKind;
+  playedCombination: NumberCombination;
+  resultingCombination: NumberCombination;
+  ruleset?: RulesetOptions;
+}): FieldLock {
+  const ruleset = input.ruleset ?? RULESET_INITIAL;
+
+  if (input.actionKind === "LEAD") {
+    return {
+      countLocked: false,
+      suitFixed: null,
+      suitUniform:
+        ruleset.suitUniformLock &&
+        input.resultingCombination.kind === "SEQUENCE" &&
+        allSameSuit(input.resultingCombination.cards),
+    };
+  }
+
+  const previous = input.previous;
+  if (!previous) {
+    return { ...UNLOCKED_FIELD };
+  }
+
+  if (input.actionKind === "EXTEND") {
+    return {
+      countLocked: false,
+      suitFixed: null,
+      suitUniform: previous.lock.suitUniform,
+    };
+  }
+
+  // REPLACE
+  const isFirstReplace = !previous.lock.countLocked;
+  let suitFixed: SuitCode[] | null;
+  if (!isFirstReplace) {
+    suitFixed = previous.lock.suitFixed;
+  } else if (!ruleset.suitFixedLock) {
+    suitFixed = null;
+  } else {
+    suitFixed = multisetEqual(
+      suitsOf(input.playedCombination.cards),
+      suitsOf(previous.combination.cards),
+    )
+      ? suitsOf(input.playedCombination.cards)
+      : null;
+  }
+
+  return {
+    countLocked: ruleset.countLock,
+    suitFixed,
+    suitUniform: previous.lock.suitUniform,
+  };
+}
+
 export function detectNaturalRevolution(
   current: NumberCombination | null,
   resultingCombination: NumberCombination,
