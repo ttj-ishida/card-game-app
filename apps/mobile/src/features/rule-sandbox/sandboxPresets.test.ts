@@ -7,8 +7,8 @@ import { jaDictionary } from '../../i18n/translate';
 import { buildPlayInput } from './sandboxModel';
 import { SANDBOX_PRESETS } from './sandboxPresets';
 
-test('there are ten presets with unique ids and existing title keys', () => {
-  assert.equal(SANDBOX_PRESETS.length, 10);
+test('there are thirteen presets with unique ids and existing title keys', () => {
+  assert.equal(SANDBOX_PRESETS.length, 13);
   const ids = SANDBOX_PRESETS.map((preset) => preset.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const preset of SANDBOX_PRESETS) {
@@ -67,6 +67,7 @@ test('every preset resolves to the outcome encoded in its id', () => {
 
   const suitLock = run('suit-lock');
   assert.equal(suitLock.ok, true);
+  assert.equal(suitLock.ok && suitLock.outcome.actionKind, 'REPLACE');
   assert.equal(suitLock.ok && suitLock.state.activeField?.lock.suitUniform, true);
 
   const extensionSealed = run('extension-sealed');
@@ -93,4 +94,39 @@ test('every preset resolves to the outcome encoded in its id', () => {
   const passClearsField = run('pass-clears-field');
   assert.equal(passClearsField.ok, true);
   assert.equal(passClearsField.ok && passClearsField.outcome.fieldCleared, true);
+
+  const countLockedAddRejected = run('count-locked-add-rejected');
+  assert.equal(countLockedAddRejected.ok, false);
+  assert.equal(
+    countLockedAddRejected.ok === false && countLockedAddRejected.reason,
+    'COUNT_LOCKED',
+  );
+
+  const suitFixedMismatch = run('suit-fixed-mismatch');
+  assert.equal(suitFixedMismatch.ok, false);
+  assert.equal(suitFixedMismatch.ok === false && suitFixedMismatch.reason, 'SUIT_FIXED_MISMATCH');
+
+  const suitUniformUpdate = run('suit-uniform-update');
+  assert.equal(suitUniformUpdate.ok, true);
+  assert.equal(suitUniformUpdate.ok && suitUniformUpdate.outcome.actionKind, 'REPLACE');
+});
+
+test('the three field-lock presets resolve to their encoded lock outcomes', () => {
+  const byId = new Map(SANDBOX_PRESETS.map((preset) => [preset.id, preset]));
+  const run = (id: string) => {
+    const preset = byId.get(id);
+    assert.ok(preset, `missing preset ${id}`);
+    return resolvePlay(preset.round, buildPlayInput(preset.round, preset.play));
+  };
+
+  const countLocked = run('count-locked-add-rejected');
+  assert.equal(countLocked.ok === false && countLocked.reason, 'COUNT_LOCKED');
+
+  const suitFixed = run('suit-fixed-mismatch');
+  assert.equal(suitFixed.ok === false && suitFixed.reason, 'SUIT_FIXED_MISMATCH');
+
+  const suitUniform = run('suit-uniform-update');
+  assert.equal(suitUniform.ok, true);
+  assert.equal(suitUniform.ok && suitUniform.outcome.actionKind, 'REPLACE');
+  assert.equal(suitUniform.ok && suitUniform.state.activeField?.lock.suitUniform, true);
 });

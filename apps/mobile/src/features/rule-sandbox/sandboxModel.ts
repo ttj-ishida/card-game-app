@@ -127,13 +127,14 @@ export function setFieldCards(
   round: RoundState,
   cards: NumberCard[],
   lastPlayerId: string,
+  lock?: Partial<FieldLock>,
 ): RoundState {
   const combination = parseNumberCombination(cards);
   if (!combination) return round;
   let next = round;
   for (const card of cards) next = withoutCardId(next, card.cardId);
   next = cloneRound(next);
-  next.activeField = createActiveField(combination, lastPlayerId);
+  next.activeField = createActiveField(combination, lastPlayerId, lock);
   return next;
 }
 

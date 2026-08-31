@@ -1,6 +1,12 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 
-import { resolvePlay, type NumberCard, type RoundState } from '@card-game-app/game-core';
+import {
+  UNLOCKED_FIELD,
+  resolvePlay,
+  type FieldLock,
+  type NumberCard,
+  type RoundState,
+} from '@card-game-app/game-core';
 
 import {
   buildPlayInput,
@@ -23,6 +29,7 @@ export type SandboxHistoryEntry = {
 export type FieldDraft = {
   cards: NumberCard[];
   lastPlayerId: string;
+  lock: FieldLock;
 };
 
 export type RuleSandboxState = {
@@ -36,6 +43,7 @@ export type RuleSandboxState = {
   resetPlayDraft: () => void;
   setFieldDraftCards: (cards: NumberCard[]) => void;
   setFieldDraftLastPlayer: (playerId: string) => void;
+  setFieldDraftLock: (patch: Partial<FieldLock>) => void;
   commitFieldDraft: () => void;
   resetFieldDraft: () => void;
   applyPlay: () => void;
@@ -48,6 +56,7 @@ function initialFieldDraft(round: RoundState): FieldDraft {
   return {
     cards: round.activeField ? [...round.activeField.combination.cards] : [],
     lastPlayerId: round.activeField?.lastPlayerId ?? round.players[0].playerId,
+    lock: { ...(round.activeField?.lock ?? UNLOCKED_FIELD) },
   };
 }
 
@@ -73,6 +82,11 @@ export function createRuleSandboxStore(): StoreApi<RuleSandboxState> {
       setFieldDraftLastPlayer: (playerId) =>
         set((state) => ({ fieldDraft: { ...state.fieldDraft, lastPlayerId: playerId } })),
 
+      setFieldDraftLock: (patch) =>
+        set((state) => ({
+          fieldDraft: { ...state.fieldDraft, lock: { ...state.fieldDraft.lock, ...patch } },
+        })),
+
       commitFieldDraft: () =>
         set((state) => {
           const { draft, fieldDraft } = state;
@@ -83,15 +97,23 @@ export function createRuleSandboxStore(): StoreApi<RuleSandboxState> {
             ? fieldDraft.lastPlayerId
             : draft.players[0].playerId;
           return {
-            draft: setFieldCards(draft, fieldDraft.cards, effectiveLastPlayerId),
-            fieldDraft: { cards: [], lastPlayerId: effectiveLastPlayerId },
+            draft: setFieldCards(draft, fieldDraft.cards, effectiveLastPlayerId, fieldDraft.lock),
+            fieldDraft: {
+              cards: [],
+              lastPlayerId: effectiveLastPlayerId,
+              lock: { ...UNLOCKED_FIELD },
+            },
             lastResult: null,
           };
         }),
 
       resetFieldDraft: () =>
         set((state) => ({
-          fieldDraft: { cards: [], lastPlayerId: state.draft.players[0].playerId },
+          fieldDraft: {
+            cards: [],
+            lastPlayerId: state.draft.players[0].playerId,
+            lock: { ...UNLOCKED_FIELD },
+          },
         })),
 
       applyPlay: () => {

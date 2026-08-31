@@ -5,6 +5,7 @@ import {
   createRoundState,
   parseNumberCombination,
   type ActiveField,
+  type FieldLock,
   type NumberCard,
   type RankCode,
   type RoundState,
@@ -26,10 +27,14 @@ type Suit = 'FIRE' | 'WATER' | 'WIND' | 'EARTH';
 const card = (rank: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, suit: Suit): NumberCard =>
   makeSandboxCard(`RANK_${rank}` as RankCode, `SUIT_${suit}` as SuitCode);
 
-const field = (cards: NumberCard[], lastPlayerId: string): ActiveField => {
+const field = (
+  cards: NumberCard[],
+  lastPlayerId: string,
+  lock?: Partial<FieldLock>,
+): ActiveField => {
   const combination = parseNumberCombination(cards);
   if (!combination) throw new Error('preset field is not a valid combination');
-  return createActiveField(combination, lastPlayerId);
+  return createActiveField(combination, lastPlayerId, lock);
 };
 
 function round(input: {
@@ -105,15 +110,15 @@ export const SANDBOX_PRESETS: readonly SandboxPreset[] = [
     id: 'suit-lock',
     titleKey: 'sandbox.preset.suit-lock',
     round: round({
-      hands: [[card(3, 'FIRE'), card(4, 'FIRE'), card(9, 'WATER')], [card(1, 'WIND')]],
-      skills: ['SKILL_JOKER_HERO', null],
+      hands: [
+        [card(5, 'WATER'), card(6, 'WATER'), card(7, 'WATER'), card(9, 'EARTH')],
+        [card(1, 'WIND')],
+      ],
+      activeField: field([card(4, 'FIRE'), card(5, 'FIRE'), card(6, 'FIRE')], 'P2', {
+        suitUniform: true,
+      }),
     }),
-    play: {
-      kind: 'PLAY',
-      cardIds: ids(card(3, 'FIRE'), card(4, 'FIRE')),
-      useSkill: 'JOKER_TRANSFORM',
-      jokerDeclaration: { rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' },
-    },
+    play: { kind: 'PLAY', cardIds: ids(card(5, 'WATER'), card(6, 'WATER'), card(7, 'WATER')) },
   },
   {
     id: 'extension-sealed',
@@ -173,5 +178,41 @@ export const SANDBOX_PRESETS: readonly SandboxPreset[] = [
       consecutivePasses: 1,
     }),
     play: { kind: 'PASS', cardIds: [] },
+  },
+  {
+    id: 'count-locked-add-rejected',
+    titleKey: 'sandbox.preset.count-locked-add-rejected',
+    round: round({
+      hands: [[card(8, 'WIND'), card(9, 'EARTH')], [card(1, 'FIRE')]],
+      activeField: field([card(8, 'FIRE'), card(8, 'WATER')], 'P2', { countLocked: true }),
+    }),
+    play: { kind: 'PLAY', cardIds: ids(card(8, 'WIND')) },
+  },
+  {
+    id: 'suit-fixed-mismatch',
+    titleKey: 'sandbox.preset.suit-fixed-mismatch',
+    round: round({
+      hands: [[card(9, 'WATER'), card(1, 'EARTH')], [card(1, 'FIRE')]],
+      activeField: field([card(8, 'FIRE')], 'P2', {
+        countLocked: true,
+        suitFixed: ['SUIT_FIRE'],
+        suitUniform: false,
+      }),
+    }),
+    play: { kind: 'PLAY', cardIds: ids(card(9, 'WATER')) },
+  },
+  {
+    id: 'suit-uniform-update',
+    titleKey: 'sandbox.preset.suit-uniform-update',
+    round: round({
+      hands: [
+        [card(4, 'WATER'), card(5, 'WATER'), card(6, 'WATER'), card(9, 'EARTH')],
+        [card(1, 'WIND')],
+      ],
+      activeField: field([card(3, 'FIRE'), card(4, 'FIRE'), card(5, 'FIRE')], 'P2', {
+        suitUniform: true,
+      }),
+    }),
+    play: { kind: 'PLAY', cardIds: ids(card(4, 'WATER'), card(5, 'WATER'), card(6, 'WATER')) },
   },
 ];

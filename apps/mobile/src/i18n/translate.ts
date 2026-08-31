@@ -32,6 +32,9 @@ export const jaDictionary = {
   'sandbox.field.edit': '場を編集',
   'sandbox.field.addCard': '場にカード追加',
   'sandbox.field.commit': '場に設定',
+  'sandbox.fieldLock.count': '枚数ロック',
+  'sandbox.fieldLock.suitUniform': '属性統一ロック',
+  'sandbox.fieldLock.suitFixed': '属性固定ロック',
   'sandbox.seal.label': '追加封印',
   'sandbox.seal.on': 'ON',
   'sandbox.seal.off': 'OFF',
@@ -98,12 +101,15 @@ export const jaDictionary = {
   'sandbox.preset.night-weaker-wins': '夜 66→55 更新',
   'sandbox.preset.extend-to-666': '昼 単体6→66 追加',
   'sandbox.preset.sequence-natural-revolution': '昼 234+56 で自然革命',
-  'sandbox.preset.suit-lock': '同属性34+Joker5 で属性ロック',
+  'sandbox.preset.suit-lock': '同属性連番リードで属性統一ロック',
   'sandbox.preset.extension-sealed': '追加封印中の同数字追加は不正',
   'sandbox.preset.revolution-card': '昼77+革命+66 反転後合法',
   'sandbox.preset.joker-clear-win': '場流しJoker→最後の数字で上がり',
   'sandbox.preset.forbidden-joker-go-out': '最後の数字+変化Joker は上がり禁止',
   'sandbox.preset.pass-clears-field': '全員パスで場流し',
+  'sandbox.preset.count-locked-add-rejected': '更新後の単体追加は不正（枚数ロック）',
+  'sandbox.preset.suit-fixed-mismatch': '属性固定ロックと不一致な更新は不正',
+  'sandbox.preset.suit-uniform-update': '統一連番は別属性の統一連番で更新可',
 } as const satisfies Record<string, string>;
 
 export function translate(key: string): string {

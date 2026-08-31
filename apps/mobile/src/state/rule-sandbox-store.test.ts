@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { UNLOCKED_FIELD } from '@card-game-app/game-core';
+
 import {
   addCardToHand,
   setFieldCards,
@@ -94,7 +96,31 @@ test('reset clears the field draft back to the initial round', () => {
   const store = createRuleSandboxStore();
   store.getState().loadPreset('replace-stronger');
   store.getState().reset();
-  assert.deepEqual(store.getState().fieldDraft, { cards: [], lastPlayerId: 'P1' });
+  assert.deepEqual(store.getState().fieldDraft, {
+    cards: [],
+    lastPlayerId: 'P1',
+    lock: { ...UNLOCKED_FIELD },
+  });
+});
+
+test('loadPreset seeds the field draft lock from the preset field lock', () => {
+  const store = createRuleSandboxStore();
+  store.getState().loadPreset('suit-fixed-mismatch');
+  const { fieldDraft, draft } = store.getState();
+  assert.deepEqual(fieldDraft.lock, draft.activeField?.lock);
+  assert.equal(fieldDraft.lock.countLocked, true);
+  assert.deepEqual(fieldDraft.lock.suitFixed, ['SUIT_FIRE']);
+});
+
+test('setFieldDraftLock then commitFieldDraft puts the lock on the active field', () => {
+  const store = createRuleSandboxStore();
+  store.getState().setFieldDraftCards([makeSandboxCard('RANK_6', 'SUIT_WATER')]);
+  store.getState().setFieldDraftLastPlayer('P2');
+  store.getState().setFieldDraftLock({ countLocked: true, suitUniform: true });
+  store.getState().commitFieldDraft();
+  assert.equal(store.getState().draft.activeField?.lock.countLocked, true);
+  assert.equal(store.getState().draft.activeField?.lock.suitUniform, true);
+  assert.deepEqual(store.getState().fieldDraft.lock, { ...UNLOCKED_FIELD });
 });
 
 test('commitFieldDraft places a valid combination and clears the draft', () => {
