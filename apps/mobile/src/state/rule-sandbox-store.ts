@@ -96,8 +96,12 @@ export function createRuleSandboxStore(): StoreApi<RuleSandboxState> {
           )
             ? fieldDraft.lastPlayerId
             : draft.players[0].playerId;
+          // Prefer the lock already on the committed field (the screen edits it
+          // via editRound(setFieldCountLocked/...)); fall back to the draft lock
+          // (only the tests drive setFieldDraftLock).
+          const seededLock = draft.activeField?.lock ?? fieldDraft.lock;
           return {
-            draft: setFieldCards(draft, fieldDraft.cards, effectiveLastPlayerId, fieldDraft.lock),
+            draft: setFieldCards(draft, fieldDraft.cards, effectiveLastPlayerId, seededLock),
             fieldDraft: {
               cards: [],
               lastPlayerId: effectiveLastPlayerId,

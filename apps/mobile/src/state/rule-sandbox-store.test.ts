@@ -6,6 +6,7 @@ import { UNLOCKED_FIELD } from '@card-game-app/game-core';
 import {
   addCardToHand,
   setFieldCards,
+  setFieldCountLocked,
   makeSandboxCard,
   setActivePlayer,
   setPlayerCount,
@@ -121,6 +122,22 @@ test('setFieldDraftLock then commitFieldDraft puts the lock on the active field'
   assert.equal(store.getState().draft.activeField?.lock.countLocked, true);
   assert.equal(store.getState().draft.activeField?.lock.suitUniform, true);
   assert.deepEqual(store.getState().fieldDraft.lock, { ...UNLOCKED_FIELD });
+});
+
+test('commitFieldDraft keeps the lock the screen set on the committed field', () => {
+  const store = createRuleSandboxStore();
+  // Seed a field, then toggle the count lock the way the screen does.
+  store.getState().setFieldDraftCards([makeSandboxCard('RANK_6', 'SUIT_WATER')]);
+  store.getState().setFieldDraftLastPlayer('P2');
+  store.getState().commitFieldDraft();
+  store.getState().editRound((round) => setFieldCountLocked(round, true));
+  assert.equal(store.getState().draft.activeField?.lock.countLocked, true);
+
+  // Editing the field cards and re-committing must not wipe that lock.
+  store.getState().setFieldDraftCards([makeSandboxCard('RANK_7', 'SUIT_WATER')]);
+  store.getState().commitFieldDraft();
+  assert.equal(store.getState().draft.activeField?.combination.ranks[0], 7);
+  assert.equal(store.getState().draft.activeField?.lock.countLocked, true);
 });
 
 test('commitFieldDraft places a valid combination and clears the draft', () => {

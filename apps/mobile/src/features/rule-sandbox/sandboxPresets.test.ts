@@ -109,24 +109,5 @@ test('every preset resolves to the outcome encoded in its id', () => {
   const suitUniformUpdate = run('suit-uniform-update');
   assert.equal(suitUniformUpdate.ok, true);
   assert.equal(suitUniformUpdate.ok && suitUniformUpdate.outcome.actionKind, 'REPLACE');
-});
-
-test('the three field-lock presets resolve to their encoded lock outcomes', () => {
-  const byId = new Map(SANDBOX_PRESETS.map((preset) => [preset.id, preset]));
-  const run = (id: string) => {
-    const preset = byId.get(id);
-    assert.ok(preset, `missing preset ${id}`);
-    return resolvePlay(preset.round, buildPlayInput(preset.round, preset.play));
-  };
-
-  const countLocked = run('count-locked-add-rejected');
-  assert.equal(countLocked.ok === false && countLocked.reason, 'COUNT_LOCKED');
-
-  const suitFixed = run('suit-fixed-mismatch');
-  assert.equal(suitFixed.ok === false && suitFixed.reason, 'SUIT_FIXED_MISMATCH');
-
-  const suitUniform = run('suit-uniform-update');
-  assert.equal(suitUniform.ok, true);
-  assert.equal(suitUniform.ok && suitUniform.outcome.actionKind, 'REPLACE');
-  assert.equal(suitUniform.ok && suitUniform.state.activeField?.lock.suitUniform, true);
+  assert.equal(suitUniformUpdate.ok && suitUniformUpdate.state.activeField?.lock.suitUniform, true);
 });
