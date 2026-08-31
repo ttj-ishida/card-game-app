@@ -13,6 +13,7 @@ import {
   resolvePlay,
   type ActiveField,
   type DayNight,
+  type FieldLock,
   type NumberCard,
   type PlayInput,
   type RoundState,
@@ -28,10 +29,14 @@ const c = (rank: number, suit: Suit = "FIRE"): NumberCard =>
     `SUIT_${suit}` as never,
   );
 
-const fieldOf = (cards: NumberCard[], by: string): ActiveField => {
+const fieldOf = (
+  cards: NumberCard[],
+  by: string,
+  lock?: FieldLock,
+): ActiveField => {
   const combination = parseNumberCombination(cards);
   assert.ok(combination);
-  return createActiveField(combination, by);
+  return createActiveField(combination, by, lock);
 };
 
 function makeRound(opts: {
@@ -41,6 +46,7 @@ function makeRound(opts: {
   p2?: NumberCard[];
   p3?: NumberCard[];
   field?: { cards: NumberCard[]; by: string };
+  fieldLock?: FieldLock;
   extensionSealed?: boolean;
 }): RoundState {
   const players = [
@@ -62,7 +68,7 @@ function makeRound(opts: {
     players,
     activePlayerId: "P1",
     activeField: opts.field
-      ? fieldOf(opts.field.cards, opts.field.by)
+      ? fieldOf(opts.field.cards, opts.field.by, opts.fieldLock)
       : null,
     extensionSealed: opts.extensionSealed ?? false,
   });
@@ -166,23 +172,13 @@ test("T-RULE-007: replacing with a fresh four-card set revolts again", () => {
   assert.equal(result.outcome.naturalRevolution, true);
 });
 
-test("T-RULE-008: same-suit 34 plus a same-suit Joker 5 creates a suit lock", () => {
+test("T-RULE-008: a uniform-suit sequence lead raises the suit-uniform lock", () => {
   const result = play(
-    makeRound({
-      p1: [c(3, "FIRE"), c(4, "FIRE"), c(9, "WATER")],
-      p1Skill: "SKILL_JOKER_HERO",
-    }),
-    {
-      kind: "PLAY",
-      playerId: "P1",
-      cardIds: ["N_3_FIRE", "N_4_FIRE"],
-      useSkill: "JOKER_TRANSFORM",
-      jokerDeclarations: [
-        { skillId: "SK_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
-      ],
-    },
+    makeRound({ p1: [c(3, "FIRE"), c(4, "FIRE"), c(5, "FIRE"), c(9, "WATER")] }),
+    { kind: "PLAY", playerId: "P1", cardIds: ["N_3_FIRE", "N_4_FIRE", "N_5_FIRE"] },
   );
   assert.ok(result.ok);
+  assert.equal(result.state.activeField?.lock.suitUniform, true);
 });
 
 test("T-RULE-009: rejects a same-rank extension while extension is sealed", () => {
@@ -404,4 +400,58 @@ test("T-RULE-022: day, single 6 accepts 66 as an extension to 666", () => {
   assert.equal(result.outcome.actionKind, "EXTEND");
   assert.deepEqual(result.state.activeField?.combination.ranks, [6]);
   assert.equal(result.state.activeField?.combination.cards.length, 3);
+});
+
+test("T-RULE-023: adding after the first replace is illegal (count lock)", () => {
+  const state = makeRound({
+    p1: [c(8), c(8, "WATER"), c(8, "WIND")],
+    p2: [c(1, "EARTH")],
+    field: { cards: [c(7), c(7, "WATER")], by: "P2" },
+  });
+  const replaced = play(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_8_FIRE", "N_8_WATER"],
+  });
+  assert.ok(replaced.ok);
+  assert.equal(replaced.state.activeField?.lock.countLocked, true);
+  const added = play(
+    {
+      ...replaced.state,
+      activePlayerId: replaced.state.activeField!.lastPlayerId,
+    },
+    {
+      kind: "PLAY",
+      playerId: replaced.state.activeField!.lastPlayerId,
+      cardIds: ["N_8_WIND"],
+    },
+  );
+  assert.equal(added.ok === false && added.reason, "COUNT_LOCKED");
+});
+
+test("T-RULE-024: a replace that misses the fixed suit multiset is illegal", () => {
+  const state = makeRound({
+    p1: [c(9, "WATER")],
+    p2: [c(1, "EARTH")],
+    field: { cards: [c(8, "FIRE")], by: "P2" },
+    fieldLock: { countLocked: true, suitFixed: ["SUIT_FIRE"], suitUniform: false },
+  });
+  const result = play(state, { kind: "PLAY", playerId: "P1", cardIds: ["N_9_WATER"] });
+  assert.equal(result.ok === false && result.reason, "SUIT_FIXED_MISMATCH");
+});
+
+test("T-RULE-025: a uniform sequence may be updated with a different uniform suit", () => {
+  const state = makeRound({
+    p1: [c(4, "WATER"), c(5, "WATER"), c(6, "WATER"), c(9, "EARTH")],
+    p2: [c(1, "EARTH")],
+    field: { cards: [c(3, "FIRE"), c(4, "FIRE"), c(5, "FIRE")], by: "P2" },
+    fieldLock: { countLocked: false, suitFixed: null, suitUniform: true },
+  });
+  const result = play(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_4_WATER", "N_5_WATER", "N_6_WATER"],
+  });
+  assert.ok(result.ok);
+  assert.equal(result.outcome.actionKind, "REPLACE");
 });
