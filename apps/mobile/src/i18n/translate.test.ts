@@ -130,11 +130,15 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     'cpuGame.result.home',
     'cpuGame.result.saveOk',
     'cpuGame.result.saveQueued',
+    'cpuGame.result.saveFailed',
+    'cpuGame.seat.cpu1',
+    'cpuGame.seat.cpu5',
+    'cpuGame.turnLog.LEAD',
+    'cpuGame.turnLog.PASS',
     'cpuGame.exit.confirmTitle',
     'cpuGame.exit.confirmOk',
     'cpuGame.exit.confirmCancel',
     'cpuGame.history',
-    'cpuGame.seatShort.you',
   ];
 
   for (const key of requiredKeys) {

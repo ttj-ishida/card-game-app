@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -11,12 +11,6 @@ import { buildBoardViewModel } from '../../features/cpu-game/boardViewModel';
 import { cpuGameStore } from '../../state/cpuGameStore';
 import { translate } from '../../i18n/translate';
 import { useStore } from 'zustand';
-
-function seatLabel(seatId: string, nameKey: string): string {
-  const base = translate(nameKey);
-  if (nameKey === 'cpuGame.seat.you') return base;
-  return `${base} ${seatId.replace('seat-', '')}`;
-}
 
 // Display-only: map a rejection reason to Japanese text, falling back to the
 // generic "cannot play this" line. No game logic here.
@@ -69,6 +63,7 @@ export default function CpuGamePlayScreen() {
     cpuGameStore
       .getState()
       .finishRound()
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) router.replace('/cpu-game/result');
       });
@@ -99,15 +94,18 @@ export default function CpuGamePlayScreen() {
     }, [router]),
   );
 
-  if (!driver) {
+  const vm = useMemo(
+    () => (driver ? buildBoardViewModel(driver, selection, legalPlays, { cpuThinking }) : null),
+    [driver, selection, legalPlays, cpuThinking],
+  );
+
+  if (!driver || !vm) {
     return (
       <View style={styles.screen}>
         <Text style={styles.muted}>{translate('cpuGame.setup.title')}</Text>
       </View>
     );
   }
-
-  const vm = buildBoardViewModel(driver, selection, legalPlays, { cpuThinking });
 
   const onSubmit = () => {
     const res = cpuGameStore.getState().submitPlay();
@@ -117,9 +115,6 @@ export default function CpuGamePlayScreen() {
     const res = cpuGameStore.getState().pass();
     setInvalidReason(res.ok ? null : reasonText(res.reason));
   };
-
-  const nameKeyOf = (seatId: string) =>
-    driver.config.seats.find((s) => s.seatId === seatId)?.nameKey ?? 'cpuGame.seat.cpu';
 
   return (
     <View style={styles.screen}>
@@ -133,7 +128,7 @@ export default function CpuGamePlayScreen() {
           {translate('cpuGame.dayNight.strengthOrder')}: {vm.strengthOrder.join('→')}
         </Text>
         <Text style={styles.topText}>
-          {translate('cpuGame.turnLabel')}: {seatLabel(vm.activeSeatId, vm.activeSeatNameKey)}
+          {translate('cpuGame.turnLabel')}: {translate(vm.activeSeatNameKey)}
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -149,15 +144,16 @@ export default function CpuGamePlayScreen() {
 
       {showHistory ? (
         <ScrollView style={styles.historyPanel}>
-          {driver.turnLog.length === 0 ? (
+          {vm.turnLog.length === 0 ? (
             <Text style={styles.muted}>{translate('sandbox.history.empty')}</Text>
           ) : (
-            driver.turnLog.map((entry) => (
-              <Text key={entry.index} style={styles.muted}>
-                {entry.index + 1}. {seatLabel(entry.seatId, nameKeyOf(entry.seatId))} ·{' '}
-                {entry.kind === 'PASS'
-                  ? translate('cpuGame.action.pass')
-                  : `${translate(`sandbox.action.${entry.actionKind}`)} (${entry.cardCount})`}
+            vm.turnLog.map((line) => (
+              <Text key={line.index} style={styles.muted}>
+                {line.index + 1}. {translate(line.seatNameKey)} ·{' '}
+                {translate(`cpuGame.turnLog.${line.actionKind}`)}
+                {line.kind === 'PLAY'
+                  ? ` ${line.cardCount}${translate('cpuGame.opponent.cardsSuffix')}`
+                  : ''}
               </Text>
             ))
           )}
@@ -171,7 +167,7 @@ export default function CpuGamePlayScreen() {
       >
         {vm.opponents.map((opp) => (
           <View key={opp.seatId} style={[styles.oppPanel, opp.isActive && styles.oppPanelActive]}>
-            <Text style={styles.oppName}>{seatLabel(opp.seatId, opp.nameKey)}</Text>
+            <Text style={styles.oppName}>{translate(opp.nameKey)}</Text>
             <Text style={styles.oppLine}>
               {opp.numberCardCount}
               {translate('cpuGame.opponent.cardsSuffix')}

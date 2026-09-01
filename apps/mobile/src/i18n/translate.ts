@@ -117,6 +117,11 @@ export const jaDictionary = {
   'cpuGame.setup.notReady': '対局を開始できません。アプリ設定を確認してください。',
   'cpuGame.seat.you': 'あなた',
   'cpuGame.seat.cpu': 'CPU',
+  'cpuGame.seat.cpu1': 'CPU 1',
+  'cpuGame.seat.cpu2': 'CPU 2',
+  'cpuGame.seat.cpu3': 'CPU 3',
+  'cpuGame.seat.cpu4': 'CPU 4',
+  'cpuGame.seat.cpu5': 'CPU 5',
   'cpuGame.phase.yourTurn': 'あなたの手番',
   'cpuGame.phase.cpuThinking': '思考中…',
   'cpuGame.phase.roundOver': '対局終了',
@@ -150,11 +155,15 @@ export const jaDictionary = {
   'cpuGame.result.home': 'ホームへ',
   'cpuGame.result.saveOk': '結果を保存しました',
   'cpuGame.result.saveQueued': '結果は後で保存します',
+  'cpuGame.result.saveFailed': '結果を保存できませんでした',
   'cpuGame.exit.confirmTitle': '対局を終了しますか？',
   'cpuGame.exit.confirmOk': '終了',
   'cpuGame.exit.confirmCancel': 'つづける',
   'cpuGame.history': '履歴',
-  'cpuGame.seatShort.you': 'あなた',
+  'cpuGame.turnLog.LEAD': '出す（リード）',
+  'cpuGame.turnLog.EXTEND': '追加・拡張',
+  'cpuGame.turnLog.REPLACE': '更新',
+  'cpuGame.turnLog.PASS': 'パス',
 } as const satisfies Record<string, string>;
 
 export function translate(key: string): string {

@@ -119,6 +119,18 @@ describe('savePracticeResult', () => {
     assert.equal(outcome, 'duplicate');
   });
 
+  it('other 4xx (400 / 401 / 422) → rejected (permanent, not retried)', async () => {
+    for (const status of [400, 401, 422]) {
+      const http = createFakeHttp([{ status, body: 'nope' }]);
+      const outcome = await savePracticeResult(makePayload(), {
+        http,
+        supabaseUrl: SUPABASE_URL,
+        anonKey: ANON_KEY,
+      });
+      assert.equal(outcome, 'rejected', `status ${status}`);
+    }
+  });
+
   it('500 → failed', async () => {
     const http = createFakeHttp([{ status: 500, body: 'Internal Server Error' }]);
     const outcome = await savePracticeResult(makePayload(), {
@@ -183,6 +195,17 @@ describe('enqueuePracticeResult', () => {
     assert.equal(parsed.length, 2);
   });
 
+  it('caps the queue at 100 entries, dropping the oldest', async () => {
+    const storage = createFakeStorage();
+    for (let n = 0; n < 105; n += 1) {
+      await enqueuePracticeResult(storage, makePayload({ client_result_id: `crid-${n}` }));
+    }
+    const parsed: PracticeResultPayload[] = JSON.parse(storage.data.get(QUEUE_KEY)!);
+    assert.equal(parsed.length, 100);
+    assert.equal(parsed[0].client_result_id, 'crid-5', 'oldest kept is #5');
+    assert.equal(parsed[99].client_result_id, 'crid-104', 'newest kept is #104');
+  });
+
   it('tolerates a missing value (starts from [])', async () => {
     const storage = createFakeStorage();
     await enqueuePracticeResult(storage, makePayload());
@@ -228,6 +251,25 @@ describe('flushPracticeResultQueue', () => {
     const survivors = JSON.parse(storage.data.get(QUEUE_KEY)!);
     assert.equal(survivors.length, 1);
     assert.equal(survivors[0].client_result_id, 'b');
+  });
+
+  it('drops a rejected (permanent 4xx) entry without keeping it', async () => {
+    const a = makePayload({ client_result_id: 'a' });
+    const b = makePayload({ client_result_id: 'b' });
+    const storage = createFakeStorage({ [QUEUE_KEY]: JSON.stringify([a, b]) });
+    // a → saved (201), b → rejected (400)
+    const http = createFakeHttp([
+      { status: 201, body: '' },
+      { status: 400, body: 'bad' },
+    ]);
+    const result = await flushPracticeResultQueue({
+      storage,
+      http,
+      supabaseUrl: SUPABASE_URL,
+      anonKey: ANON_KEY,
+    });
+    assert.deepEqual(result, { flushed: 2, remaining: 0 });
+    assert.equal(JSON.parse(storage.data.get(QUEUE_KEY)!).length, 0);
   });
 
   it('empty queue → { flushed: 0, remaining: 0 } and no http calls', async () => {
@@ -302,5 +344,18 @@ describe('recordFinishedRound', () => {
     const queued = JSON.parse(storage.data.get(QUEUE_KEY)!);
     assert.equal(queued.length, 1);
     assert.equal(queued[0].client_result_id, 'crid-1');
+  });
+
+  it('save is permanently rejected (4xx) → returns rejected, queue stays empty', async () => {
+    const storage = createFakeStorage();
+    const http = createFakeHttp([{ status: 400, body: 'bad payload' }]);
+    const outcome = await recordFinishedRound(makePayload(), {
+      storage,
+      http,
+      supabaseUrl: SUPABASE_URL,
+      anonKey: ANON_KEY,
+    });
+    assert.equal(outcome, 'rejected');
+    assert.equal(storage.data.get(QUEUE_KEY), undefined);
   });
 });

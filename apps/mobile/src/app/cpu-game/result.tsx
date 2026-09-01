@@ -31,7 +31,9 @@ export default function CpuGameResultScreen() {
       ? translate('cpuGame.result.saveOk')
       : saveStatus === 'queued'
         ? translate('cpuGame.result.saveQueued')
-        : null;
+        : saveStatus === 'failed'
+          ? translate('cpuGame.result.saveFailed')
+          : null;
 
   return (
     <View style={styles.screen}>

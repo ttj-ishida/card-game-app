@@ -8,7 +8,14 @@ import { __resetAnonPlayerIdMemoForTest } from '../features/cpu-game/anonPlayerI
 import type { HttpPort } from '../features/cpu-game/practiceResultSync';
 import { QUEUE_KEY } from '../features/cpu-game/practiceResultQueue';
 import { activeSeatId, type DriverState } from '../features/cpu-game/turnDriver';
-import { cpuGameStore, configureCpuGameStore, type CpuGameDeps } from './cpuGameStore';
+import {
+  cpuGameStore,
+  configureCpuGameStore,
+  __resetCpuGameStoreForTest,
+  type CpuGameDeps,
+} from './cpuGameStore';
+
+const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 const SUPABASE_URL = 'https://example.supabase.co';
 const ANON_KEY = 'anon-key-123';
@@ -136,6 +143,7 @@ function playToRoundOver(n: number): void {
 
 beforeEach(() => {
   __resetAnonPlayerIdMemoForTest();
+  __resetCpuGameStoreForTest();
   cpuGameStore.getState().exit();
 });
 
@@ -278,9 +286,50 @@ describe('finishRound failure handling', () => {
     playToRoundOver(3);
 
     await cpuGameStore.getState().finishRound();
+    await tick();
 
     assert.equal(cpuGameStore.getState().saveStatus, 'queued');
     assert.ok(cpuGameStore.getState().result);
+    const queued = JSON.parse((deps.storage as { data: Map<string, string> }).data.get(QUEUE_KEY)!);
+    assert.equal(queued.length, 1);
+  });
+
+  it('http 400 (permanent) leaves saveStatus failed and nothing queued', async () => {
+    const deps = makeFakeDeps({ http: createFakeHttp([{ status: 400, body: 'bad payload' }]) });
+    configureCpuGameStore(deps);
+    playToRoundOver(3);
+
+    await cpuGameStore.getState().finishRound();
+    await tick();
+
+    assert.equal(cpuGameStore.getState().saveStatus, 'failed');
+    const raw = (deps.storage as { data: Map<string, string> }).data.get(QUEUE_KEY);
+    assert.deepEqual(raw ? JSON.parse(raw) : [], []);
+  });
+
+  it('finishRound flushes a pre-seeded queue entry once the network is back', async () => {
+    const preseeded = {
+      client_result_id: 'preseed-1',
+      anon_player_id: 'anon-x',
+      mode: 'CPU_PRACTICE',
+      player_count: 4,
+      local_player_seat: 0,
+      winner_seat: 1,
+      local_won: false,
+      turn_count: 10,
+      duration_ms: 1000,
+      round_seed: 1,
+    };
+    const storage = createFakeStorage({ [QUEUE_KEY]: JSON.stringify([preseeded]) });
+    const deps = makeFakeDeps({ storage, http: createFakeHttp([{ status: 201, body: '' }]) });
+    configureCpuGameStore(deps);
+    playToRoundOver(3);
+
+    await cpuGameStore.getState().finishRound();
+    await tick();
+
+    assert.equal(cpuGameStore.getState().saveStatus, 'saved');
+    assert.equal(JSON.parse(storage.data.get(QUEUE_KEY)!).length, 0, 'queue drained by flush');
   });
 
   it('a storage failure inside finishRound does not crash and queues', async () => {

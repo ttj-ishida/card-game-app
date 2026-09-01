@@ -23,10 +23,12 @@ export function buildMatchConfig(totalPlayers: number): MatchConfig {
       `buildMatchConfig: total must be ${MIN_PLAYERS}..${MAX_PLAYERS}, got ${totalPlayers}`,
     );
   }
+  // seat-0 is the human; seat-i (i >= 1) is the i-th CPU and gets its own name
+  // key `cpuGame.seat.cpu{i}` so a 6-player game shows CPU 1 .. CPU 5 distinctly.
   const seats: SeatConfig[] = Array.from({ length: totalPlayers }, (_, i) =>
     i === 0
       ? { seatId: 'seat-0', kind: 'HUMAN', nameKey: 'cpuGame.seat.you' }
-      : { seatId: `seat-${i}`, kind: 'CPU', policyId: 'STANDARD', nameKey: `cpuGame.seat.cpu` },
+      : { seatId: `seat-${i}`, kind: 'CPU', policyId: 'STANDARD', nameKey: `cpuGame.seat.cpu${i}` },
   );
   return { seats, packId: DEFAULT_PACK_ID };
 }

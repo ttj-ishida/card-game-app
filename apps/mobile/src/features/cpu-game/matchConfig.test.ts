@@ -25,6 +25,25 @@ test('buildMatchConfig: seat-0 is HUMAN, rest are CPU STANDARD, length N, packId
   assert.equal(c.seats[0].kind, 'HUMAN');
   assert.ok(c.seats.slice(1).every((s) => s.kind === 'CPU' && s.policyId === 'STANDARD'));
   assert.equal(c.seats[0].nameKey, 'cpuGame.seat.you');
+  assert.deepEqual(
+    c.seats.slice(1).map((s) => s.nameKey),
+    ['cpuGame.seat.cpu1', 'cpuGame.seat.cpu2', 'cpuGame.seat.cpu3'],
+  );
+});
+
+test('buildMatchConfig: a 6-player game gives CPU seats distinct cpu1..cpu5 name keys', () => {
+  const c = buildMatchConfig(6);
+  assert.deepEqual(
+    c.seats.map((s) => s.nameKey),
+    [
+      'cpuGame.seat.you',
+      'cpuGame.seat.cpu1',
+      'cpuGame.seat.cpu2',
+      'cpuGame.seat.cpu3',
+      'cpuGame.seat.cpu4',
+      'cpuGame.seat.cpu5',
+    ],
+  );
 });
 
 test('buildMatchConfig throws for invalid totals', () => {

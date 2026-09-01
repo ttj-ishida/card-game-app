@@ -14,7 +14,7 @@ export type HttpPort = {
   ): Promise<{ status: number; body: string }>;
 };
 
-export type SaveOutcome = 'saved' | 'duplicate' | 'failed';
+export type SaveOutcome = 'saved' | 'duplicate' | 'failed' | 'rejected';
 
 export type SyncDeps = {
   http: HttpPort;
@@ -36,7 +36,9 @@ function isDuplicate(status: number, body: string): boolean {
  * - 200 / 201 / 204 → `'saved'`
  * - 409、または本文が `'23505'` を含む、または本文（小文字化）が `'duplicate key'` を含む → `'duplicate'`
  *   （`client_result_id` UNIQUE 違反。既に保存済みなので二重登録扱いにしない）
- * - `post` が reject、またはその他のステータス → `'failed'`
+ * - その他の 4xx（不正ペイロード / 失効した anon キー / CHECK 違反など）→ `'rejected'`
+ *   （恒久的な失敗。再送しても直らないのでキューに積まない）
+ * - 5xx、または `post` が reject → `'failed'`（一時的。再送で回復しうる）
  */
 export async function savePracticeResult(
   payload: PracticeResultPayload,
@@ -61,12 +63,16 @@ export async function savePracticeResult(
   if (isDuplicate(response.status, response.body ?? '')) {
     return 'duplicate';
   }
+  if (response.status >= 400 && response.status < 500) {
+    return 'rejected';
+  }
   return 'failed';
 }
 
 /**
  * 対局終了時のオーケストレータ。`savePracticeResult` を試み、
- * `'failed'` のときだけキューへ退避する。返り値は最終状態。
+ * `'failed'`（一時的失敗）のときだけキューへ退避する。
+ * `'rejected'`（恒久的失敗）は再送しても直らないので退避しない。返り値は最終状態。
  */
 export async function recordFinishedRound(
   payload: PracticeResultPayload,

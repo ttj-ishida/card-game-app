@@ -5,6 +5,7 @@ import type { LegalPlay, PlayRejectionReason, RoundState } from '@card-game-app/
 import { getAnonPlayerId, type StoragePort } from '../features/cpu-game/anonPlayerId';
 import { buildMatchConfig, isValidTotalPlayers } from '../features/cpu-game/matchConfig';
 import { recordFinishedRound, type HttpPort } from '../features/cpu-game/practiceResultSync';
+import { flushPracticeResultQueue } from '../features/cpu-game/practiceResultQueue';
 import {
   buildPracticeResultPayload,
   describeRoundResult,
@@ -23,7 +24,7 @@ import {
 
 const TOTAL_CARDS = 36;
 
-export type CpuGameSaveStatus = 'idle' | 'saving' | 'saved' | 'duplicate' | 'queued';
+export type CpuGameSaveStatus = 'idle' | 'saving' | 'saved' | 'duplicate' | 'queued' | 'failed';
 
 export type PendingCpuReveal = {
   decided: CpuDecision;
@@ -52,6 +53,7 @@ export type CpuGameState = {
   advanceCpu: () => { thinkMillis: number };
   commitCpuReveal: () => void;
   finishRound: () => Promise<void>;
+  flushQueue: () => Promise<void>;
   rematch: () => void;
   exit: () => void;
 };
@@ -105,6 +107,7 @@ const INITIAL: Omit<
   | 'advanceCpu'
   | 'commitCpuReveal'
   | 'finishRound'
+  | 'flushQueue'
   | 'rematch'
   | 'exit'
 > = {
@@ -205,12 +208,13 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
       if (!driver || driver.phase !== 'ROUND_OVER' || result != null) return;
 
       set({ saveStatus: 'saving' });
-      const endedAtMs = d.now();
-      const view = describeRoundResult(driver, startedAtMs ?? endedAtMs, endedAtMs);
-      const clientResultId = get().clientResultId ?? d.makeId();
-      set({ result: view, clientResultId });
 
       try {
+        const endedAtMs = d.now();
+        const view = describeRoundResult(driver, startedAtMs ?? endedAtMs, endedAtMs);
+        const clientResultId = get().clientResultId ?? d.makeId();
+        set({ result: view, clientResultId });
+
         const anonPlayerId = await getAnonPlayerId({ storage: d.storage, makeId: d.makeId });
         const payload = buildPracticeResultPayload({
           view,
@@ -226,11 +230,42 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         });
         set({
           saveStatus:
-            outcome === 'saved' ? 'saved' : outcome === 'duplicate' ? 'duplicate' : 'queued',
+            outcome === 'saved'
+              ? 'saved'
+              : outcome === 'duplicate'
+                ? 'duplicate'
+                : outcome === 'rejected'
+                  ? 'failed'
+                  : 'queued',
         });
       } catch {
-        // A thrown storage/network error must not crash the round-over screen.
+        // A thrown storage/network error (or a describeRoundResult/makeId failure)
+        // must not crash the round-over screen. `result` may still have been set.
         set({ saveStatus: 'queued' });
+      }
+
+      // Fire-and-forget: retry anything queued by an earlier round now that this
+      // save attempt has completed (we are presumably online). Never surfaces.
+      void get().flushQueue();
+    },
+
+    flushQueue: async () => {
+      let d: CpuGameDeps;
+      try {
+        d = requireDeps();
+      } catch {
+        // Unconfigured (e.g. called from _layout on mount before env is wired) — no-op.
+        return;
+      }
+      try {
+        await flushPracticeResultQueue({
+          storage: d.storage,
+          http: d.http,
+          supabaseUrl: d.supabaseUrl,
+          anonKey: d.anonKey,
+        });
+      } catch {
+        // A flush failure must never surface. `saveStatus` is per-round; untouched here.
       }
     },
 
@@ -256,3 +291,12 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
     exit: () => set({ ...INITIAL }),
   };
 });
+
+/**
+ * テスト専用リセット。注入済み `deps` を undefined に戻し、ストアを初期状態へ。
+ * `beforeEach` で呼ぶ（本番コードからは呼ばない）。
+ */
+export function __resetCpuGameStoreForTest(): void {
+  deps = null;
+  cpuGameStore.setState({ ...INITIAL });
+}

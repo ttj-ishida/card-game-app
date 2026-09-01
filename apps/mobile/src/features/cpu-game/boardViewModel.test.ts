@@ -225,6 +225,27 @@ test('humanSkillNameKey reuses the existing sandbox.skill.* key or is null', () 
   }
 });
 
+test('turnLog mirrors state.turnLog with per-seat name keys and no card contents', () => {
+  const s = advance(start(4, 404), 6);
+  const vm = buildBoardViewModel(s, [], []);
+  assert.equal(vm.turnLog.length, s.turnLog.length);
+  assert.ok(vm.turnLog.length > 0);
+  for (let i = 0; i < vm.turnLog.length; i += 1) {
+    const line = vm.turnLog[i];
+    const entry = s.turnLog[i];
+    assert.equal(line.index, entry.index);
+    assert.equal(line.kind, entry.kind);
+    assert.equal(line.cardCount, entry.cardCount);
+    assert.equal(line.actionKind, entry.actionKind);
+    const seat = s.config.seats.find((x) => x.seatId === entry.seatId)!;
+    assert.equal(line.seatNameKey, seat.nameKey);
+    // Distinct CPU seats carry distinct name keys.
+    assert.match(line.seatNameKey, /^cpuGame\.seat\.(you|cpu[1-5])$/);
+  }
+  // No cardId / rankCode / suitCode anywhere in the serialized log lines.
+  assert.doesNotMatch(JSON.stringify(vm.turnLog), /cardId|rankCode|suitCode/);
+});
+
 test('phase / winner fields pass through from the driver state', () => {
   const end = playToEnd(start(2, 2001));
   const vm = buildBoardViewModel(end, [], []);

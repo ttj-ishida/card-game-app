@@ -9,7 +9,7 @@ import {
 } from '@card-game-app/game-core';
 import { canPass, canSelectCard, canSubmit, type HandSelection } from './handSelection';
 import type { MatchConfig } from './matchConfig';
-import type { DriverState, GamePhase } from './turnDriver';
+import type { DriverState, GamePhase, TurnActionKind } from './turnDriver';
 
 /** パック非依存のカード描画データ。`CardFace`（Task 10）が受け取る唯一の入力。 */
 export type CardFaceData = { rank: number; suitCode: SuitCode; isJoker: boolean };
@@ -40,6 +40,18 @@ export type HandCardView = {
   selectable: boolean;
 };
 
+/**
+ * 履歴パネル1行ぶんの表示データ。席名は `seatNameKey` を画面側で `translate()`。
+ * カード内容は含めない（`TurnLogEntry` と同じく枚数のみ）。
+ */
+export type TurnLogLineView = {
+  index: number;
+  seatNameKey: string;
+  kind: 'PLAY' | 'PASS';
+  cardCount: number;
+  actionKind: TurnActionKind;
+};
+
 export type BoardViewModel = {
   phase: GamePhase;
   dayNight: DayNight;
@@ -50,6 +62,7 @@ export type BoardViewModel = {
   lock: { countLocked: boolean; suitFixed: SuitCode[] | null; suitUniform: boolean };
   extensionSealed: boolean;
   opponents: OpponentView[];
+  turnLog: TurnLogLineView[];
   humanSkillNameKey: string | null;
   hand: HandCardView[];
   canSubmit: boolean;
@@ -131,6 +144,14 @@ export function buildBoardViewModel(
       };
     });
 
+  const turnLog: TurnLogLineView[] = state.turnLog.map((entry) => ({
+    index: entry.index,
+    seatNameKey: seatNameKey(config, entry.seatId) ?? '',
+    kind: entry.kind,
+    cardCount: entry.cardCount,
+    actionKind: entry.actionKind,
+  }));
+
   const humanSkillNameKey =
     humanPlayer?.skill != null ? `sandbox.skill.${humanPlayer.skill.effectCode}` : null;
 
@@ -144,6 +165,7 @@ export function buildBoardViewModel(
     lock: round.activeField?.lock ?? { ...UNLOCKED },
     extensionSealed: round.extensionSealed,
     opponents,
+    turnLog,
     humanSkillNameKey,
     hand,
     canSubmit: canSubmit(selection, legalPlays),

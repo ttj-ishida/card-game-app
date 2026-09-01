@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 
 import { translate } from '../i18n/translate';
 import { cpuGameDeps } from '../features/cpu-game/cpuGameAdapters';
-import { configureCpuGameStore } from '../state/cpuGameStore';
+import { configureCpuGameStore, cpuGameStore } from '../state/cpuGameStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
@@ -14,6 +16,17 @@ try {
 }
 
 export default function RootLayout() {
+  // Retry the offline practice-result queue on launch and whenever the app comes
+  // back to the foreground (spec §4.7). `flushQueue` no-ops when unconfigured and
+  // swallows its own errors, so this is safe to fire unconditionally.
+  useEffect(() => {
+    void cpuGameStore.getState().flushQueue();
+    const sub = AppState.addEventListener('change', (status) => {
+      if (status === 'active') void cpuGameStore.getState().flushQueue();
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <Stack
       screenOptions={{
