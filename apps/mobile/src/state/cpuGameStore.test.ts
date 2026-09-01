@@ -208,6 +208,91 @@ describe('M2-QA-02: every player count completes a full round', () => {
   });
 });
 
+describe('M3-QA-01: CPU skill usage keeps card conservation', () => {
+  // Real cards only: a transformed Joker (createTransformedJokerCard) is a
+  // NumberCard carrying `transformedFromSkillId` and is NOT one of the 36.
+  const isReal = (card: { transformedFromSkillId?: string }): boolean =>
+    card.transformedFromSkillId === undefined;
+
+  function realCardTotal(round: RoundState): number {
+    const inHands = round.players.reduce((sum, p) => sum + p.hand.filter(isReal).length, 0);
+    const field = round.activeField ? round.activeField.combination.cards.filter(isReal).length : 0;
+    return inHands + round.discardPile.filter(isReal).length + field;
+  }
+
+  function anyTransformedJokerCard(round: RoundState): boolean {
+    const onField = round.activeField
+      ? round.activeField.combination.cards.some((c) => !isReal(c))
+      : false;
+    return (
+      onField ||
+      round.discardPile.some((c) => !isReal(c)) ||
+      round.players.some((p) => p.hand.some((c) => !isReal(c)))
+    );
+  }
+
+  // seed 29 / 2 players: a STANDARD CPU declares JOKER_TRANSFORM mid-round and
+  // the transformed Joker card actually reaches the field, so the real-card
+  // conservation filter (Part B) is exercised through the store's
+  // assertCardConservation on every commitCpuReveal / human play.
+  it('n=2 seed=29: STANDARD uses JOKER_TRANSFORM, round completes, no conservation throw', () => {
+    const deps = makeFakeDeps({ makeSeed: () => 29 });
+    configureCpuGameStore(deps);
+
+    cpuGameStore.getState().startMatch(2);
+    assert.equal(realCardTotal(cpuGameStore.getState().driver!.round), 36, 'initial');
+
+    const skillsUsed = new Set<string>();
+    let sawTransformedJokerCard = false;
+    let guard = 0;
+
+    for (;;) {
+      if ((guard += 1) > 2000) throw new Error('no progress');
+      const state = cpuGameStore.getState();
+      const driver = state.driver!;
+      if (driver.phase === 'ROUND_OVER') break;
+
+      if (driver.phase === 'HUMAN_TURN') {
+        const legal = state.legalPlays;
+        assert.ok(legal.length > 0, 'no legal human plays');
+        const first = legal[0];
+        if (first.input.kind === 'PASS') {
+          assert.ok(cpuGameStore.getState().pass().ok, 'pass rejected');
+        } else {
+          for (const cardId of first.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+          assert.ok(cpuGameStore.getState().submitPlay().ok, 'submit rejected');
+        }
+      } else {
+        cpuGameStore.getState().advanceCpu();
+        const pending = cpuGameStore.getState().pendingCpuReveal;
+        assert.ok(pending, 'no pending CPU reveal');
+        if (pending!.decided.input.kind === 'PLAY' && pending!.decided.input.useSkill) {
+          skillsUsed.add(pending!.decided.input.useSkill);
+        }
+        // commitCpuReveal runs the store's own assertCardConservation; a broken
+        // real-card filter would throw here.
+        cpuGameStore.getState().commitCpuReveal();
+      }
+
+      const round = cpuGameStore.getState().driver!.round;
+      assert.equal(realCardTotal(round), 36, `real-card conservation at guard ${guard}`);
+      if (anyTransformedJokerCard(round)) sawTransformedJokerCard = true;
+    }
+
+    const done = cpuGameStore.getState().driver!;
+    assert.equal(done.phase, 'ROUND_OVER', 'round did not complete');
+    assert.ok(done.winnerSeatId, 'no winner');
+    assert.ok(
+      skillsUsed.has('JOKER_TRANSFORM'),
+      `expected a STANDARD CPU to use JOKER_TRANSFORM (saw: ${[...skillsUsed].join(', ') || 'none'})`,
+    );
+    assert.ok(
+      sawTransformedJokerCard,
+      'expected a transformed Joker card on field/discard/hand at some point',
+    );
+  });
+});
+
 describe('determinism', () => {
   it('two runs with identical fakes produce a deepEqual final driver', async () => {
     const seen: DriverState[] = [];

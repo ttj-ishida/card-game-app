@@ -166,7 +166,7 @@ test('buildPracticeResultPayload throws when the view contradicts the state (ups
 });
 
 test('both a human-wins and a CPU-wins seed produce constraint-valid payloads for 3 players', () => {
-  const h3 = playToEnd(3, 0); // human wins
+  const h3 = playToEnd(3, 6); // human wins
   const c3 = playToEnd(3, 3); // CPU wins
   assert.equal(h3.winnerSeatId, 'seat-0');
   assert.notEqual(c3.winnerSeatId, 'seat-0');

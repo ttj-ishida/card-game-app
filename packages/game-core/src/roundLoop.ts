@@ -111,7 +111,7 @@ export function playRound(input: PlayRoundInput): RoundResult {
     const policyId = input.seatPolicies[active];
     const turnRng = rng.fork();
 
-    const legalPlays = enumerateLegalPlays(state);
+    const legalPlays = enumerateLegalPlays(state, { includeSkills: true });
     if (legalPlays.length === 0) {
       stopReason = "NO_PROGRESS";
       break;

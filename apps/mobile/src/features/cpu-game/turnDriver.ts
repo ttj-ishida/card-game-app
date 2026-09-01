@@ -154,7 +154,7 @@ export function cpuStep(state: DriverState): CpuStepResult {
   const seatId = state.round.activePlayerId;
   const turnIndex = state.turnLog.length;
   const rng = turnRng(state.seed, turnIndex);
-  const legalPlays = enumerateLegalPlays(state.round);
+  const legalPlays = enumerateLegalPlays(state.round, { includeSkills: true });
   const policyId = seatPolicies(state.config)[seatId];
   if (!policyId) {
     throw new Error(
