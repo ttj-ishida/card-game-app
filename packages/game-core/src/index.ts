@@ -1104,3 +1104,6 @@ function resolveCardPlay(
     },
   };
 }
+
+// ---- M2: headless CPU engine ----
+export * from "./rng.js";
