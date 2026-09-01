@@ -1,4 +1,11 @@
-import type { DayNight, PlayActionKind, PlayInput, PlaySkillUse, RoundState } from "./core.ts";
+import type {
+  DayNight,
+  NumberCard,
+  PlayActionKind,
+  PlayInput,
+  PlaySkillUse,
+  RoundState,
+} from "./core.ts";
 import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./core.ts";
 import { type DealResult, dealRound } from "./deal.ts";
 import { enumerateLegalPlays } from "./legalMoves.ts";
@@ -173,16 +180,26 @@ function redactPlay(play: PlayInput): TurnPlayRecord {
   }
 }
 
+// A transformed Joker (createTransformedJokerCard) is a NumberCard that is NOT one
+// of the 36 number-deck cards — it carries `transformedFromSkillId`. The card
+// conservation invariant only holds for the real deck, so filter it out here.
+function isRealCard(card: NumberCard): boolean {
+  return card.transformedFromSkillId === undefined;
+}
+
 function assertInvariants(state: RoundState, turnIndex: number, playerIds: string[]): void {
-  const handCards = state.players.flatMap((p) => p.hand);
-  const fieldCards = state.activeField?.combination.cards ?? [];
-  const total = handCards.length + state.discardPile.length + fieldCards.length;
+  const handCards = state.players.flatMap((p) => p.hand).filter(isRealCard);
+  const fieldCards = (state.activeField?.combination.cards ?? []).filter(isRealCard);
+  const discardCards = state.discardPile.filter(isRealCard);
+  const total = handCards.length + discardCards.length + fieldCards.length;
   if (total !== 36) {
-    throw new Error(`playRound: card conservation broken at turn ${turnIndex} (total ${total})`);
+    throw new Error(
+      `playRound: real card conservation broken at turn ${turnIndex} (total ${total})`,
+    );
   }
   const handIds = handCards.map((c) => c.cardId);
   if (new Set(handIds).size !== handIds.length) {
-    throw new Error(`playRound: duplicate card in hands at turn ${turnIndex}`);
+    throw new Error(`playRound: duplicate real card in hands at turn ${turnIndex}`);
   }
   if (!playerIds.includes(state.activePlayerId)) {
     throw new Error(`playRound: active player "${state.activePlayerId}" not seated at turn ${turnIndex}`);

@@ -85,14 +85,26 @@ function requireDeps(): CpuGameDeps {
   return deps;
 }
 
+// A transformed Joker (createTransformedJokerCard) is a NumberCard that is not one
+// of the 36 real number-deck cards — it carries `transformedFromSkillId`. Card
+// conservation only counts real cards, so exclude transformed Jokers everywhere.
+const isRealCard = (card: { transformedFromSkillId?: string }): boolean =>
+  card.transformedFromSkillId === undefined;
+
 function assertCardConservation(round: RoundState): void {
-  const inHands = round.players.reduce((sum, player) => sum + player.hand.length, 0);
-  const onField = round.activeField ? round.activeField.combination.cards.length : 0;
-  const total = inHands + round.discardPile.length + onField;
+  const inHands = round.players.reduce(
+    (sum, player) => sum + player.hand.filter(isRealCard).length,
+    0,
+  );
+  const onField = round.activeField
+    ? round.activeField.combination.cards.filter(isRealCard).length
+    : 0;
+  const inDiscard = round.discardPile.filter(isRealCard).length;
+  const total = inHands + inDiscard + onField;
   if (total !== TOTAL_CARDS) {
     throw new Error(
       `cpuGameStore: card conservation violated (${inHands} in hands + ` +
-        `${round.discardPile.length} discarded + ${onField} on field = ${total}, expected ${TOTAL_CARDS})`,
+        `${inDiscard} discarded + ${onField} on field = ${total}, expected ${TOTAL_CARDS})`,
     );
   }
 }

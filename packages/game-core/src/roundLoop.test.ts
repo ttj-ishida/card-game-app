@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { type CpuPolicyId, numberDeck, playRound } from "./index.ts";
+import {
+  type CpuPolicyId,
+  INITIAL_RULESET_VERSION,
+  type NumberCard,
+  createPlayerState,
+  createRoundState,
+  createSkillCard,
+  numberDeck,
+  playRound,
+  resolvePlay,
+} from "./index.ts";
 
 const seats = (n: number) => Array.from({ length: n }, (_, i) => `p${i + 1}`);
 const allStandard = (ids: string[]): Record<string, CpuPolicyId> =>
@@ -28,6 +38,69 @@ test("card conservation holds on every turn", () => {
   const finalInHands = result.finalState.players.reduce((a, p) => a + p.hand.length, 0);
   const field = result.finalState.activeField?.combination.cards.length ?? 0;
   assert.equal(finalInHands + result.finalState.discardPile.length + field, 36);
+});
+
+test("real-card conservation holds even with a transformed Joker in the active field", () => {
+  // Mirrors roundLoop's private assertInvariants predicate: only real deck cards
+  // (transformedFromSkillId === undefined) count toward the 36.
+  const isRealCard = (card: NumberCard): boolean => card.transformedFromSkillId === undefined;
+
+  const deck = numberDeck();
+  const byId = (id: string): NumberCard => {
+    const card = deck.find((c) => c.cardId === id);
+    if (!card) throw new Error(`test deck missing ${id}`);
+    return card;
+  };
+  const p1HandIds = [
+    "CARD_NUMBER_RANK_3_SUIT_FIRE",
+    "CARD_NUMBER_RANK_4_SUIT_FIRE",
+    "CARD_NUMBER_RANK_9_SUIT_WATER",
+  ];
+  const p1Hand = p1HandIds.map(byId);
+  const p2Hand = deck.filter((c) => !p1HandIds.includes(c.cardId));
+
+  const state = createRoundState({
+    rulesetCode: "INITIAL",
+    rulesetVersion: INITIAL_RULESET_VERSION,
+    dayNight: "DAY",
+    players: [
+      createPlayerState("P1", p1Hand, createSkillCard("SK_JOKER_P1", "SKILL_JOKER_HERO")),
+      createPlayerState("P2", p2Hand),
+    ],
+    activePlayerId: "P1",
+    activeField: null,
+  });
+
+  // Sanity: the starting state is a clean 36 with no transformed Jokers anywhere.
+  assert.equal(p1Hand.length + p2Hand.length, 36);
+
+  const res = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["CARD_NUMBER_RANK_3_SUIT_FIRE", "CARD_NUMBER_RANK_4_SUIT_FIRE"],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [
+      { skillId: "SK_JOKER_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
+      { skillId: "SK_JOKER_P1_2", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
+    ],
+  });
+  assert.ok(res.ok);
+
+  const fieldCards = res.state.activeField?.combination.cards ?? [];
+  // The transform Joker really did land on the field.
+  assert.ok(fieldCards.some((c) => !isRealCard(c)));
+
+  const realHands = res.state.players.flatMap((p) => p.hand).filter(isRealCard);
+  const realField = fieldCards.filter(isRealCard);
+  const realDiscard = res.state.discardPile.filter(isRealCard);
+  assert.equal(realHands.length + realField.length + realDiscard.length, 36);
+
+  // A naive count that includes the transformed Joker would overshoot 36.
+  const naiveTotal =
+    res.state.players.flatMap((p) => p.hand).length +
+    fieldCards.length +
+    res.state.discardPile.length;
+  assert.ok(naiveTotal > 36);
 });
 
 test("playRound is fully reproducible for the same seed", () => {
