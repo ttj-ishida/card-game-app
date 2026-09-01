@@ -19,9 +19,16 @@ function assertSvg(path, size) {
   assert(svg.includes('xmlns="http://www.w3.org/2000/svg"'), path + " missing xmlns");
   assert(svg.includes('role="img"'), path + " missing role=img");
   assert(svg.includes("<title"), path + " missing <title>");
-  assert(svg.includes(`width="${size.width}"`), path + " must declare width " + size.width);
-  assert(svg.includes(`height="${size.height}"`), path + " must declare height " + size.height);
-  assert(svg.includes(`viewBox="${size.viewBox}"`), path + " must declare viewBox " + size.viewBox);
+  assert(svg.includes("<desc"), path + " missing <desc>");
+
+  // Anchor dimension checks to the root <svg ...> tag so a child <rect> can't satisfy them.
+  const openTag = svg.match(/<svg\b[^>]*>/);
+  assert(openTag, path + " has no <svg> opening tag");
+  const root = openTag[0];
+  assert(root.includes(`width="${size.width}"`), path + " root must declare width " + size.width);
+  assert(root.includes(`height="${size.height}"`), path + " root must declare height " + size.height);
+  assert(root.includes(`viewBox="${size.viewBox}"`), path + " root must declare viewBox " + size.viewBox);
+
   assert(statSync(path).size <= size.maxBytes, path + " exceeds maxBytes " + size.maxBytes);
 }
 
