@@ -1,7 +1,7 @@
 # M3 サブプロジェクト2：Supabase 統計・イベント基盤 設計書
 
 - 文書ID：GAME-SPEC-M3-SB-STATS-EVENTS
-- 版数：0.1
+- 版数：0.2
 - 作成日：2026-09-02
 - 基準文書：`独自カードゲーム_要件定義書_v0.2.md`（v0.4 本文）、`独自カードゲーム_M3_詳細TODO_v0.2.md` §M3-SB-01〜04
 - 対象 TODO：M3-SB-01、M3-SB-02、M3-SB-03、M3-SB-04（M3 サブプロジェクト2 全体）
@@ -172,7 +172,7 @@ create table public.round_events (
 ```
 
 - `cards`：実カードのみ（`transformedFromSkillId === undefined`）。変化Jokerの場合は宣言された `rank_code`/`suit_code` も併せて記録する（プレイヤーが公開した内容そのもの）。
-- `skill_effect`：`SkillEffectCode | null`。使用しなかったスキルは記録しない。
+- `skill_effect`：`PlaySkillUse | null`（値：`EXTENSION_SEAL` / `REVOLUTION` / `JOKER_TRANSFORM` / `JOKER_CLEAR`）。この値は行った操作を表す。`JOKER_CLEAR` / `JOKER_TRANSFORM` の背後のスキルカードが勇者(HERO)か聖女(SAINT)かは区別しない（VIS-104 上は「ジョーカー技を使った」で十分。区別が必要になれば M3-EX-04 実装時に `player.skill.effectCode` を追加フィールドとして記録する — JSONB なので追加は非破壊）。
 - `kind: "PASS"` のとき `cards` は空配列、`action_kind` は存在しない値を省略可。
 - 既存 UI 用の匿名化された `TurnLogEntry`（カード内容を持たない）とは別構造。`round_events` は「行動時点で公開された情報」なので、場に出たカードとスキル効果はここでは秘匿しない（VIS-202 は非公開手札・未使用スキルの秘匿を求めているのであって、公開されたプレイ内容の秘匿は求めていない）。
 
@@ -278,7 +278,7 @@ grant execute on function public.get_player_mode_stats(text, text) to anon, auth
 ### 8.2 `turnDriver.ts` の拡張（M3-SB-04）
 
 - `DriverState` に `publicEvents: PublicRoundEvent[]` を追加。`TurnLogEntry` を追記している内部の共通記録ヘルパー（`humanPlay`/`cpuStep` の両方が通る箇所）で、同時に `PublicRoundEvent` も1件追記する。
-- `PublicRoundEvent` の型は §4.5 の JSON 形状に対応する TypeScript 型として `turnDriver.ts`（または同ディレクトリの新規ファイル）に定義する。カード情報は `resolvePlay` 適用後の `RoundState.activeField.combination.cards`（実カードのみ、`transformedFromSkillId === undefined` でフィルタ）から取得する。スキル効果は `cpuPolicyStandard.ts` の `activeSkillEffect` と同等のロジックで `activeField.lock`/`combination` から導出する（既存ロジックの再利用を優先し、必要なら `game-core` 側から export を追加する）。
+- `PublicRoundEvent` の型は §4.5 の JSON 形状に対応する TypeScript 型として `turnDriver.ts`（または同ディレクトリの新規ファイル）に定義する。カード情報はプレイ前の手札から `input.cardIds` を引き当て、変化Jokerの宣言（`input.jokerDeclarations`）を加えて得る（`resolvePlay` 適用前の `state.round` を使う）。スキル効果は `PlayInput.useSkill`（`PlaySkillUse | null`）を直接読む。`resolvePlay` が `useSkill` を検証し、使用不可・使用済みのスキルは `SKILL_NOT_AVAILABLE` で弾くため、プレイが成立した時点で記録される効果は必ず実際に消費・公開されたもの。`activeField` から導出する方式は `EXTENSION_SEAL`（組み合わせに痕跡を残さない後効果）を取りこぼすため採らない。
 - `PASS` の場合は `cards: []`、`skill_effect: null`。
 
 ### 8.3 新規ファイル `roundEventsPayload.ts`（M3-SB-04）
@@ -334,4 +334,5 @@ pure 関数。`round_result_id` は `practice_round_results` への insert 成�
 - `ruleset_id` の NOT NULL 化は、次サブプロジェクトでクライアント送信配線が完了した後の別マイグレーションで行う。
 - 棄権局（STAT-004）は、対局途中離脱・CPU引き継ぎの実装（将来マイルストーン）と合わせて `practice_round_results` のスキーマ拡張（例：`abandoned boolean`）を検討する。
 - `player_mode_stats` の `win_rate` を毎回計算するのが重くなった場合、マテリアライズドビュー化や集計列の追加を検討する（現状の規模では不要）。
+- **`round_events` の insert 先取り（denial-of-write）**：`with check (true)` + `round_result_id` UNIQUE の組み合わせにより、anon クライアントは他人の `practice_round_results.id`（全件 select 可）に対して `round_events` 行を先に insert できる。すると正当な所有者は自分のイベントを永久に insert できなくなる（再送は 23505 → クライアントは「保存済み」と誤認）。`practice_round_results` 単体の `with check (true)` はゴミ行の追加しか許さないが、こちらは被害者の書き込みを恒久的にブロックできる新しい危険クラス。ローカル・認証前では許容だが、認証導入時に insert policy を `with check (exists (select 1 from public.practice_round_results r where r.id = round_result_id and r.anon_player_id = <caller>))` 相当へ狭める。
 - 共有/ステージング環境へ出す前に、`round_events`/`practice_round_results` とも無制限・無スロットルの `INSERT` を anon が持つ点は M2-SB-01 と同じ注意事項として残る。
