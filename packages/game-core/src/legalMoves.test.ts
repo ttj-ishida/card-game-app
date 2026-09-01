@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   type RoundState,
+  type SkillEffectCode,
   createNumberCard,
   createPlayerState,
   createRoundState,
@@ -220,6 +221,154 @@ test("enumerateLegalPlays exactly matches the oracle over an active SEQUENCE fie
     .sort()
     .join("|");
   assert.ok(keys.includes(fourFive));
+});
+
+// ---- includeSkills: Joker (JOKER_CLEAR + JOKER_TRANSFORM) ----
+
+type SeatSkill = { skillId: string; effectCode: SkillEffectCode };
+
+function skillRound(overrides: {
+  activeSeatSkill: SeatSkill | null;
+  activeSeatHand: ReturnType<typeof n>[];
+  activeField?: Parameters<typeof createRoundState>[0]["activeField"];
+}): RoundState {
+  return createRoundState({
+    rulesetCode: "INITIAL",
+    rulesetVersion: 1,
+    dayNight: "DAY",
+    players: [
+      createPlayerState(
+        "P1",
+        overrides.activeSeatHand,
+        overrides.activeSeatSkill ? { ...overrides.activeSeatSkill, used: false } : null,
+      ),
+      createPlayerState("P2", [n(9, "WATER"), n(9, "WIND")]),
+    ],
+    activePlayerId: "P1",
+    activeField: overrides.activeField ?? null,
+  });
+}
+
+const nonEmptyField: Parameters<typeof createRoundState>[0]["activeField"] = {
+  combination: { kind: "SINGLE", cards: [n(4, "EARTH")], ranks: [4] },
+  lastPlayerId: "P2",
+  lock: { countLocked: false, suitFixed: null, suitUniform: false },
+};
+
+test("enumerateLegalPlays without options equals enumerateLegalPlays(state, {})", () => {
+  const state = round({
+    players: [
+      createPlayerState("P1", [n(3, "FIRE"), n(3, "WATER"), n(5, "FIRE"), n(6, "FIRE"), n(7, "FIRE")]),
+      createPlayerState("P2", [n(9, "WATER")]),
+    ],
+    activePlayerId: "P1",
+    activeField: {
+      combination: { kind: "SINGLE", cards: [n(2, "WIND")], ranks: [2] },
+      lastPlayerId: "P2",
+      lock: { countLocked: false, suitFixed: null, suitUniform: false },
+    },
+  });
+  assert.deepEqual(enumerateLegalPlays(state), enumerateLegalPlays(state, {}));
+});
+
+test("includeSkills: a Joker holder on a non-empty field can clear-and-lead", () => {
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_JOKER_HERO" },
+    activeSeatHand: [n(2, "FIRE"), n(3, "WATER")],
+    activeField: nonEmptyField,
+  });
+  const plays = enumerateLegalPlays(state, { includeSkills: true });
+  assert.ok(
+    plays.some((p) => p.input.kind === "PLAY" && p.input.useSkill === "JOKER_CLEAR"),
+  );
+  for (const p of plays) assert.equal(resolvePlay(state, p.input).ok, true);
+});
+
+test("includeSkills: JOKER_TRANSFORM plays are enumerated but never a go-out", () => {
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_JOKER_SAINT" },
+    activeSeatHand: [n(5, "FIRE")], // 1 card -> transforming out would be a go-out
+  });
+  const plays = enumerateLegalPlays(state, { includeSkills: true });
+  const transforms = plays.filter(
+    (p) => p.input.kind === "PLAY" && p.input.useSkill === "JOKER_TRANSFORM",
+  );
+  assert.ok(transforms.length > 0);
+  assert.ok(transforms.every((p) => !p.goesOut));
+  for (const p of transforms) assert.equal(resolvePlay(state, p.input).ok, true);
+});
+
+test("includeSkills is a no-op without an unused skill", () => {
+  const state = skillRound({ activeSeatSkill: null, activeSeatHand: [n(4, "FIRE")] });
+  assert.deepEqual(
+    enumerateLegalPlays(state, { includeSkills: true }).map((p) => p.input),
+    enumerateLegalPlays(state).map((p) => p.input),
+  );
+});
+
+test("includeSkills is a no-op when the held skill is already used", () => {
+  const state = createRoundState({
+    rulesetCode: "INITIAL",
+    rulesetVersion: 1,
+    dayNight: "DAY",
+    players: [
+      createPlayerState("P1", [n(4, "FIRE"), n(5, "FIRE")], {
+        skillId: "SK1",
+        effectCode: "SKILL_JOKER_HERO",
+        used: true,
+      }),
+      createPlayerState("P2", [n(9, "WATER")]),
+    ],
+    activePlayerId: "P1",
+    activeField: nonEmptyField,
+  });
+  assert.deepEqual(
+    enumerateLegalPlays(state, { includeSkills: true }),
+    enumerateLegalPlays(state),
+  );
+});
+
+test("includeSkills: every JOKER_CLEAR / JOKER_TRANSFORM entry passes resolvePlay and order is deterministic", () => {
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_JOKER_HERO" },
+    activeSeatHand: [n(3, "FIRE"), n(3, "WATER"), n(4, "FIRE"), n(5, "FIRE")],
+    activeField: nonEmptyField,
+  });
+  const a = enumerateLegalPlays(state, { includeSkills: true });
+  const b = enumerateLegalPlays(state, { includeSkills: true });
+  assert.deepEqual(
+    a.map((p) => JSON.stringify(p.input)),
+    b.map((p) => JSON.stringify(p.input)),
+  );
+  const skillPlays = a.filter((p) => p.input.kind === "PLAY" && p.input.useSkill);
+  assert.ok(
+    skillPlays.some((p) => p.input.kind === "PLAY" && p.input.useSkill === "JOKER_CLEAR"),
+    "expected a JOKER_CLEAR play",
+  );
+  assert.ok(
+    skillPlays.some((p) => p.input.kind === "PLAY" && p.input.useSkill === "JOKER_TRANSFORM"),
+    "expected a JOKER_TRANSFORM play",
+  );
+  for (const p of a) {
+    assert.equal(resolvePlay(state, p.input).ok, true, `not ok: ${JSON.stringify(p.input)}`);
+  }
+  // within a given card count, bare number plays precede their skill-bearing siblings
+  for (let count = 0; count <= 5; count += 1) {
+    const atCount = a
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => p.input.kind === "PLAY" && p.input.cardIds.length === count);
+    const lastBare = atCount
+      .filter(({ p }) => p.input.kind === "PLAY" && !p.input.useSkill)
+      .map(({ i }) => i)
+      .at(-1);
+    const firstSkill = atCount
+      .filter(({ p }) => p.input.kind === "PLAY" && p.input.useSkill)
+      .map(({ i }) => i)
+      .at(0);
+    if (lastBare !== undefined && firstSkill !== undefined) {
+      assert.ok(lastBare < firstSkill, `count ${count}: bare should precede skill`);
+    }
+  }
 });
 
 test("the sequence candidate cap (1024) does not skip a legal 5-card window on an 18-card hand", () => {
