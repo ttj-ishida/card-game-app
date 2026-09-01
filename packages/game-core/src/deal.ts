@@ -1,4 +1,4 @@
-import type { NumberCard, PlayerState, SkillCard } from "./index.js";
+import type { NumberCard, PlayerState, SkillCard } from "./core.ts";
 import {
   RANK_CODES,
   SUIT_CODES,
@@ -6,9 +6,9 @@ import {
   createPlayerState,
   createSkillCard,
   rankNumber,
-} from "./index.js";
-import type { Rng } from "./rng.js";
-import { shuffle } from "./rng.js";
+} from "./core.ts";
+import type { Rng } from "./rng.ts";
+import { shuffle } from "./rng.ts";
 
 // index.ts が末尾で deal.ts を re-export するため、index.ts の値はモジュール
 // トップレベルで使えない（TDZ）。デッキは毎回組み立てる関数にする。

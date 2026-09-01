@@ -1,8 +1,8 @@
-import type { NumberCard, PlayInput } from "./index.js";
-import { rankNumber, rankStrength } from "./index.js";
-import type { CpuDecisionInput, CpuPolicy } from "./cpuPolicy.js";
-import { type LegalPlay, resultStrength } from "./legalMoves.js";
-import type { Rng } from "./rng.js";
+import type { NumberCard, PlayInput } from "./core.ts";
+import { rankNumber, rankStrength } from "./core.ts";
+import type { CpuDecisionInput, CpuPolicy } from "./cpuPolicy.ts";
+import { type LegalPlay, resultStrength } from "./legalMoves.ts";
+import type { Rng } from "./rng.ts";
 
 /** 決定的順序済みの候補から rng で1つ選ぶ（同値タイブレーク）。 */
 function pickWeakest(

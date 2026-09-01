@@ -1,14 +1,14 @@
-import type { DayNight, PlayActionKind, PlayInput, PlaySkillUse, RoundState } from "./index.js";
-import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./index.js";
-import { type DealResult, dealRound } from "./deal.js";
-import { enumerateLegalPlays } from "./legalMoves.js";
+import type { DayNight, PlayActionKind, PlayInput, PlaySkillUse, RoundState } from "./core.ts";
+import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./core.ts";
+import { type DealResult, dealRound } from "./deal.ts";
+import { enumerateLegalPlays } from "./legalMoves.ts";
 import {
   CPU_POLICY_IDS,
   type CpuPolicyId,
   resolveCpuPolicy,
   rollThinkDelayMillis,
-} from "./cpuPolicy.js";
-import { createRng } from "./rng.js";
+} from "./cpuPolicy.ts";
+import { createRng } from "./rng.ts";
 
 export type PlayRoundInput = {
   playerIds: readonly string[];

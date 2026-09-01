@@ -1,7 +1,7 @@
-import type { PlayInput, RoundState } from "./index.js";
-import type { LegalPlay } from "./legalMoves.js";
-import type { Rng } from "./rng.js";
-import { standardPolicy } from "./cpuPolicyStandard.js";
+import type { PlayInput, RoundState } from "./core.ts";
+import type { LegalPlay } from "./legalMoves.ts";
+import type { Rng } from "./rng.ts";
+import { standardPolicy } from "./cpuPolicyStandard.ts";
 
 export type CpuPolicyId = "STANDARD";
 

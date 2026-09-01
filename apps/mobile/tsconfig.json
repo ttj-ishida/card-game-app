@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "types": ["node"],
+    "allowImportingTsExtensions": true,
     "paths": {
       "@card-game-app/game-core": ["../../packages/game-core/src/index.ts"],
       "@card-game-app/ui": ["../../packages/ui/src/tokens.ts"]

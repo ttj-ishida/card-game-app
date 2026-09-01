@@ -5,8 +5,8 @@ import type {
   PlayActionKind,
   PlayInput,
   RoundState,
-} from "./index.js";
-import { combinationStrength, rankNumber, resolvePlay } from "./index.js";
+} from "./core.ts";
+import { combinationStrength, rankNumber, resolvePlay } from "./core.ts";
 
 export type LegalPlay = {
   input: PlayInput;
