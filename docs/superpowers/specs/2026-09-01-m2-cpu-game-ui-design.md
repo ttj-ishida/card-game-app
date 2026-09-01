@@ -35,7 +35,8 @@
 | 卓／ルーム作成、招待リンク、Realtime 同期、マッチング、複数人間、同時卓のサーバ基盤 | M4（席抽象は M4-ready で作るが、オンライン層・卓UIは作らない） |
 | カード移動アニメ、革命の背景反転演出、ロックの紋章・結界演出、SE/BGM | M2-GR-04 素材 + M3 以降の演出実装（M2 は View/Text の状態表示のみ、M0-QA-01 踏襲） |
 | 対局履歴の専用画面、CPU戦統計の専用画面 | M3-EX-04 / M3-EX-05（M2 は対局中の簡易手番ログのみ） |
-| 本番カードイラスト・属性フレーム | M2-GR-*（M2 は数字＋属性ラベル＋属性色＋形状で識別、UI-A11Y-001/002） |
+| 本番カードイラスト・属性フレーム、デザインカード、複数カードパック、パック選択UI | イラストは M2-GR-*。パック選択はソロ = M3-EX-08 設定土台、卓 = M4 卓設定（卓作成者が選び全員へ配信）。M2 は継ぎ目のみ用意（§4.4 `CardFace` / §4.1 `packId`）。M2 は数字＋属性ラベル＋属性色＋形状で識別（UI-A11Y-001/002） |
+| デザイン版の各画面 | M2 の3画面は機能プレースホルダ。将来のデザイン画面は `boardViewModel` / ストアという安定契約の上に新 `.tsx` を作るだけ（§6・§10） |
 | チュートリアル、不正理由の詳細支援表示 | M3-EX-06 / M3-EX-07（M2 は不正時に確定無効化＋簡潔な日本語理由） |
 
 ## 2. Global Constraints
@@ -51,6 +52,8 @@
 - コミットは `main` 直、`[TODO-ID]` 付き Conventional Commits、明示パスのみ `git add`（`.idea/` は `.gitignore` 済み）。
 
 ## 3. 画面構成
+
+**M2 の3画面は機能プレースホルダ**。デザイン確定後にデザイン版へ差し替える前提で、画面は「`cpuGameStore` / `boardViewModel` という安定契約の上の薄い皮」に徹する。画面ファイルにロジック（判定・遷移条件・集計）を持たせない。差し替え時は新 `.tsx` を作り同じストア/ビューモデルを読むだけ。
 
 expo-router、`src/app/cpu-game/` 配下。ホーム（`src/app/index.tsx`）に「CPU戦」ボタンを追加し `/cpu-game/setup` へ。`src/app/_layout.tsx` の `Stack` に3画面を登録。
 
@@ -86,7 +89,10 @@ export type SeatConfig = {
 
 export type MatchConfig = {
   seats: SeatConfig[];         // 席順（時計回り）。長さ 2..6
+  packId: string;              // カードパック。M2 は常に 'DEFAULT'。M3/M4 で選択可に
 };
+
+export const DEFAULT_PACK_ID = 'DEFAULT';
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
@@ -408,7 +414,8 @@ export type CpuGameState = {
 ```
 
 - 相手パネル：`OpponentView` を席順で。手番の席は枠強調＋`isActive`。`PASSED`/`OUT` はラベル＋淡色（色のみに依存しない、UI-A11Y-001）。
-- カード表現：数字（大）＋属性（色＋日本語ラベル＋形状/記号）。変化Joker由来は「J」バッジ（既存 `CardChip` 準拠）。M2 はイラスト無し。
+- カード表現：**すべて1つの `CardFace` コンポーネント経由**（`src/features/cpu-game/CardFace.tsx`）。入力はパック非依存のデータ `{ rank: number; suitCode: SuitCode; isJoker: boolean; size: 'hand' | 'field' | 'mini' }` のみ。M2 の実装は既存 `apps/mobile/src/app/sandbox/index.tsx` の `CardChip` 相当のプレースホルダ＝「デフォルトパック」（数字大＋属性色＋日本語ラベル＋形状/記号、変化Joker は「J」バッジ）。イラスト無し。
+- **将来のデザインカード／複数パック**：`CardFace` に `packId`（props か Context）を渡し、`packId + rank + suitCode` からアセットを引く描画レイヤの仕事。ビューモデルとロジックは無変更。M2 は `packId` を `MatchConfig` に載せる（常に `'DEFAULT'`）ところまで。
 - `phase==='CPU_PENDING'`：手番 CPU パネルに「思考中…」、手札操作は無効。
 - `phase==='HUMAN_TURN'`：`selectable` なカードのみ押下可、`canSubmit` で「出す」活性、`canPass` で「パス」活性（場が空なら非活性、UI-BATTLE-009）。不正選択（`canSubmit===false` かつ選択あり）で「出す」非活性＋簡潔理由（`sandbox.reason.*` から、または「この組み合わせは出せません」）。
 - `phase==='ROUND_OVER'`：`result.tsx` へ自動 `replace`。
@@ -456,5 +463,7 @@ export type CpuGameState = {
 - **M3-EX-01/02**：人間のスキルUI（Joker宣言画面、追加封印/革命のトグル）。`turnDriver.humanPlay` は既に `PlayInput`（`useSkill` / `jokerDeclarations` 含む）を受けるので、UI を足すだけ。
 - **M3-EX-03**：CPU のスキルポリシー。`matchConfig` の `policyId` を差し替えるだけ（`game-core` 側で新ポリシー追加済み前提）。
 - **M3-EX-04/05**：対局履歴・CPU戦統計の専用画面。`turnLog` と `practice_round_results`（`anon_player_id` 索引）から。
-- **M4**：`SeatConfig.kind` に「リモート人間」を足し、`turnDriver` の外側にオンライン同期層（Realtime 購読、`resolvePlay` はサーバ権威）。卓作成UIは新規画面。`turnDriver` の純粋な状態機械はそのまま。
+- **M4**：`SeatConfig.kind` に「リモート人間」を足し、`turnDriver` の外側にオンライン同期層（Realtime 購読、`resolvePlay` はサーバ権威）。卓作成UIは新規画面。卓作成者が `MatchConfig.packId` を選び、`MatchConfig` が同期対象なので全参加者へ自然に配信される。`turnDriver` の純粋な状態機械はそのまま。
 - **手番タイマー（UI-BATTLE-006）**：M4 のルーム設定（15/30/60/無制限）とセットで。M2 は「手番プレイヤー表示」のみで時間は出さない。
+- **デザイン画面への差し替え**：`boardViewModel` の `*View` 型と `cpuGameStore` のアクション群が契約。デザイン版は新 `.tsx` を作って差し替えるだけで、`features/cpu-game/*.ts` は無変更。
+- **デザインカード・複数パック**：`CardFace` に `packId` を渡し `packId + rank + suitCode` でアセットを引く描画レイヤを追加。`MatchConfig.packId` は M2 から存在（`'DEFAULT'` 固定）。パック = カードごとのアセットIDセットの集合（`FUT-006` アセット管理の枠）。ソロは M3-EX-08 設定、卓は M4 卓設定でユーザー/卓作成者が選択。
