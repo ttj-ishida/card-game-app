@@ -14,7 +14,7 @@
 
 - `packages/game-core` に依存を追加しない（zero-dep、`node:test` + `tsx` のみ）。
 - `game-core:typecheck`（`tsc --noEmit`、`include: ["src/index.ts"]`）は `src/index.ts` 経由のシンボルだけを型検査する。**新規公開シンボルはすべて `src/index.ts` から re-export する**。テストファイルは型検査対象外 → テスト側の型健全性は実装者が手動監査する。
-- import は必ず `.ts` 拡張子付き（既存コード・テストに合わせる。例：`import { createRng } from "./rng.ts";`）。
+- `packages/game-core/src/` 内のソース間 import と `index.ts` の re-export は **`.js` 拡張子**で書く（`tsconfig` は `moduleResolution: NodeNext` かつ `allowImportingTsExtensions` 無効。`tsc` は `index.ts` から到達する全ソースを追うため、ソースが `.ts` 指定子を持つと TS5097 で落ちる。例：`export * from "./rng.js";` / `import { shuffle } from "./rng.js";`）。テストファイル（`*.test.ts`）は既存慣習どおり `.ts` 指定子でよい（型検査対象外、`tsx` が解決）。
 - game-core は純粋・同期・決定的。時計・タイマー・スレッド・I/O・モジュールスコープの可変状態を持たない。乱数は必ず注入された `Rng` 経由。
 - 既存 export の**シグネチャは変更しない**。private 関数を `export` に格上げするのは可（追加的変更）。既存ファイル `index.ts` への変更は「re-export 行の追加」と「`combinationStrength` への `export` 付与」のみ。
 - カードID命名：数字 `CARD_NUMBER_RANK_<r>_SUIT_<s>`（例 `CARD_NUMBER_RANK_1_SUIT_FIRE`）、スキル物理カード `SKILL_CARD_JOKER_HERO` / `SKILL_CARD_JOKER_SAINT` / `SKILL_CARD_EXTENSION_SEAL_1` / `SKILL_CARD_EXTENSION_SEAL_2` / `SKILL_CARD_REVOLUTION_1` / `SKILL_CARD_REVOLUTION_2`。
@@ -255,7 +255,7 @@ export function shuffle<T>(rng: Rng, items: readonly T[]): T[] {
 ```ts
 
 // ---- M2: headless CPU engine ----
-export * from "./rng.ts";
+export * from "./rng.js";
 ```
 
 - [ ] **Step 5: テストと型検査を実行** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS（新規12件 + 既存114件）。
@@ -449,7 +449,7 @@ test("dealRound rejects invalid player counts and missing rematch baseline", () 
 - [ ] **Step 3: `packages/game-core/src/deal.ts` を実装**
 
 ```ts
-import type { NumberCard, PlayerState, SkillCard } from "./index.ts";
+import type { NumberCard, PlayerState, SkillCard } from "./index.js";
 import {
   RANK_CODES,
   SUIT_CODES,
@@ -457,9 +457,9 @@ import {
   createPlayerState,
   createSkillCard,
   rankNumber,
-} from "./index.ts";
-import type { Rng } from "./rng.ts";
-import { shuffle } from "./rng.ts";
+} from "./index.js";
+import type { Rng } from "./rng.js";
+import { shuffle } from "./rng.js";
 
 export const NUMBER_DECK: readonly NumberCard[] = RANK_CODES.flatMap((rankCode) =>
   SUIT_CODES.map((suitCode) =>
@@ -566,7 +566,7 @@ export function dealRound(input: DealInput): DealResult {
 - [ ] **Step 4: `index.ts` の re-export ブロックに追記**
 
 ```ts
-export * from "./deal.ts";
+export * from "./deal.js";
 ```
 
 - [ ] **Step 5: テストと型検査** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS。
@@ -750,8 +750,8 @@ import type {
   PlayActionKind,
   PlayInput,
   RoundState,
-} from "./index.ts";
-import { combinationStrength, rankNumber, resolvePlay } from "./index.ts";
+} from "./index.js";
+import { combinationStrength, rankNumber, resolvePlay } from "./index.js";
 
 export type LegalPlay = {
   input: PlayInput;
@@ -891,7 +891,7 @@ function sortLegalPlays(plays: LegalPlay[], dayNight: DayNight): LegalPlay[] {
 - [ ] **Step 5: `index.ts` の re-export ブロックに追記**
 
 ```ts
-export * from "./legalMoves.ts";
+export * from "./legalMoves.js";
 ```
 
 - [ ] **Step 6: テストと型検査** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS。
@@ -1055,10 +1055,10 @@ test("rollThinkDelayMillis stays within [600, 1200] and is reproducible", () => 
 - [ ] **Step 3: `packages/game-core/src/cpuPolicy.ts` を実装**
 
 ```ts
-import type { PlayInput, RoundState } from "./index.ts";
-import type { LegalPlay } from "./legalMoves.ts";
-import type { Rng } from "./rng.ts";
-import { standardPolicy } from "./cpuPolicyStandard.ts";
+import type { PlayInput, RoundState } from "./index.js";
+import type { LegalPlay } from "./legalMoves.js";
+import type { Rng } from "./rng.js";
+import { standardPolicy } from "./cpuPolicyStandard.js";
 
 export type CpuPolicyId = "STANDARD";
 
@@ -1092,11 +1092,11 @@ export function rollThinkDelayMillis(rng: Rng): number {
 - [ ] **Step 4: `packages/game-core/src/cpuPolicyStandard.ts` を実装**
 
 ```ts
-import type { NumberCard, PlayInput } from "./index.ts";
-import { rankNumber, rankStrength } from "./index.ts";
-import type { CpuDecisionInput, CpuPolicy } from "./cpuPolicy.ts";
-import { type LegalPlay, resultStrength } from "./legalMoves.ts";
-import type { Rng } from "./rng.ts";
+import type { NumberCard, PlayInput } from "./index.js";
+import { rankNumber, rankStrength } from "./index.js";
+import type { CpuDecisionInput, CpuPolicy } from "./cpuPolicy.js";
+import { type LegalPlay, resultStrength } from "./legalMoves.js";
+import type { Rng } from "./rng.js";
 
 /** 決定的順序済みの候補から rng で1つ選ぶ（同値タイブレーク）。 */
 function pickWeakest(
@@ -1159,8 +1159,8 @@ function findCard(state: CpuDecisionInput["state"], cardId: string): NumberCard 
 - [ ] **Step 5: `index.ts` の re-export ブロックに追記**
 
 ```ts
-export * from "./cpuPolicy.ts";
-export * from "./cpuPolicyStandard.ts";
+export * from "./cpuPolicy.js";
+export * from "./cpuPolicyStandard.js";
 ```
 
 - [ ] **Step 6: テストと型検査** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS。
@@ -1285,12 +1285,12 @@ test("rematchIndex rotates the first player", () => {
 - [ ] **Step 3: `packages/game-core/src/roundLoop.ts` を実装**
 
 ```ts
-import type { DayNight, PlayActionKind, PlayInput, RoundState } from "./index.ts";
-import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./index.ts";
-import { type DealResult, dealRound } from "./deal.ts";
-import { enumerateLegalPlays } from "./legalMoves.ts";
-import { type CpuPolicyId, resolveCpuPolicy, rollThinkDelayMillis } from "./cpuPolicy.ts";
-import { createRng } from "./rng.ts";
+import type { DayNight, PlayActionKind, PlayInput, RoundState } from "./index.js";
+import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./index.js";
+import { type DealResult, dealRound } from "./deal.js";
+import { enumerateLegalPlays } from "./legalMoves.js";
+import { type CpuPolicyId, resolveCpuPolicy, rollThinkDelayMillis } from "./cpuPolicy.js";
+import { createRng } from "./rng.js";
 
 export type PlayRoundInput = {
   playerIds: readonly string[];
@@ -1440,7 +1440,7 @@ function assertInvariants(state: RoundState, turnIndex: number, playerIds: strin
 - [ ] **Step 4: `index.ts` の re-export ブロックに追記**
 
 ```ts
-export * from "./roundLoop.ts";
+export * from "./roundLoop.js";
 ```
 
 - [ ] **Step 5: テストと型検査** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS。
