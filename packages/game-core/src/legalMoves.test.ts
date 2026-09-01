@@ -298,6 +298,35 @@ test("includeSkills: JOKER_TRANSFORM plays are enumerated but never a go-out", (
   for (const p of transforms) assert.equal(resolvePlay(state, p.input).ok, true);
 });
 
+test("includeSkills: a declared Joker + one adjacent real card extends an active sequence (2-card window)", () => {
+  // field: SEQUENCE 1-2-3. Active seat holds a Joker skill + a real 4 adjacent to
+  // the run. Declaring the Joker as a 5 lets [real 4 + transformed 5] EXTEND the
+  // sequence — a 2-card window that the len=3 loop used to miss entirely.
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_JOKER_HERO" },
+    activeSeatHand: [n(4, "FIRE"), n(8, "WATER")],
+    activeField: {
+      combination: {
+        kind: "SEQUENCE",
+        cards: [n(1, "WATER"), n(2, "WATER"), n(3, "WATER")],
+        ranks: [1, 2, 3],
+      },
+      lastPlayerId: "P2",
+      lock: { countLocked: false, suitFixed: null, suitUniform: false },
+    },
+  });
+  const plays = enumerateLegalPlays(state, { includeSkills: true });
+  const extend = plays.filter(
+    (p) =>
+      p.input.kind === "PLAY" &&
+      p.input.useSkill === "JOKER_TRANSFORM" &&
+      p.actionKind === "EXTEND" &&
+      p.input.cardIds.includes("CARD_NUMBER_RANK_4_SUIT_FIRE"),
+  );
+  assert.ok(extend.length > 0, "expected a 2-card JOKER_TRANSFORM sequence extension");
+  for (const p of extend) assert.equal(resolvePlay(state, p.input).ok, true);
+});
+
 test("includeSkills is a no-op without an unused skill", () => {
   const state = skillRound({ activeSeatSkill: null, activeSeatHand: [n(4, "FIRE")] });
   assert.deepEqual(

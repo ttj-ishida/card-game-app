@@ -99,6 +99,33 @@ Task 3 レビューの性能懸念（最悪ケースで `enumerateLegalPlays({in
 - `JOKER_TRANSFORM` の発動は少数（1000 局で 100 回）。宣言のみでは上がれず（`TRANSFORM_JOKER_GO_OUT` で除外）、`standardPolicy` は「数字だけでは作れない組み合わせを完成させ、かつ厳密に多く手札を減らせる」ときのみ選ぶため、頻度が低いのは設計どおり。全人数で発動を確認済み。
 - 変化Joker上がりは軽量・フルとも **0 件**。
 
+## ブランチ最終レビュー fix wave 後の再検証（2026-09-02）
+
+M3 サブプロジェクト1 のブランチ全体レビュー指摘（`fix(game-core): [M3] final-review fixes`）を1パスで適用後、全確認コマンドを再実行。
+
+| 変更 | 内容 |
+|---|---|
+| `legalMoves.ts` `jokerTransformSubsets` 連番窓 | `len = 3` → `len = 2`（宣言Joker + 隣接実カード1枚の2枚連番拡張を列挙。`candidateCardIdSets` と対称） |
+| `legalMoves.ts` Joker 分岐 | `jokerTransformSubsets` を suit ループ外へ巻き上げ（宣言 rank ごと1回） |
+| `legalMoves.ts` `candidateCardIdSets` | `export` 撤去（外部未使用） |
+| `legalMoves.ts` `pushIfLegal` | `actor` undefined 時は早期 return（`goesOut` の符号を明示） |
+| `cpuPolicyStandard.ts` `activeSkillEffect` | 返り値型 `string \| null` → `SkillEffectCode \| null` |
+| `deal.ts` | 陳腐化した TDZ コメントを撤去 |
+| `roundLoop.test.ts` 保存則テスト | `jokerDeclarations` を席が実際に持つ skillId 1件へ修正（エンジンの未検証な穴に依存しない） |
+| `cpuSelfPlay.test.ts` 集約テスト | モジュール共有 `skillFireCounts` を廃し、テスト本体で自前スイープ（`--test-name-pattern` シャード実行でも成立） |
+| `legalMoves.test.ts` | 2枚連番拡張の回帰テストを追加（`EXTEND` + 実カード含む `JOKER_TRANSFORM`） |
+
+**結果**：`game-core:test` 204 件 PASS（回帰テスト +1）、`game-core:typecheck` / `mobile:test`（181 件）/ `mobile:typecheck` / `mobile:lint` / `mobile:format:check` / `expo export --platform android` / `git diff --check` すべて PASS。
+
+**自己対戦スキル発動回数は fix 前と完全一致**（軽量 `JOKER_CLEAR:129 JOKER_TRANSFORM:17 EXTENSION_SEAL:132 REVOLUTION:100` / `RUN_FULL=1` 下表）。2枚連番窓の追加は列挙候補を広げるが、`standardPolicy` の `jokerDump` は「手札から出す枚数が最弱数字応答より厳密に多い」ときのみ変化Jokerを選ぶため、1000 局のいずれでも CPU の選択手は変わらなかった。
+
+| 実行 | ハーネス | wall-clock |
+|---|---|---|
+| `RUN_FULL=1`（1000 局、per-count 5 テスト）| 約 21 s | — |
+| `RUN_FULL=1` ファイル単体（集約テストが追加で 1000 局スイープ）| — | 約 42 s |
+
+集約テストの自己完結化で `RUN_FULL=1` の単体ファイル実行が約 21 s → 約 42 s に増加（軽量コミットテストは影響軽微、~8 s）。2 分閾値に対し十分な余裕。全局 `WINNER`、スロー 0、変化Joker上がり 0、4 スキル全種発動を再確認。
+
 ## モバイル側の保存則テスト（Task 2 Step 4 の回収）
 
 `apps/mobile/src/state/cpuGameStore.test.ts` に新規テスト `M3-QA-01: CPU skill usage keeps card conservation`：

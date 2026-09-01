@@ -10,8 +10,7 @@ import {
 import type { Rng } from "./rng.ts";
 import { shuffle } from "./rng.ts";
 
-// index.ts が末尾で deal.ts を re-export するため、index.ts の値はモジュール
-// トップレベルで使えない（TDZ）。デッキは毎回組み立てる関数にする。
+// デッキは呼び出しごとに新しく組み立てる（共有ミュータブル状態を持たない）。
 export function numberDeck(): NumberCard[] {
   return RANK_CODES.flatMap((rankCode) =>
     SUIT_CODES.map((suitCode) =>

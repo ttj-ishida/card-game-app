@@ -26,11 +26,6 @@ const REQUIRED_SKILLS: PlaySkillUse[] = [
   "REVOLUTION",
 ];
 
-// 全人数テストが埋める。末尾の集約テストが 4 スキル全種の出現を検証する。
-const skillFireCounts = new Map<string, number>();
-const bumpSkill = (skill: string) =>
-  skillFireCounts.set(skill, (skillFireCounts.get(skill) ?? 0) + 1);
-
 for (const n of PLAYER_COUNTS) {
   test(`self-play: ${n} players complete cleanly across ${SEEDS_PER_COUNT} seeds`, () => {
     const ids = seats(n);
@@ -61,7 +56,6 @@ for (const n of PLAYER_COUNTS) {
       // スキル発動を記録（全 turns を走査）。
       for (const turn of result.turns) {
         if (turn.input.kind === "PLAY" && turn.input.useSkill) {
-          bumpSkill(turn.input.useSkill);
           localSkillCounts.set(
             turn.input.useSkill,
             (localSkillCounts.get(turn.input.useSkill) ?? 0) + 1,
@@ -103,9 +97,28 @@ for (const n of PLAYER_COUNTS) {
 }
 
 test(`self-play: all 4 skill types fire across the lightweight sweep`, () => {
-  // 全人数テストが先に走り skillFireCounts を埋めている（node:test は定義順で実行）。
-  const missing = REQUIRED_SKILLS.filter((s) => (skillFireCounts.get(s) ?? 0) === 0);
-  const summary = REQUIRED_SKILLS.map((s) => `${s}:${skillFireCounts.get(s) ?? 0}`).join(", ");
+  // 自前でスイープを回して集計する（他テストの実行順・共有状態に依存しない。
+  // `--test-name-pattern` でシャード実行しても単独で成立する）。
+  const fireCounts = new Map<string, number>();
+  for (const n of PLAYER_COUNTS) {
+    const ids = seats(n);
+    for (let seed = 1; seed <= SEEDS_PER_COUNT; seed += 1) {
+      const absSeed = n * 10_000 + seed;
+      let result;
+      try {
+        result = playRound({ playerIds: ids, seed: absSeed, seatPolicies: allStandard(ids) });
+      } catch {
+        continue;
+      }
+      for (const turn of result.turns) {
+        if (turn.input.kind === "PLAY" && turn.input.useSkill) {
+          fireCounts.set(turn.input.useSkill, (fireCounts.get(turn.input.useSkill) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  const missing = REQUIRED_SKILLS.filter((s) => (fireCounts.get(s) ?? 0) === 0);
+  const summary = REQUIRED_SKILLS.map((s) => `${s}:${fireCounts.get(s) ?? 0}`).join(", ");
   console.log(`[self-play] skill fire counts across ${SEEDS_PER_COUNT * PLAYER_COUNTS.length} games: ${summary}`);
   assert.deepEqual(
     missing,

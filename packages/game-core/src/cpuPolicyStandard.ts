@@ -1,4 +1,4 @@
-import type { NumberCard, PlayInput } from "./core.ts";
+import type { NumberCard, PlayInput, SkillEffectCode } from "./core.ts";
 import { rankNumber, rankStrength } from "./core.ts";
 import type { CpuDecisionInput, CpuPolicy } from "./cpuPolicy.ts";
 import { type LegalPlay, resultStrength } from "./legalMoves.ts";
@@ -23,7 +23,7 @@ function playHandCount(p: LegalPlay): number {
 }
 
 /** 手番プレイヤーが未使用スキルを持つならその effectCode、無ければ null。 */
-function activeSkillEffect(state: CpuDecisionInput["state"]): string | null {
+function activeSkillEffect(state: CpuDecisionInput["state"]): SkillEffectCode | null {
   const skill = state.players.find((p) => p.playerId === state.activePlayerId)?.skill;
   return skill && !skill.used ? skill.effectCode : null;
 }

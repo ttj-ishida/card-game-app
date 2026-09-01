@@ -55,7 +55,7 @@ function groupByRank(hand: readonly NumberCard[]): Map<number, NumberCard[]> {
 }
 
 /** 手札から重複しない候補 cardId 集合を生成する（単体 / 同数2..4 / 連番2..9）。 */
-export function candidateCardIdSets(hand: readonly NumberCard[]): string[][] {
+function candidateCardIdSets(hand: readonly NumberCard[]): string[][] {
   const sets: string[][] = [];
 
   // 単体
@@ -141,9 +141,8 @@ export function enumerateLegalPlays(
     const res = resolvePlay(state, input);
     if (!res.ok) return;
     const actor = res.state.players.find((p) => p.playerId === playerId);
-    const realHand = (actor?.hand ?? []).filter(
-      (c) => c.transformedFromSkillId === undefined,
-    );
+    if (!actor) return;
+    const realHand = actor.hand.filter((c) => c.transformedFromSkillId === undefined);
     results.push({
       input,
       actionKind: res.outcome.actionKind,
@@ -204,9 +203,11 @@ function enumerateSkillPlays(
     // JOKER_TRANSFORM: 9 rank × 4 suit 宣言 × 手札部分集合
     let produced = 0;
     for (const rankCode of RANK_CODES) {
+      // suitCode に依存しないので宣言 rank ごとに1回だけ生成する。
+      const subsets = jokerTransformSubsets(player.hand, rankCode);
       for (const suitCode of SUIT_CODES) {
         const decl = { skillId: skill.skillId, rankCode, suitCode };
-        for (const subsetIds of jokerTransformSubsets(player.hand, rankCode)) {
+        for (const subsetIds of subsets) {
           if (produced >= JOKER_TRANSFORM_CANDIDATE_CAP) return;
           const key =
             "JT|" + rankCode + suitCode + "|" + [...subsetIds].sort().join("|");
@@ -272,9 +273,11 @@ function jokerTransformSubsets(
     }
   }
 
-  // 連番: 宣言 rank を含む連続窓 (長さ 3..9)、宣言以外の rank から 1 枚ずつ
+  // 連番: 宣言 rank を含む連続窓 (長さ 2..9)、宣言以外の rank から 1 枚ずつ。
+  // 長さ2は candidateCardIdSets と同様、場端に隣接する2枚の連番拡張
+  // （宣言Joker + 隣接する実カード1枚）を拾うために必要。
   for (let start = 1; start <= 9; start += 1) {
-    for (let len = 3; start + len - 1 <= 9; len += 1) {
+    for (let len = 2; start + len - 1 <= 9; len += 1) {
       const ranks = Array.from({ length: len }, (_, i) => start + i);
       if (!ranks.includes(dr)) continue;
       const perRank = ranks

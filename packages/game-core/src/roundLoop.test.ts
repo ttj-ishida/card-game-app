@@ -79,10 +79,7 @@ test("real-card conservation holds even with a transformed Joker in the active f
     playerId: "P1",
     cardIds: ["CARD_NUMBER_RANK_3_SUIT_FIRE", "CARD_NUMBER_RANK_4_SUIT_FIRE"],
     useSkill: "JOKER_TRANSFORM",
-    jokerDeclarations: [
-      { skillId: "SK_JOKER_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
-      { skillId: "SK_JOKER_P1_2", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
-    ],
+    jokerDeclarations: [{ skillId: "SK_JOKER_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" }],
   });
   assert.ok(res.ok);
 
