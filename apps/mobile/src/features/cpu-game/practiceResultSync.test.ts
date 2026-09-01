@@ -25,6 +25,7 @@ function makePayload(overrides: Partial<PracticeResultPayload> = {}): PracticeRe
     turn_count: 37,
     duration_ms: 123456,
     round_seed: 99,
+    ruleset_id: null,
     ...overrides,
   };
 }

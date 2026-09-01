@@ -51,6 +51,7 @@ export type PracticeResultPayload = {
   turn_count: number;
   duration_ms: number;
   round_seed: number;
+  ruleset_id: string | null;
 };
 
 function humanSeatIndex(config: MatchConfig): number {
@@ -72,8 +73,9 @@ export function buildPracticeResultPayload(input: {
   state: DriverState;
   anonPlayerId: string;
   clientResultId: string;
+  rulesetId?: string | null;
 }): PracticeResultPayload {
-  const { view, state, anonPlayerId, clientResultId } = input;
+  const { view, state, anonPlayerId, clientResultId, rulesetId } = input;
   const localPlayerSeat = humanSeatIndex(state.config);
   const winnerSeat = state.config.seats.findIndex((s) => s.seatId === view.winnerSeatId);
   if (winnerSeat < 0) {
@@ -98,5 +100,6 @@ export function buildPracticeResultPayload(input: {
     turn_count: view.turnCount,
     duration_ms: view.durationMs,
     round_seed: state.seed,
+    ruleset_id: rulesetId ?? null,
   };
 }

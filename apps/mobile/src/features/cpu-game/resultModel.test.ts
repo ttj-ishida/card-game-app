@@ -83,6 +83,7 @@ test('buildPracticeResultPayload carries every practice_round_results column wit
     'mode',
     'player_count',
     'round_seed',
+    'ruleset_id',
     'turn_count',
     'winner_seat',
   ]);
@@ -96,6 +97,7 @@ test('buildPracticeResultPayload carries every practice_round_results column wit
   assert.equal(typeof payload.turn_count, 'number');
   assert.equal(typeof payload.duration_ms, 'number');
   assert.equal(typeof payload.round_seed, 'number');
+  assert.equal(payload.ruleset_id, null);
 
   assert.equal(payload.player_count, 2);
   assert.equal(payload.local_player_seat, 0);
@@ -185,4 +187,27 @@ test('both a human-wins and a CPU-wins seed produce constraint-valid payloads fo
     assert.ok(payload.turn_count >= 0);
     assert.ok(payload.duration_ms >= 0);
   }
+});
+
+test('ruleset_id defaults to null when not provided', () => {
+  const view = describeRoundResult(HUMAN_WINS, 0, 1000);
+  const payload = buildPracticeResultPayload({
+    view,
+    state: HUMAN_WINS,
+    anonPlayerId: 'd',
+    clientResultId: 'c',
+  });
+  assert.equal(payload.ruleset_id, null);
+});
+
+test('ruleset_id carries the provided value through', () => {
+  const view = describeRoundResult(HUMAN_WINS, 0, 1000);
+  const payload = buildPracticeResultPayload({
+    view,
+    state: HUMAN_WINS,
+    anonPlayerId: 'd',
+    clientResultId: 'c',
+    rulesetId: 'ruleset-uuid-123',
+  });
+  assert.equal(payload.ruleset_id, 'ruleset-uuid-123');
 });

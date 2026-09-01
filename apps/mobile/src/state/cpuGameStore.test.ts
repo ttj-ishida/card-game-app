@@ -89,6 +89,7 @@ const PAYLOAD_COLUMNS = [
   'mode',
   'player_count',
   'round_seed',
+  'ruleset_id',
   'turn_count',
   'winner_seat',
 ];
