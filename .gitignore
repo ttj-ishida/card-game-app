@@ -16,3 +16,6 @@ supabase/.temp/
 supabase/.branches/
 
 .superpowers/
+
+# JetBrains IDE (local settings, never tracked)
+.idea/
