@@ -141,7 +141,11 @@ export function enumerateLegalPlays(
 
 ### 5.6 決定的順序
 
-既存のソート（`actionKind`（PASS 末尾）→ 枚数 → 結果の強さ → cardIds 辞書順）に、スキル手を組み込む。同キーのときは `useSkill` の有無（無しを先）→ `useSkill` 名の辞書順 → `jokerDeclarations` の `(rank,suit)` で決定的に並べる。ポリシーが安定した順序を見られるようにする。
+既存のソートキー `[isPass, 枚数, 結果の強さ, cardIds辞書順]` に、`枚数` の直後へスキル次元を挿入する：`[isPass, 枚数, useSkill有無（無し=0 先）, useSkill名, jokerDeclaration の rank・suit, 結果の強さ, cardIds辞書順]`。
+
+- **数字手（`useSkill` 無し）どうしの相対順序は不変**（スキル次元は定数 `0 / "" / 0` になり、`cardIds` が一意タイブレークなので並びは従来と完全に一致）。→ `enumerateLegalPlays(state)` / `(state, {})` の出力は現行と byte 一致。
+- スキル手は同じ枚数の数字手の**後ろ**に来る（`useSkill有無` が枚数の次）。
+- 注：宣言のみ（手札0枚）の JOKER_TRANSFORM 単体は `枚数 = input.cardIds.length = 0` なので、1枚の数字単体より前に並ぶ。ポリシーは `useSkill === undefined` で数字手を絞るので実害なし。決定的で安定であればよい。
 
 ## 6. `standardPolicy` のスキルヒューリスティック（Part D）
 
