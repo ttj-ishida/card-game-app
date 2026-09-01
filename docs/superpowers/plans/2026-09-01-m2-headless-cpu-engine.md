@@ -1194,7 +1194,7 @@ git commit -m "feat(game-core): [M2-EX-03] add selectable CPU policy registry an
 **Interfaces:**
 - Consumes: `createRng`, `Rng`（Task 1）／`numberDeck`, `dealRound`, `DealResult`（Task 2）／`enumerateLegalPlays`（Task 3）／`CpuPolicyId`, `resolveCpuPolicy`, `rollThinkDelayMillis`（Task 4）／`RoundState`, `PlayInput`, `PlayActionKind`, `DayNight`, `createRoundState`, `resolvePlay`, `INITIAL_RULESET_VERSION`（既存）
 - Produces:
-  - `type PlayRoundInput`, `type TurnRecord`, `type RoundStopReason`, `type RoundResult`
+  - `type PlayRoundInput`, `type TurnPlayRecord`, `type TurnRecord`, `type RoundStopReason`, `type RoundResult`
   - `function playRound(input: PlayRoundInput): RoundResult`
 
 **設計参照:** §4.5・§5・§6。`rng.fork()` を「配布1回 + 手番ごと1回」で消費。各手番の `resolvePlay` 後に不変条件（カード保存則36枚 / cardId 一意 / 手番席が playerIds 内）を検査。policy が非合法手を返したら throw。
@@ -1292,7 +1292,7 @@ test("rematchIndex rotates the first player", () => {
 - [ ] **Step 3: `packages/game-core/src/roundLoop.ts` を実装**
 
 ```ts
-import type { DayNight, PlayActionKind, PlayInput, RoundState } from "./index.js";
+import type { DayNight, PlayActionKind, PlayInput, PlaySkillUse, RoundState } from "./index.js";
 import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./index.js";
 import { type DealResult, dealRound } from "./deal.js";
 import { enumerateLegalPlays } from "./legalMoves.js";
@@ -1308,12 +1308,18 @@ export type PlayRoundInput = {
   maxTurns?: number;
 };
 
+// プライバシー制約（TurnRecord は手札の中身を持たない）に合わせ、選んだ手は
+// 種別・枚数・スキルだけの redacted 形で記録する。生の cardIds は入れない。
+export type TurnPlayRecord =
+  | { kind: "PASS"; playerId: string }
+  | { kind: "PLAY"; playerId: string; cardCount: number; useSkill?: PlaySkillUse };
+
 export type TurnRecord = {
   index: number;
   playerId: string;
   policyId: CpuPolicyId;
   legalPlayCount: number;
-  input: PlayInput;
+  input: TurnPlayRecord;
   actionKind: PlayActionKind | "PASS";
   fieldCleared: boolean;
   naturalRevolution: boolean;
@@ -1399,7 +1405,7 @@ export function playRound(input: PlayRoundInput): RoundResult {
       playerId: active,
       policyId,
       legalPlayCount: legalPlays.length,
-      input: play,
+      input: redactPlay(play),
       actionKind: res.outcome.actionKind,
       fieldCleared: res.outcome.fieldCleared,
       naturalRevolution: res.outcome.naturalRevolution,
@@ -1425,6 +1431,17 @@ export function playRound(input: PlayRoundInput): RoundResult {
     finalState: state,
     stopReason,
   };
+}
+
+function redactPlay(play: PlayInput): TurnPlayRecord {
+  if (play.kind === "PASS") return { kind: "PASS", playerId: play.playerId };
+  const record: TurnPlayRecord = {
+    kind: "PLAY",
+    playerId: play.playerId,
+    cardCount: play.cardIds.length,
+  };
+  if (play.useSkill) record.useSkill = play.useSkill;
+  return record;
 }
 
 function assertInvariants(state: RoundState, turnIndex: number, playerIds: string[]): void {
@@ -1545,7 +1562,7 @@ git commit -m "test(game-core): [M2-QA-01] add CPU self-play harness"
 - Modify: `packages/game-core/src/index.ts`（必要なら re-export の並び整理のみ）
 - Create: `docs/progress/M2-EX-02.md` 等が未作成なら補完（通常は各タスクで作成済み）
 
-- [ ] **Step 1: 公開シンボル監査** — `packages/game-core/src/index.ts` を読み、Task 1〜5 の全公開シンボル（`Rng`, `createRng`, `shuffle`, `numberDeck`, `skillDeck`, `dealRound`, `DealInput`, `DealResult`, `LegalPlay`, `enumerateLegalPlays`, `resultStrength`, `CpuPolicyId`, `CPU_POLICY_IDS`, `CpuDecisionInput`, `CpuPolicy`, `resolveCpuPolicy`, `rollThinkDelayMillis`, `standardPolicy`, `PlayRoundInput`, `TurnRecord`, `RoundStopReason`, `RoundResult`, `playRound`, `combinationStrength`）が re-export されていることを確認。漏れがあれば追加。
+- [ ] **Step 1: 公開シンボル監査** — `packages/game-core/src/index.ts` を読み、Task 1〜5 の全公開シンボル（`Rng`, `createRng`, `shuffle`, `numberDeck`, `skillDeck`, `dealRound`, `DealInput`, `DealResult`, `LegalPlay`, `enumerateLegalPlays`, `resultStrength`, `CpuPolicyId`, `CPU_POLICY_IDS`, `CpuDecisionInput`, `CpuPolicy`, `resolveCpuPolicy`, `rollThinkDelayMillis`, `standardPolicy`, `PlayRoundInput`, `TurnPlayRecord`, `TurnRecord`, `RoundStopReason`, `RoundResult`, `playRound`, `combinationStrength`）が re-export されていることを確認。漏れがあれば追加。
 
 - [ ] **Step 2: テストファイルの型健全性を手動監査** — 6つの新規 `.test.ts` を読み、`as never` の乱用や `any` 漏れ、`createRoundState` の引数型との齟齬がないか確認。`tsc` 対象外なので目視。問題があれば修正。
 
