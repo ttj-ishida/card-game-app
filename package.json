@@ -22,7 +22,9 @@
     "game-core:test": "npm --prefix apps/mobile exec -- tsx --test packages/game-core/src/**/*.test.ts",
     "game-core:typecheck": "npm --prefix apps/mobile exec -- tsc --noEmit --project packages/game-core/tsconfig.json",
     "assets:generate:m1": "node scripts/generate-m1-rule-sandbox-assets.mjs",
-    "assets:check:m1": "node scripts/check-m1-assets.mjs"
+    "assets:check:m1": "node scripts/check-m1-assets.mjs",
+    "assets:generate:m2": "node scripts/generate-m2-battle-assets.mjs",
+    "assets:check:m2": "node scripts/check-m2-assets.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"

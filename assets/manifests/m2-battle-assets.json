@@ -1,0 +1,218 @@
+{
+  "todoIds": [
+    "M2-GR-01",
+    "M2-GR-02",
+    "M2-GR-03",
+    "M2-GR-04"
+  ],
+  "version": "0.1.0",
+  "status": "placeholder-for-m2-battle",
+  "sizes": {
+    "background": {
+      "width": 1920,
+      "height": 1080,
+      "viewBox": "0 0 1920 1080",
+      "maxBytes": 40960
+    },
+    "cardIllust": {
+      "width": 630,
+      "height": 882,
+      "viewBox": "0 0 630 882",
+      "maxBytes": 24576
+    },
+    "frame": {
+      "width": 750,
+      "height": 1050,
+      "viewBox": "0 0 750 1050",
+      "maxBytes": 16384
+    },
+    "emblem": {
+      "width": 200,
+      "height": 200,
+      "viewBox": "0 0 200 200",
+      "maxBytes": 8192
+    },
+    "composite": {
+      "width": 750,
+      "height": 1050,
+      "viewBox": "0 0 750 1050",
+      "maxBytes": 32768
+    },
+    "fxSelect": {
+      "width": 300,
+      "height": 420,
+      "viewBox": "0 0 300 420",
+      "maxBytes": 12288
+    },
+    "fxSubmit": {
+      "width": 400,
+      "height": 400,
+      "viewBox": "0 0 400 400",
+      "maxBytes": 12288
+    },
+    "fxVictory": {
+      "width": 900,
+      "height": 300,
+      "viewBox": "0 0 900 300",
+      "maxBytes": 16384
+    }
+  },
+  "backgrounds": [
+    {
+      "assetId": "m2-battle-bg-day",
+      "sourcePath": "assets/source/m2/battle/backgrounds/m2-battle-bg-day.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/backgrounds/m2-battle-bg-day.svg",
+      "phase": "DAY",
+      "size": "background"
+    },
+    {
+      "assetId": "m2-battle-bg-night",
+      "sourcePath": "assets/source/m2/battle/backgrounds/m2-battle-bg-night.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/backgrounds/m2-battle-bg-night.svg",
+      "phase": "NIGHT",
+      "size": "background"
+    }
+  ],
+  "cardIllustrations": [
+    {
+      "assetId": "m2-card-illust-rank-1",
+      "sourcePath": "assets/source/m2/battle/card-illustrations/m2-card-illust-rank-1.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/card-illustrations/m2-card-illust-rank-1.svg",
+      "rank": 1,
+      "rankCode": "RANK_1",
+      "nameJa": "大魔王",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m2-card-illust-rank-5",
+      "sourcePath": "assets/source/m2/battle/card-illustrations/m2-card-illust-rank-5.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/card-illustrations/m2-card-illust-rank-5.svg",
+      "rank": 5,
+      "rankCode": "RANK_5",
+      "nameJa": "人間の戦士",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m2-card-illust-rank-9",
+      "sourcePath": "assets/source/m2/battle/card-illustrations/m2-card-illust-rank-9.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/card-illustrations/m2-card-illust-rank-9.svg",
+      "rank": 9,
+      "rankCode": "RANK_9",
+      "nameJa": "神",
+      "size": "cardIllust"
+    }
+  ],
+  "attributeFrames": [
+    {
+      "assetId": "m2-frame-fire",
+      "sourcePath": "assets/source/m2/battle/frames/m2-frame-fire.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/frames/m2-frame-fire.svg",
+      "suitCode": "SUIT_FIRE",
+      "shapeCue": "spikes",
+      "size": "frame"
+    },
+    {
+      "assetId": "m2-frame-water",
+      "sourcePath": "assets/source/m2/battle/frames/m2-frame-water.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/frames/m2-frame-water.svg",
+      "suitCode": "SUIT_WATER",
+      "shapeCue": "waves",
+      "size": "frame"
+    },
+    {
+      "assetId": "m2-frame-wind",
+      "sourcePath": "assets/source/m2/battle/frames/m2-frame-wind.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/frames/m2-frame-wind.svg",
+      "suitCode": "SUIT_WIND",
+      "shapeCue": "swirls",
+      "size": "frame"
+    },
+    {
+      "assetId": "m2-frame-earth",
+      "sourcePath": "assets/source/m2/battle/frames/m2-frame-earth.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/frames/m2-frame-earth.svg",
+      "suitCode": "SUIT_EARTH",
+      "shapeCue": "diamonds",
+      "size": "frame"
+    }
+  ],
+  "attributeEmblems": [
+    {
+      "assetId": "m2-emblem-fire",
+      "sourcePath": "assets/source/m2/battle/emblems/m2-emblem-fire.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/emblems/m2-emblem-fire.svg",
+      "suitCode": "SUIT_FIRE",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m2-emblem-water",
+      "sourcePath": "assets/source/m2/battle/emblems/m2-emblem-water.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/emblems/m2-emblem-water.svg",
+      "suitCode": "SUIT_WATER",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m2-emblem-wind",
+      "sourcePath": "assets/source/m2/battle/emblems/m2-emblem-wind.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/emblems/m2-emblem-wind.svg",
+      "suitCode": "SUIT_WIND",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m2-emblem-earth",
+      "sourcePath": "assets/source/m2/battle/emblems/m2-emblem-earth.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/emblems/m2-emblem-earth.svg",
+      "suitCode": "SUIT_EARTH",
+      "size": "emblem"
+    }
+  ],
+  "compositePreviews": [
+    {
+      "assetId": "m2-composite-rank-1",
+      "sourcePath": "assets/source/m2/battle/composites/m2-composite-rank-1.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/composites/m2-composite-rank-1.svg",
+      "rank": 1,
+      "frameSuit": "SUIT_EARTH",
+      "size": "composite"
+    },
+    {
+      "assetId": "m2-composite-rank-5",
+      "sourcePath": "assets/source/m2/battle/composites/m2-composite-rank-5.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/composites/m2-composite-rank-5.svg",
+      "rank": 5,
+      "frameSuit": "SUIT_WATER",
+      "size": "composite"
+    },
+    {
+      "assetId": "m2-composite-rank-9",
+      "sourcePath": "assets/source/m2/battle/composites/m2-composite-rank-9.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/composites/m2-composite-rank-9.svg",
+      "rank": 9,
+      "frameSuit": "SUIT_WIND",
+      "size": "composite"
+    }
+  ],
+  "effects": [
+    {
+      "assetId": "m2-fx-select",
+      "sourcePath": "assets/source/m2/battle/effects/m2-fx-select.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/effects/m2-fx-select.svg",
+      "event": "SELECT",
+      "size": "fxSelect"
+    },
+    {
+      "assetId": "m2-fx-submit",
+      "sourcePath": "assets/source/m2/battle/effects/m2-fx-submit.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/effects/m2-fx-submit.svg",
+      "event": "SUBMIT",
+      "size": "fxSubmit"
+    },
+    {
+      "assetId": "m2-fx-victory",
+      "sourcePath": "assets/source/m2/battle/effects/m2-fx-victory.source.svg",
+      "runtimePath": "assets/runtime/m2/battle/effects/m2-fx-victory.svg",
+      "event": "VICTORY",
+      "size": "fxVictory"
+    }
+  ]
+}
