@@ -275,7 +275,7 @@ export function compareCombinations(
   return 0;
 }
 
-function combinationStrength(
+export function combinationStrength(
   combination: NumberCombination,
   dayNight: DayNight,
 ): number {
@@ -1108,3 +1108,4 @@ function resolveCardPlay(
 // ---- M2: headless CPU engine ----
 export * from "./rng.js";
 export * from "./deal.js";
+export * from "./legalMoves.js";
