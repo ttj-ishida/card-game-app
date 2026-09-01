@@ -13,12 +13,19 @@ const COUNTS = Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => M
 export default function CpuGameSetupScreen() {
   const router = useRouter();
   const [count, setCount] = useState(MIN_PLAYERS);
+  const [startError, setStartError] = useState<string | null>(null);
   const canStart = isValidTotalPlayers(count);
 
   const start = () => {
     if (!canStart) return;
-    cpuGameStore.getState().startMatch(count);
-    router.replace('/cpu-game/play');
+    try {
+      cpuGameStore.getState().startMatch(count);
+      router.replace('/cpu-game/play');
+    } catch {
+      // The store is unconfigured (missing EXPO_PUBLIC_* env). Degrade like the
+      // play/result screens rather than throwing out of this event handler.
+      setStartError(translate('cpuGame.setup.notReady'));
+    }
   };
 
   return (
@@ -53,6 +60,8 @@ export default function CpuGameSetupScreen() {
       >
         <Text style={styles.startText}>{translate('cpuGame.setup.start')}</Text>
       </Pressable>
+
+      {startError ? <Text style={styles.error}>{startError}</Text> : null}
     </View>
   );
 }
@@ -93,6 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   startDisabled: { backgroundColor: colors.state.disabled },
+  error: { fontSize: typography.size.caption, color: colors.suit.fire, textAlign: 'center' },
   startText: {
     fontSize: typography.size.body,
     fontWeight: typography.weight.bold,

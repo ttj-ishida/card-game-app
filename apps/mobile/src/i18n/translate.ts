@@ -114,6 +114,7 @@ export const jaDictionary = {
   'cpuGame.setup.title': 'CPU戦の設定',
   'cpuGame.setup.players': '人数',
   'cpuGame.setup.start': '開始',
+  'cpuGame.setup.notReady': '対局を開始できません。アプリ設定を確認してください。',
   'cpuGame.seat.you': 'あなた',
   'cpuGame.seat.cpu': 'CPU',
   'cpuGame.phase.yourTurn': 'あなたの手番',

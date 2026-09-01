@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -32,35 +32,35 @@ function reasonText(reason?: PlayRejectionReason): string {
 export default function CpuGamePlayScreen() {
   const router = useRouter();
   const state = useStore(cpuGameStore, (s) => s);
-  const { driver, selection, legalPlays, pendingCpuReveal, cpuThinking } = state;
+  const { driver, selection, legalPlays, cpuThinking } = state;
+  const pending = useStore(cpuGameStore, (s) => s.pendingCpuReveal);
 
   const [invalidReason, setInvalidReason] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const thinkMillisRef = useRef(0);
 
   const phase = driver?.phase;
-  const hasPending = pendingCpuReveal != null;
 
   // Redirect if the store has no active match (direct nav / post-exit).
   useEffect(() => {
     if (!driver) router.replace('/cpu-game/setup');
   }, [driver, router]);
 
-  // CPU progression: stage the decision, then reveal it after thinkMillis.
+  // CPU progression: stage the decision, then reveal it after its thinkMillis.
+  // The staged move (and its delay) lives in the store as `pendingCpuReveal`, so
+  // a double-invoked effect stays correct — `advanceCpu()` is a no-op once staged.
   useEffect(() => {
-    if (phase === 'CPU_PENDING' && !hasPending) {
-      const { thinkMillis } = cpuGameStore.getState().advanceCpu();
-      thinkMillisRef.current = thinkMillis;
+    if (phase === 'CPU_PENDING' && !pending) {
+      cpuGameStore.getState().advanceCpu();
       return;
     }
-    if (hasPending) {
+    if (pending) {
       const timer = setTimeout(
         () => cpuGameStore.getState().commitCpuReveal(),
-        thinkMillisRef.current,
+        pending.decided.thinkMillis,
       );
       return () => clearTimeout(timer);
     }
-  }, [phase, hasPending]);
+  }, [phase, pending]);
 
   // Round over: persist the result, then move to the result screen.
   useEffect(() => {
