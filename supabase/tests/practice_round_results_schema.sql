@@ -1,6 +1,6 @@
 begin;
 
-select plan(35);
+select plan(38);
 
 -- テーブル存在
 select has_table('public', 'practice_round_results', 'practice_round_results table exists');
@@ -29,6 +29,15 @@ select col_not_null('public', 'practice_round_results', 'recorded_at', 'recorded
 
 -- 既定値
 select col_default_is('public', 'practice_round_results', 'mode', 'CPU_PRACTICE', 'mode defaults to CPU_PRACTICE');
+select is(
+  (select pg_get_expr(d.adbin, d.adrelid)
+     from pg_attrdef d
+     join pg_attribute a on a.attrelid = d.adrelid and a.attnum = d.adnum
+    where d.adrelid = 'public.practice_round_results'::regclass
+      and a.attname = 'recorded_at'),
+  'now()',
+  'recorded_at defaults to now()'
+);
 
 -- unique 制約
 select ok(
@@ -62,7 +71,7 @@ select is(
   'row level security is enabled'
 );
 
--- CHECK 制約の挙動（postgres ロールで直接検証。RLS を跨がない）
+-- CHECK 制約の挙動（テーブル所有者は RLS を迂回するので CHECK のみを検証）
 set local role postgres;
 
 select lives_ok(
@@ -157,6 +166,26 @@ select lives_ok(
     values
       (extensions.gen_random_uuid(), 'schema-fixture', 2, 1, 1, true, 15, 12000, 987654321)$$,
   'round_seed accepts a bigint value'
+);
+
+select throws_ok(
+  $$insert into public.practice_round_results
+      (client_result_id, anon_player_id, player_count, local_player_seat, winner_seat, local_won, turn_count, duration_ms)
+    values
+      (extensions.gen_random_uuid(), 'schema-fixture', 3, 0, 0, false, 20, 30000)$$,
+  '23514',
+  NULL,
+  'local_won=false while winner_seat = local_player_seat is rejected'
+);
+
+select throws_ok(
+  $$insert into public.practice_round_results
+      (client_result_id, anon_player_id, mode, player_count, local_player_seat, winner_seat, local_won, turn_count, duration_ms)
+    values
+      (extensions.gen_random_uuid(), 'schema-fixture', 'PVP', 3, 0, 0, true, 20, 30000)$$,
+  '23514',
+  NULL,
+  'an unknown mode is rejected'
 );
 
 reset role;

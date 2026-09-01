@@ -182,7 +182,8 @@ create policy practice_round_results_select_client
 
 ## 8. 将来への申し送り
 
-- **M2-SB-02**（サブプロジェクト2）：`anon_player_id` を生成・端末永続化するクライアントモジュール。AsyncStorage（ネイティブ依存、dev client 再ビルドが要る）。
-- **M2-EX-09**（サブプロジェクト2）：結果保存クライアント。POST 失敗時は AsyncStorage キューに退避、`client_result_id` で冪等、次回起動/次局後にフラッシュ。unique violation は「保存済み」= 成功扱い。
-- **M3-SB-01/02**：`players` テーブル導入時に `anon_player_id` を FK 化 or 移行。二重登録防止キーの恒久化（`client_result_id` はその布石）。
-- **認証導入時**：RLS policy を `using (true)` から自分の行だけに狭める。
+- **M2-SB-02**（サブプロジェクト2）：`anon_player_id` を生成・端末永続化するクライアントモジュール。AsyncStorage（ネイティブ依存、dev client 再ビルドが要る）。insert 時は `id` と `recorded_at` を送らない（サーバ既定に任せる）。
+- **M2-EX-09**（サブプロジェクト2）：結果保存クライアント。POST 失敗時は AsyncStorage キューに退避、`client_result_id` で冪等、次回起動/次局後にフラッシュ。unique violation（23505）は「保存済み」= 成功扱い。
+- **M3-SB-01/02**：`players` テーブル導入時に `anon_player_id` を FK 化 or 移行。二重登録防止キーの恒久化（`client_result_id` はその布石、この変更の影響を受けない）。
+- **認証導入時（RLS の狭め方）**：現状はプレイヤーを識別する `uuid` 列も `auth.uid()` も無いので、`using (true)` を狭めるには**マイグレーションが必要**（`player_id uuid` 列を追加し `players`（`anon_player_id` → プレイヤー）から backfill、両 policy を `using (player_id = auth.uid())` 相当へ書き換え）。一行の policy 変更では済まない。M3 の担当者へ明示。
+- **共有/ステージング環境へ出す前に**：この anon キーは（読み取り専用のマスタ表と違い）**無制限・無スロットルの `INSERT`** を許す。ゲストが任意の `anon_player_id` で行を量産できる。ローカル開発・認証前では許容だが、デプロイチェックリストに載せる（PostgREST のレート制限、または統計が重要になった時点で insert を Edge Function 経由にする）。

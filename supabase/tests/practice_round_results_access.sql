@@ -1,6 +1,6 @@
 begin;
 
-select plan(19);
+select plan(20);
 
 -- policy 構成: insert / select のみ、他は 0
 select is(
@@ -30,6 +30,7 @@ select ok(not has_table_privilege('anon', 'public.practice_round_results', 'DELE
 select ok(has_table_privilege('authenticated', 'public.practice_round_results', 'SELECT'), 'authenticated has SELECT');
 select ok(has_table_privilege('authenticated', 'public.practice_round_results', 'INSERT'), 'authenticated has INSERT');
 select ok(not has_table_privilege('authenticated', 'public.practice_round_results', 'UPDATE'), 'authenticated has no UPDATE');
+select ok(not has_table_privilege('authenticated', 'public.practice_round_results', 'DELETE'), 'authenticated has no DELETE');
 select ok(has_table_privilege('service_role', 'public.practice_round_results', 'DELETE'), 'service_role has DELETE');
 
 -- anon の実操作
