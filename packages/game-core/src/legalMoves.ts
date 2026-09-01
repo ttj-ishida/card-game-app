@@ -118,7 +118,7 @@ function cartesian<T>(groups: readonly T[][]): T[][] {
  * - `options` 省略 or `includeSkills !== true` のとき：数字カードのプレイ + PASS のみ。
  *   結果は現行実装と完全に同一。
  * - `includeSkills === true` かつ手番プレイヤーが未使用スキルを持つとき：スキル手も追加で列挙。
- *   本タスクは Joker（`JOKER_CLEAR` / `JOKER_TRANSFORM`）を担当。封印・革命は別タスク。
+ *   Joker（`JOKER_CLEAR` / `JOKER_TRANSFORM`）・EXTENSION_SEAL・REVOLUTION を担当。
  * - PASS が合法なら含める。
  * - 連番候補は窓ごとに `SEQUENCE_CANDIDATE_CAP`、JOKER_TRANSFORM 候補は
  *   `JOKER_TRANSFORM_CANDIDATE_CAP` で上限ガードする（超過分はスキップ）。
@@ -226,7 +226,30 @@ function enumerateSkillPlays(
     return;
   }
 
-  // SKILL_EXTENSION_SEAL / SKILL_REVOLUTION は別タスク。
+  if (effect === "SKILL_EXTENSION_SEAL") {
+    // 各数字手候補に封印併用版。封印は事後効果なので手自体の合法性は
+    // 変わらないが、pushIfLegal のドライランで確認し actionKind 等を写す。
+    for (const cardIds of candidateCardIdSets(player.hand)) {
+      const key = "ES|" + [...cardIds].sort().join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pushIfLegal({ kind: "PLAY", playerId, cardIds, useSkill: "EXTENSION_SEAL" });
+    }
+    return;
+  }
+
+  if (effect === "SKILL_REVOLUTION") {
+    // 革命は昼夜を先に反転してから判定する（resolvePlay が usesRevolutionSkill
+    // 経由で処理）。現昼夜で不正な手が反転後に合法になり得るため、全候補を
+    // ドライランして ok のもののみ採用する。
+    for (const cardIds of candidateCardIdSets(player.hand)) {
+      const key = "RV|" + [...cardIds].sort().join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pushIfLegal({ kind: "PLAY", playerId, cardIds, useSkill: "REVOLUTION" });
+    }
+    return;
+  }
 }
 
 /**

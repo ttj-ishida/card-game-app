@@ -371,6 +371,83 @@ test("includeSkills: every JOKER_CLEAR / JOKER_TRANSFORM entry passes resolvePla
   }
 });
 
+// ---- includeSkills: EXTENSION_SEAL + REVOLUTION ----
+
+const sameSet = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+
+test("includeSkills: an EXTENSION_SEAL holder gets a sealed variant of each number play", () => {
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_EXTENSION_SEAL" },
+    activeSeatHand: [n(5, "FIRE"), n(6, "FIRE"), n(8, "WATER")],
+    activeField: nonEmptyField, // SINGLE 4 -> singles 5/6/8 are REPLACE in DAY
+  });
+  const bare = enumerateLegalPlays(state).filter(
+    (p) => p.input.kind === "PLAY",
+  );
+  assert.ok(bare.length > 0);
+  const withSkill = enumerateLegalPlays(state, { includeSkills: true });
+  for (const b of bare) {
+    assert.ok(
+      withSkill.some(
+        (p) =>
+          p.input.kind === "PLAY" &&
+          p.input.useSkill === "EXTENSION_SEAL" &&
+          b.input.kind === "PLAY" &&
+          sameSet(p.input.cardIds, b.input.cardIds),
+      ),
+      `no sealed variant for ${
+        b.input.kind === "PLAY" ? b.input.cardIds.join(",") : "?"
+      }`,
+    );
+  }
+  // the bare/sealed pair are two distinct plays (distinct seen keys)
+  const sealed = withSkill.filter(
+    (p) => p.input.kind === "PLAY" && p.input.useSkill === "EXTENSION_SEAL",
+  );
+  assert.equal(sealed.length, bare.length);
+  for (const p of withSkill) assert.equal(resolvePlay(state, p.input).ok, true);
+});
+
+test("includeSkills: a REVOLUTION holder gets plays that are legal only after the flip", () => {
+  // field SINGLE 6. In DAY a single 3 (str 3) or 2 (str 2) is NOT_STRONGER.
+  // REVOLUTION flips to NIGHT: str(3)=7, str(2)=8, str(field 6)=4 -> both REPLACE.
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_REVOLUTION" },
+    activeSeatHand: [n(3, "FIRE"), n(2, "WATER")],
+    activeField: {
+      combination: { kind: "SINGLE", cards: [n(6, "WIND")], ranks: [6] },
+      lastPlayerId: "P2",
+      lock: { countLocked: false, suitFixed: null, suitUniform: false },
+    },
+  });
+  // no bare number response exists in the current (DAY) orientation
+  const bare = enumerateLegalPlays(state);
+  assert.ok(!bare.some((p) => p.input.kind === "PLAY" && !p.input.useSkill));
+
+  const plays = enumerateLegalPlays(state, { includeSkills: true });
+  const rev = plays.filter(
+    (p) => p.input.kind === "PLAY" && p.input.useSkill === "REVOLUTION",
+  );
+  assert.ok(rev.length > 0);
+  for (const p of rev) assert.equal(resolvePlay(state, p.input).ok, true);
+  for (const p of rev) assert.notEqual(p.actionKind, "PASS");
+});
+
+test("includeSkills: EXTENSION_SEAL / REVOLUTION keep the no-options invariance", () => {
+  for (const effectCode of [
+    "SKILL_EXTENSION_SEAL",
+    "SKILL_REVOLUTION",
+  ] as const) {
+    const state = skillRound({
+      activeSeatSkill: { skillId: "SK1", effectCode },
+      activeSeatHand: [n(3, "FIRE"), n(3, "WATER"), n(5, "FIRE"), n(6, "FIRE")],
+      activeField: nonEmptyField,
+    });
+    assert.deepEqual(enumerateLegalPlays(state), enumerateLegalPlays(state, {}));
+  }
+});
+
 test("the sequence candidate cap (1024) does not skip a legal 5-card window on an 18-card hand", () => {
   // rank counts 4/4/4/3/3 over ranks 1-5 → full-window product 4*4*4*3*3 = 576 (> old cap 512).
   const suits = ["FIRE", "WATER", "WIND", "EARTH"] as const;
