@@ -90,3 +90,63 @@ test('jaDictionary includes rule sandbox keys for every reason and action code',
     assert.notEqual(jaDictionary[key].length, 0);
   }
 });
+
+test('jaDictionary includes every cpu-game screen key required by the M2 flow', () => {
+  const requiredKeys: TranslationKey[] = [
+    'home.cpuGame',
+    'cpuGame.setup.title',
+    'cpuGame.setup.players',
+    'cpuGame.setup.start',
+    'cpuGame.seat.you',
+    'cpuGame.seat.cpu',
+    'cpuGame.phase.yourTurn',
+    'cpuGame.phase.cpuThinking',
+    'cpuGame.phase.roundOver',
+    'cpuGame.action.submit',
+    'cpuGame.action.pass',
+    'cpuGame.action.clear',
+    'cpuGame.field.empty',
+    'cpuGame.field.lastPlayer',
+    'cpuGame.lock.count',
+    'cpuGame.lock.suitFixed',
+    'cpuGame.lock.suitUniform',
+    'cpuGame.lock.seal',
+    'cpuGame.dayNight.day',
+    'cpuGame.dayNight.night',
+    'cpuGame.dayNight.strengthOrder',
+    'cpuGame.opponent.cardsSuffix',
+    'cpuGame.opponent.hasSkill',
+    'cpuGame.opponent.status.PASSED',
+    'cpuGame.opponent.status.OUT',
+    'cpuGame.skill.heldNote',
+    'cpuGame.invalid',
+    'cpuGame.result.title',
+    'cpuGame.result.youWin',
+    'cpuGame.result.youLose',
+    'cpuGame.result.winnerIs',
+    'cpuGame.result.turns',
+    'cpuGame.result.duration',
+    'cpuGame.result.rematch',
+    'cpuGame.result.home',
+    'cpuGame.result.saveOk',
+    'cpuGame.result.saveQueued',
+    'cpuGame.exit.confirmTitle',
+    'cpuGame.exit.confirmOk',
+    'cpuGame.exit.confirmCancel',
+    'cpuGame.history',
+    'cpuGame.seatShort.you',
+  ];
+
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+
+  // Every cpuGame.* key in the dictionary must resolve through translate().
+  for (const key of Object.keys(jaDictionary)) {
+    if (key.startsWith('cpuGame.')) {
+      assert.equal(translate(key), jaDictionary[key as TranslationKey]);
+    }
+  }
+});

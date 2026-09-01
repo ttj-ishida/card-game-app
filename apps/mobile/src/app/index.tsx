@@ -8,6 +8,11 @@ export default function HomeScreen() {
     <View style={styles.screen}>
       <Text style={styles.title}>{translate('app.title')}</Text>
       <Text style={styles.subtitle}>{translate('home.subtitle')}</Text>
+      <Link href="/cpu-game/setup" asChild>
+        <Pressable accessibilityRole="button" style={styles.button}>
+          <Text style={styles.buttonText}>{translate('home.cpuGame')}</Text>
+        </Pressable>
+      </Link>
       <Link href="/catalog" asChild>
         <Pressable accessibilityRole="button" style={styles.button}>
           <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
