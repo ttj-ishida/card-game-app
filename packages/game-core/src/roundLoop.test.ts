@@ -56,6 +56,17 @@ test("playRound throws when a seat has no policy", () => {
   );
 });
 
+test("playRound throws when a seat has an unknown policy id", () => {
+  const ids = seats(3);
+  const seatPolicies = Object.fromEntries(
+    ids.map((id) => [id, id === "p2" ? "BOGUS" : "STANDARD"]),
+  ) as Record<string, CpuPolicyId>;
+  assert.throws(
+    () => playRound({ playerIds: ids, seed: 1, seatPolicies }),
+    /unknown CPU policy/,
+  );
+});
+
 test("maxTurns stops the loop with MAX_TURNS", () => {
   const ids = seats(4);
   const result = playRound({

@@ -14,6 +14,10 @@ export type CpuDecisionInput = {
   rng: Rng;
 };
 
+/**
+ * 1手を決める純関数。`input.legalPlays` は必ず非空である（呼び出し側 = `playRound`
+ * が空の場合は先に停止するため保証する）。ポリシー実装は空配列を想定しなくてよい。
+ */
 export type CpuPolicy = (input: CpuDecisionInput) => PlayInput;
 
 const REGISTRY: Record<CpuPolicyId, CpuPolicy> = {

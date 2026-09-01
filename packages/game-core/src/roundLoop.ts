@@ -2,7 +2,12 @@ import type { DayNight, PlayActionKind, PlayInput, PlaySkillUse, RoundState } fr
 import { INITIAL_RULESET_VERSION, createRoundState, resolvePlay } from "./index.js";
 import { type DealResult, dealRound } from "./deal.js";
 import { enumerateLegalPlays } from "./legalMoves.js";
-import { type CpuPolicyId, resolveCpuPolicy, rollThinkDelayMillis } from "./cpuPolicy.js";
+import {
+  CPU_POLICY_IDS,
+  type CpuPolicyId,
+  resolveCpuPolicy,
+  rollThinkDelayMillis,
+} from "./cpuPolicy.js";
 import { createRng } from "./rng.js";
 
 export type PlayRoundInput = {
@@ -50,12 +55,28 @@ export type RoundResult = {
   stopReason: RoundStopReason;
 };
 
+// 停止性の根拠：場が流れるたびに必ず LEAD が発生し（空場では PASS は不正）、
+// LEAD は必ず1枚以上を手札から恒久的に取り除く PLAY である。よって PLAY 手番は
+// 高々 ~36 回、その間に挟まる PASS は高々 (n-1) 回 → どのポリシーでも合法手を返す限り
+// 手番数は概ね 36n（n≤6 で ≤216）で頭打ちになる。1000 はあくまで安全マージンで、
+// チューニング値ではない。
 const DEFAULT_MAX_TURNS = 1000;
 
 export function playRound(input: PlayRoundInput): RoundResult {
   const rematchIndex = input.rematchIndex ?? 0;
   const maxTurns = input.maxTurns ?? DEFAULT_MAX_TURNS;
   const playerIds = [...input.playerIds];
+
+  // 配布より前に席ポリシーを検証する（局の途中で気付くより早く落とす）。
+  for (const id of playerIds) {
+    if (!Object.hasOwn(input.seatPolicies, id)) {
+      throw new Error(`playRound: no CPU policy for seat "${id}"`);
+    }
+    const policyId = input.seatPolicies[id];
+    if (!CPU_POLICY_IDS.includes(policyId)) {
+      throw new Error(`playRound: unknown CPU policy "${policyId}" for seat "${id}"`);
+    }
+  }
 
   const rng = createRng(input.seed);
 
@@ -65,12 +86,6 @@ export function playRound(input: PlayRoundInput): RoundResult {
     rematchIndex,
     baselineFirstPlayerId: input.baselineFirstPlayerId,
   });
-
-  for (const id of playerIds) {
-    if (!(id in input.seatPolicies)) {
-      throw new Error(`playRound: no CPU policy for seat "${id}"`);
-    }
-  }
 
   let state = createRoundState({
     rulesetCode: "INITIAL",
@@ -145,14 +160,17 @@ export function playRound(input: PlayRoundInput): RoundResult {
 function redactPlay(play: PlayInput): TurnPlayRecord {
   if (play.kind === "PASS") {
     return { kind: "PASS", playerId: play.playerId };
+  } else if (play.kind === "PLAY") {
+    const record: TurnPlayRecord = {
+      kind: "PLAY",
+      playerId: play.playerId,
+      cardCount: play.cardIds.length,
+    };
+    if (play.useSkill !== undefined) record.useSkill = play.useSkill;
+    return record;
+  } else {
+    throw new Error(`redactPlay: unexpected play kind`);
   }
-  const record: TurnPlayRecord = {
-    kind: "PLAY",
-    playerId: play.playerId,
-    cardCount: play.cardIds.length,
-  };
-  if (play.useSkill !== undefined) record.useSkill = play.useSkill;
-  return record;
 }
 
 function assertInvariants(state: RoundState, turnIndex: number, playerIds: string[]): void {

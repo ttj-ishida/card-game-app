@@ -20,9 +20,12 @@ export function resultStrength(combination: NumberCombination, dayNight: DayNigh
   return combinationStrength(combination, dayNight);
 }
 
-const SEQUENCE_CANDIDATE_CAP = 512;
+// 1窓ごとに生成する連番候補（各 rank から1枚選ぶ属性直積）の上限。
+// 到達しうる最大は「18枚の手札 = 6 rank × 3 suit」の窓で 3^6 = 729。
+// 1024 は安全マージン。これを超える窓は丸ごとスキップする（通常対局では起きない）。
+const SEQUENCE_CANDIDATE_CAP = 1024;
 
-/** 手札から重複しない候補 cardId 集合を生成する（単体 / 同数2..4 / 連番3..9）。 */
+/** 手札から重複しない候補 cardId 集合を生成する（単体 / 同数2..4 / 連番2..9）。 */
 function candidateCardIdSets(hand: readonly NumberCard[]): string[][] {
   const sets: string[][] = [];
 
@@ -51,9 +54,11 @@ function candidateCardIdSets(hand: readonly NumberCard[]): string[][] {
     }
   }
 
-  // 連番セット（連続 rank 窓、長さ 3..9、各 rank から1枚）
+  // 連番セット（連続 rank 窓、長さ 2..9、各 rank から1枚）
+  // 長さ2は連番の EXTEND（場端に隣接する2枚の連番拡張）を拾うために必要。
+  // クロス rank の不正な2枚リードは resolvePlay のドライランが弾く。
   for (let start = 1; start <= 9; start += 1) {
-    for (let len = 3; start + len - 1 <= 9; len += 1) {
+    for (let len = 2; start + len - 1 <= 9; len += 1) {
       const ranks = Array.from({ length: len }, (_, i) => start + i);
       const perRank = ranks.map((r) => byRank.get(r) ?? []);
       if (perRank.some((cards) => cards.length === 0)) continue;
@@ -87,6 +92,16 @@ function cartesian<T>(groups: readonly T[][]): T[][] {
   );
 }
 
+/**
+ * 現手番プレイヤーの全合法手を列挙する。
+ *
+ * - 数字カードのプレイのみを列挙する。`useSkill` を伴う手（Joker・追加封印・革命）は
+ *   M3 の担当であり、ここには含めない。
+ * - PASS が合法なら末尾に1件だけ含める。
+ * - 連番候補は窓ごとに `SEQUENCE_CANDIDATE_CAP` で上限ガードする（超過窓はスキップ）。
+ * - 出力は決定的順序（actionKind → 枚数 → 強さ → cardId 文字列）でソート済み。
+ * - 各候補は `resolvePlay` のドライランで検証し、判定ロジックを複製しない。
+ */
 export function enumerateLegalPlays(state: RoundState): LegalPlay[] {
   if (state.winnerId) return [];
   const playerId = state.activePlayerId;

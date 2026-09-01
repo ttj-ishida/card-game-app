@@ -151,7 +151,7 @@ export function enumerateLegalPlays(state: RoundState): LegalPlay[];
 - **候補生成**（手番プレイヤーの数字手札から）：
   - 単体：各カード1枚。
   - 同数セット：同一 rank が2枚以上ある rank について、サイズ 2〜min(4, 枚数) の全組合せ。
-  - 連番セット：連続する rank 窓（長さ 3〜9、各 rank を手札が1枚以上持つ）について、各 rank から1枚選ぶ全属性組合せ。組合せ爆発を防ぐため、1回の列挙で生成する連番候補は上限（例：512）でガードし、上限超過時はその窓をスキップして良い（M2 の手札上限18枚では実際には到達しない）。
+  - 連番セット：連続する rank 窓（長さ 2〜9、各 rank を手札が1枚以上持つ）について、各 rank から1枚選ぶ全属性組合せ（連番の拡張は2枚から起こり得るため、下限は2）。組合せ爆発を防ぐため、1回の列挙で1窓あたり生成する連番候補は上限（`SEQUENCE_CANDIDATE_CAP = 1024`）でガードし、上限超過時はその窓をスキップして良い。到達しうる最大は「18枚の手札 = 6 rank × 3 suit」の窓で 3^6 = 729 であり、1024 がこれを安全マージン込みで覆う（超過窓は通常対局では発生しない）。
 - **検証**：各候補 `cardIds` について `resolvePlay(state, { kind:"PLAY", playerId: activePlayerId, cardIds })` をドライラン。`ok === true` のものだけ採用し、`outcome.actionKind` を `actionKind` に、採用手の `resolvePlay` 後 `state` から手番プレイヤーの `hand.length === 0` を `goesOut` に、反映後 `activeField.combination` を `resultingCombination` に写す。判定ロジックを列挙器側に複製しない（`resolvePlay` が唯一の正）。
 - **決定的順序**：`actionKind`（PASS を末尾）→ カード枚数 昇順 → `resultingCombination` の強さ 昇順 → `cardIds` を結合した文字列の辞書順。
 - PASS の合法性は `resolvePlay(state, { kind:"PASS", playerId })` のドライランで判定する（`ok` なら採用）。

@@ -10,6 +10,7 @@ function pickWeakest(
   weight: (play: LegalPlay) => number,
   rng: Rng,
 ): LegalPlay {
+  if (plays.length === 0) throw new Error("pickWeakest: no candidates");
   let best = Number.POSITIVE_INFINITY;
   for (const play of plays) best = Math.min(best, weight(play));
   const tied = plays.filter((play) => weight(play) === best);

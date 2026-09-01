@@ -55,6 +55,10 @@ test("nextInt rejects non-positive or non-integer bounds", () => {
   assert.throws(() => rng.nextInt(2.5), RangeError);
 });
 
+test("nextInt rejects a bound above 2^32", () => {
+  assert.throws(() => createRng(1).nextInt(2 ** 32 + 1), RangeError);
+});
+
 test("nextFloat stays within [0, 1)", () => {
   const rng = createRng(3);
   for (let i = 0; i < 1000; i += 1) {

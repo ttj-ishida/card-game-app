@@ -30,8 +30,8 @@ export function createRng(seed: number): Rng {
   const nextFloat = (): number => nextUint32() / 2 ** 32;
 
   const nextInt = (bound: number): number => {
-    if (!Number.isInteger(bound) || bound <= 0) {
-      throw new RangeError(`nextInt: bound must be a positive integer, got ${bound}`);
+    if (!Number.isInteger(bound) || bound <= 0 || bound > 2 ** 32) {
+      throw new RangeError(`nextInt: bound must be a positive integer <= 2^32, got ${bound}`);
     }
     // rejection sampling で剰余バイアスを避ける
     const limit = 2 ** 32 - (2 ** 32 % bound);
