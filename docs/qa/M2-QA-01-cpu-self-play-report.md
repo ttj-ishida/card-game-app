@@ -11,7 +11,7 @@
 
 | コマンド | 結果 |
 |---|---|
-| `npm run game-core:test` | PASS（178件 / 新規 6件）|
+| `npm run game-core:test` | PASS（179件 / 新規 7件）|
 | `npm run game-core:typecheck` | PASS |
 
 ## テスト構成
@@ -33,24 +33,26 @@
 |---|---|---|
 | 全局が `stopReason: "WINNER"` | ✓ | **PASS** — 120/120 |
 | 勝者が有効な手札を持つ（0枚） | ✓ | **PASS** — 勝者の手札は全て空 |
-| 例外スロー（不正手・カード消失） | 0 件 | **PASS** — スロー発生なし |
-| 手番数の上限（max 1000） | 有限 | **PASS** — 最大 73 手番 |
+| 例外スロー（違法手・カード消失） | 0 件 | **PASS** — スロー発生なし |
+| 有界ループアサート（`turns.length < 500`） | ✓ | **PASS** — 6人 10 seed すべてクリア |
 
-### 追加検証: 手番数の分布
+### 実測: 手番数の分布
 
-| 人数 | 手番数 (min-max-avg) |
+ハーネスが実行時に計測する手番数統計（`npm run game-core:test` 出力の `[self-play]` ログより）:
+
+| 人数 | 手番数 (min–max–mean) |
 |---|---|
-| 2 players | 3–73–23.33 |
-| 3 players | 3–46–16.50 |
-| 4 players | 3–31–12.08 |
-| 5 players | 3–28–11.13 |
-| 6 players | 3–24–9.96 |
+| 2 players | 25–44–31.8 |
+| 3 players | 25–45–37.8 |
+| 4 players | 23–55–40.2 |
+| 5 players | 24–57–41.5 |
+| 6 players | 23–66–41.8 |
 
-全試行で上限 1000 に対し十分な余裕を保つ（最大 73 ≪ 1000）。停滞なし、無限ループなし。
+全試行が有界ループアサート（`< 500`）をクリア。`playRound`（Task 5）内部で実装されるカード保存則・合法性検査・上限 1000 手番も同時に保証される。
 
 ## 決定性検証
 
-同一 seed から生成された `RoundResult` は複数回実行で **バイト一致** を確認（決定的エンジンの性質が保証される）。
+新規テスト `self-play results are deterministic (byte-match on replay)` により、複数の `(playerIds, seed)` 組について `playRound` を 2 回ずつ呼び出し、戻り値 `RoundResult` が `assert.deepEqual` で **完全一致** することを確認。決定的エンジン動作が保証される。
 
 ## 不具合
 
@@ -62,13 +64,14 @@
 
 ## 回帰登録
 
-- `packages/game-core/src/cpuSelfPlay.test.ts` — 2～6 人規模の CPU 自動対戦が決定的に WINNER へ到達、勝者の妥当性、不正手なし・カード保存則維持。
-  - `self-play: 2 players complete cleanly across 24 seeds`
-  - `self-play: 3 players complete cleanly across 24 seeds`
-  - `self-play: 4 players complete cleanly across 24 seeds`
-  - `self-play: 5 players complete cleanly across 24 seeds`
-  - `self-play: 6 players complete cleanly across 24 seeds`
-  - `self-play traces stay bounded (no runaway loop)`
+- `packages/game-core/src/cpuSelfPlay.test.ts` — 2～6 人規模の CPU 自動対戦が決定的に WINNER へ到達、勝者の妥当性、スロー 0、有界ループ検証。
+  - `self-play: 2 players complete cleanly across 24 seeds` — 統計出力、WINNER 到達・勝者妥当性検証
+  - `self-play: 3 players complete cleanly across 24 seeds` — 統計出力、WINNER 到達・勝者妥当性検証
+  - `self-play: 4 players complete cleanly across 24 seeds` — 統計出力、WINNER 到達・勝者妥当性検証
+  - `self-play: 5 players complete cleanly across 24 seeds` — 統計出力、WINNER 到達・勝者妥当性検証
+  - `self-play: 6 players complete cleanly across 24 seeds` — 統計出力、WINNER 到達・勝者妥当性検証
+  - `self-play traces stay bounded (no runaway loop)` — 6人規模 10 seed で `< 500` 手番アサート
+  - `self-play results are deterministic (byte-match on replay)` — 複数 seed 組で`RoundResult` 完全一致検証
 
 ## 残課題（実装延期）
 
@@ -77,10 +80,24 @@
 
 ## メモ
 
-- `playRound` の再現性：配布・手番スの RNG 消費順序を固定（`fork()` 毎回 1 回、配布 + 手番ごと）。同一 seed → バイト一致の `RoundResult`。
-- 不変条件の毎手検査：`resolvePlay` 後、カード総数 36 / cardId 一意 / 手番席の3点をアサート。違反時は手番 index 付き `Error` を throw。CPU ポリシーが不正手を返した場合も同様にスロー。
-- `maxTurns` はデフォルト 1000（必要に応じて引き上げ可能だが、本試行では不要）。
-- ハーネスは純粋・同期・決定的。ネットワーク I/O なし、`Math.random()` なし、`Date` 依存なし。
+### Task 5（`playRound`）が保証する安全性
+
+- **不変条件の毎手検査** — `resolvePlay` 後、カード総数 36 / cardId 一意性 / 手番席の 3 点を検査。違反時は手番 index 付き `Error` を throw。CPU ポリシーが違法手を返した場合も同様。
+- **上限チェック** — `maxTurns`（デフォルト 1000）に達すると `stopReason: "MAX_TURNS"` で停止し、無限ループを防止。
+- **決定性** — RNG 消費順序を固定（配布 1 回 + 手番ごと `fork()` 1 回）。同一 seed → バイト一致の `RoundResult`。
+
+### このハーネスが追加で検証する項目
+
+- **WINNER 到達** — 120 試行全て `stopReason === "WINNER"`（決着する）。
+- **勝者妥当性** — 宣言された勝者が `finalState.players` に存在し、手札が 0 枚。
+- **有界ループ** — 6 人規模 10 seed について `turns.length < 500` をアサート（`maxTurns` 1000 よりも厳しい実測チェック）。
+- **決定性再検証** — 複数 seed 組で `playRound` を 2 回ずつ実行し、`RoundResult` の完全一致を確認（決定的エンジンの再保証）。
+
+### ハーネスの特性
+
+- 純粋・同期・決定的（ネットワーク I/O なし、`Math.random()` なし、`Date` 依存なし）。
+- 実行時に手番数統計を計測・ログ出力（`[self-play]` 行）。
+- 失敗時に絶対 seed と理由を記録（種単位での再現性を確保）。
 
 ## 対応した設計要件
 
