@@ -9,6 +9,7 @@ import {
   activeSeatId,
   legalPlaysForHuman,
   type DriverState,
+  type PublicRoundEvent,
 } from './turnDriver';
 import type { PlayInput } from '@card-game-app/game-core';
 
@@ -173,4 +174,58 @@ test('turn log carries card counts but no card ids', () => {
     assert.equal(entry.index, s.turnLog.indexOf(entry));
     if (entry.kind === 'PASS') assert.equal(entry.cardCount, 0);
   }
+});
+
+test('publicEvents has one entry per turn, matching turnLog', () => {
+  const s = playToEnd(5, 5 * 7919 + 13);
+  assert.equal(s.publicEvents.length, s.turnLog.length);
+  s.publicEvents.forEach((event: PublicRoundEvent, i: number) => {
+    assert.equal(event.index, i);
+    assert.equal(event.seatId, s.turnLog[i].seatId);
+    assert.equal(event.seatKind, s.turnLog[i].seatKind);
+    assert.equal(event.kind, s.turnLog[i].kind);
+    assert.equal(event.fieldCleared, s.turnLog[i].fieldCleared);
+    assert.equal(event.dayNightAfter, s.turnLog[i].dayNightAfter);
+    assert.deepEqual(event.handCountsAfter, s.turnLog[i].handCountsAfter);
+  });
+});
+
+test('a PASS event carries no cards and no skill effect', () => {
+  const s = playToEnd(5, 5 * 7919 + 13);
+  for (const event of s.publicEvents) {
+    if (event.kind === 'PASS') {
+      assert.deepEqual(event.cards, []);
+      assert.equal(event.skillEffect, null);
+    }
+  }
+});
+
+test('a PLAY event carries at least one public card', () => {
+  const s = playToEnd(5, 5 * 7919 + 13);
+  for (const event of s.publicEvents) {
+    if (event.kind === 'PLAY') {
+      assert.ok(event.cards.length > 0, `turn ${event.index} PLAY has no cards`);
+    }
+  }
+});
+
+test('publicEvents surface every skill effect across the standard sweep, with cards attached', () => {
+  const seen = new Set<string>();
+  let transformHasCards = false;
+  for (let n = 2; n <= 6; n += 1) {
+    for (let seed = 0; seed < 50; seed += 1) {
+      const s = playToEnd(n, seed);
+      for (const event of s.publicEvents) {
+        if (!event.skillEffect) continue;
+        seen.add(event.skillEffect);
+        if (event.skillEffect === 'JOKER_TRANSFORM' && event.cards.length > 0) {
+          transformHasCards = true;
+        }
+      }
+    }
+  }
+  for (const effect of ['JOKER_CLEAR', 'JOKER_TRANSFORM', 'EXTENSION_SEAL', 'REVOLUTION']) {
+    assert.ok(seen.has(effect), `${effect} never appeared in publicEvents across the sweep`);
+  }
+  assert.ok(transformHasCards, 'a JOKER_TRANSFORM event should carry at least one public card');
 });

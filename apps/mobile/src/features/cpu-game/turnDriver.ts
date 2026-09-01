@@ -9,11 +9,15 @@ import {
   rollThinkDelayMillis,
   type DayNight,
   type LegalPlay,
+  type NumberCard,
   type PlayInput,
   type PlayRejectionReason,
   type PlayResolution,
+  type PlaySkillUse,
+  type RankCode,
   type RoundState,
   type Rng,
+  type SuitCode,
 } from '@card-game-app/game-core';
 import { isHumanSeat, seatPolicies, type MatchConfig } from './matchConfig';
 
@@ -37,6 +41,24 @@ export type TurnLogEntry = {
   handCountsAfter: Record<string, number>;
 };
 
+/**
+ * 局のトレース1手ぶん（公開対局イベント版）。行動時点で公開された情報のみを持つ：
+ * 場に出たカードの rank/suit（変化Jokerは宣言内容も含む）、使用したスキル効果。
+ * 非公開手札・未使用スキルは含めない（VIS-202）。M3-SB-04 `round_events` の送信元。
+ */
+export type PublicRoundEvent = {
+  index: number;
+  seatId: string;
+  seatKind: 'HUMAN' | 'CPU';
+  kind: 'PLAY' | 'PASS';
+  actionKind: TurnActionKind;
+  cards: { rankCode: RankCode; suitCode: SuitCode }[];
+  skillEffect: PlaySkillUse | null;
+  fieldCleared: boolean;
+  dayNightAfter: DayNight;
+  handCountsAfter: Record<string, number>;
+};
+
 export type DriverState = {
   config: MatchConfig;
   seed: number;
@@ -45,6 +67,7 @@ export type DriverState = {
   round: RoundState;
   phase: GamePhase;
   turnLog: TurnLogEntry[];
+  publicEvents: PublicRoundEvent[];
   winnerSeatId: string | null;
 };
 
@@ -110,8 +133,34 @@ export function initGame(input: {
     round,
     phase: phaseFor(input.config, round),
     turnLog: [],
+    publicEvents: [],
     winnerSeatId: round.winnerId,
   };
+}
+
+/**
+ * プレイ前の手札と PlayInput から、公開される（場へ出る）カードの rank/suit を抽出する。
+ * 実カードは cardIds → 手札引き当て。変化Joker の宣言（jokerDeclarations）は
+ * hand に無いので別途加える。PASS は空配列。
+ */
+function publicCardsPlayed(
+  handBefore: NumberCard[],
+  input: PlayInput,
+): { rankCode: RankCode; suitCode: SuitCode }[] {
+  if (input.kind === 'PASS') return [];
+  const byId = new Map(handBefore.map((card) => [card.cardId, card]));
+  const realCards = input.cardIds.map((cardId) => {
+    const card = byId.get(cardId);
+    if (!card) {
+      throw new Error(`publicCardsPlayed: card "${cardId}" not found in hand before the play`);
+    }
+    return { rankCode: card.rankCode, suitCode: card.suitCode };
+  });
+  const declaredCards = (input.jokerDeclarations ?? []).map((declaration) => ({
+    rankCode: declaration.rankCode,
+    suitCode: declaration.suitCode,
+  }));
+  return [...realCards, ...declaredCards];
 }
 
 function appendTurn(
@@ -121,6 +170,7 @@ function appendTurn(
   res: ResolvedPlay,
 ): DriverState {
   const seatKind = isHumanSeat(state.config, seatId) ? 'HUMAN' : 'CPU';
+  const handBefore = state.round.players.find((p) => p.playerId === seatId)?.hand ?? [];
   const entry: TurnLogEntry = {
     index: state.turnLog.length,
     seatId,
@@ -132,10 +182,23 @@ function appendTurn(
     dayNightAfter: res.outcome.dayNightAfter,
     handCountsAfter: Object.fromEntries(res.state.players.map((p) => [p.playerId, p.hand.length])),
   };
+  const publicEvent: PublicRoundEvent = {
+    index: state.publicEvents.length,
+    seatId,
+    seatKind,
+    kind: entry.kind,
+    actionKind: entry.actionKind,
+    cards: publicCardsPlayed(handBefore, input),
+    skillEffect: input.kind === 'PLAY' ? (input.useSkill ?? null) : null,
+    fieldCleared: entry.fieldCleared,
+    dayNightAfter: entry.dayNightAfter,
+    handCountsAfter: entry.handCountsAfter,
+  };
   return {
     ...state,
     round: res.state,
     turnLog: [...state.turnLog, entry],
+    publicEvents: [...state.publicEvents, publicEvent],
     phase: phaseFor(state.config, res.state),
     winnerSeatId: res.state.winnerId,
   };
