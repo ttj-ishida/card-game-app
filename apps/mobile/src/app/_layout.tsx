@@ -1,6 +1,17 @@
 import { Stack } from 'expo-router';
 
 import { translate } from '../i18n/translate';
+import { cpuGameDeps } from '../features/cpu-game/cpuGameAdapters';
+import { configureCpuGameStore } from '../state/cpuGameStore';
+
+// Wire the CPU-game store to its native adapters once, at module load. If the
+// public env is unset `getAppConfig()` throws — degrade so the rest of the app
+// still loads; the CPU-game screens then surface "store not configured".
+try {
+  configureCpuGameStore(cpuGameDeps());
+} catch (error) {
+  console.warn('configureCpuGameStore skipped:', error);
+}
 
 export default function RootLayout() {
   return (
