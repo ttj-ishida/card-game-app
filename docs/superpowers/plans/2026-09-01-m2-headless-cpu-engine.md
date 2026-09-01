@@ -15,6 +15,7 @@
 - `packages/game-core` に依存を追加しない（zero-dep、`node:test` + `tsx` のみ）。
 - `game-core:typecheck`（`tsc --noEmit`、`include: ["src/index.ts"]`）は `src/index.ts` 経由のシンボルだけを型検査する。**新規公開シンボルはすべて `src/index.ts` から re-export する**。テストファイルは型検査対象外 → テスト側の型健全性は実装者が手動監査する。
 - `packages/game-core/src/` 内のソース間 import と `index.ts` の re-export は **`.js` 拡張子**で書く（`tsconfig` は `moduleResolution: NodeNext` かつ `allowImportingTsExtensions` 無効。`tsc` は `index.ts` から到達する全ソースを追うため、ソースが `.ts` 指定子を持つと TS5097 で落ちる。例：`export * from "./rng.js";` / `import { shuffle } from "./rng.js";`）。テストファイル（`*.test.ts`）は既存慣習どおり `.ts` 指定子でよい（型検査対象外、`tsx` が解決）。
+- **循環 import 対策（重要）:** `index.ts` は末尾で全 M2 ソースを `export *` する。ESM では re-export 先が index.ts 本体より先に評価されるため、M2 ソースが `index.ts` の値（`RANK_CODES`・`createNumberCard`・`resolvePlay` 等）を **モジュールトップレベルで使う**と TDZ エラー（`Cannot access 'X' before initialization`）になる。回避規則：M2 ソースは `index.ts` からの import を**関数本体の中でだけ**使う。モジュールトップレベルで評価される値（デッキ定数など）は関数化する（`deal.ts` の `numberDeck()` / `skillDeck()`）。`index.ts` の関数・定数を M2 ソースへコピーして重複させてはいけない（必ず import する）。
 - game-core は純粋・同期・決定的。時計・タイマー・スレッド・I/O・モジュールスコープの可変状態を持たない。乱数は必ず注入された `Rng` 経由。
 - 既存 export の**シグネチャは変更しない**。private 関数を `export` に格上げするのは可（追加的変更）。既存ファイル `index.ts` への変更は「re-export 行の追加」と「`combinationStrength` への `export` 付与」のみ。
 - カードID命名：数字 `CARD_NUMBER_RANK_<r>_SUIT_<s>`（例 `CARD_NUMBER_RANK_1_SUIT_FIRE`）、スキル物理カード `SKILL_CARD_JOKER_HERO` / `SKILL_CARD_JOKER_SAINT` / `SKILL_CARD_EXTENSION_SEAL_1` / `SKILL_CARD_EXTENSION_SEAL_2` / `SKILL_CARD_REVOLUTION_1` / `SKILL_CARD_REVOLUTION_2`。
@@ -278,10 +279,10 @@ git commit -m "feat(game-core): [M2] add deterministic Rng and shuffle"
 - Create: `docs/progress/M2-EX-01.md`
 
 **Interfaces:**
-- Consumes: `Rng`, `shuffle`（Task 1）／`NumberCard`, `SkillCard`, `PlayerState`, `RankCode`, `SuitCode`, `SkillEffectCode`, `RANK_CODES`, `SUIT_CODES`, `createNumberCard`, `createSkillCard`, `createPlayerState`, `rankNumber`（既存）
+- Consumes: `Rng`, `shuffle`（Task 1）／`NumberCard`, `SkillCard`, `PlayerState`, `RankCode`, `SuitCode`, `SkillEffectCode`, `RANK_CODES`, `SUIT_CODES`, `createNumberCard`, `createSkillCard`, `createPlayerState`, `rankNumber`（既存 — `index.js` から import する。コピー禁止）
 - Produces:
-  - `const NUMBER_DECK: readonly NumberCard[]` — 36枚
-  - `const SKILL_DECK: readonly SkillCard[]` — 6枚（`used: false`）
+  - `function numberDeck(): NumberCard[]` — 毎回新しい36枚配列（循環 import 回避のため定数でなく関数）
+  - `function skillDeck(): SkillCard[]` — 毎回新しい6枚配列（`used: false`）
   - `type DealInput = { playerIds: readonly string[]; rng: Rng; rematchIndex?: number; baselineFirstPlayerId?: string }`
   - `type DealResult = { players: PlayerState[]; firstPlayerId: string; dayNight: "DAY"; eightCardSeatId: string | null }`
   - `function dealRound(input: DealInput): DealResult`
@@ -295,8 +296,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  NUMBER_DECK,
-  SKILL_DECK,
+  numberDeck,
+  skillDeck,
   createRng,
   dealRound,
   rankNumber,
@@ -304,16 +305,16 @@ import {
 
 const seats = (n: number) => Array.from({ length: n }, (_, i) => `p${i + 1}`);
 
-test("NUMBER_DECK has the 36 unique number cards", () => {
-  assert.equal(NUMBER_DECK.length, 36);
-  assert.equal(new Set(NUMBER_DECK.map((c) => c.cardId)).size, 36);
-  assert.ok(NUMBER_DECK.every((c) => c.cardId.startsWith("CARD_NUMBER_RANK_")));
+test("numberDeck() returns the 36 unique number cards", () => {
+  assert.equal(numberDeck().length, 36);
+  assert.equal(new Set(numberDeck().map((c) => c.cardId)).size, 36);
+  assert.ok(numberDeck().every((c) => c.cardId.startsWith("CARD_NUMBER_RANK_")));
 });
 
-test("SKILL_DECK has the 6 physical skill cards, all unused", () => {
-  assert.equal(SKILL_DECK.length, 6);
+test("skillDeck() returns the 6 physical skill cards, all unused", () => {
+  assert.equal(skillDeck().length, 6);
   assert.deepEqual(
-    SKILL_DECK.map((c) => c.skillId).sort(),
+    skillDeck().map((c) => c.skillId).sort(),
     [
       "SKILL_CARD_EXTENSION_SEAL_1",
       "SKILL_CARD_EXTENSION_SEAL_2",
@@ -323,7 +324,7 @@ test("SKILL_DECK has the 6 physical skill cards, all unused", () => {
       "SKILL_CARD_REVOLUTION_2",
     ],
   );
-  assert.ok(SKILL_DECK.every((c) => c.used === false));
+  assert.ok(skillDeck().every((c) => c.used === false));
 });
 
 for (const [n, expected] of [
@@ -360,7 +361,7 @@ test("dealRound distributes all 36 number cards with no duplicates or gaps", () 
   const result = dealRound({ playerIds: seats(6), rng: createRng(9) });
   const ids = result.players.flatMap((p) => p.hand.map((c) => c.cardId));
   assert.equal(ids.length, 36);
-  assert.deepEqual(new Set(ids), new Set(NUMBER_DECK.map((c) => c.cardId)));
+  assert.deepEqual(new Set(ids), new Set(numberDeck().map((c) => c.cardId)));
 });
 
 test("dealRound gives each seat one distinct skill card", () => {
@@ -461,20 +462,26 @@ import {
 import type { Rng } from "./rng.js";
 import { shuffle } from "./rng.js";
 
-export const NUMBER_DECK: readonly NumberCard[] = RANK_CODES.flatMap((rankCode) =>
-  SUIT_CODES.map((suitCode) =>
-    createNumberCard(`CARD_NUMBER_${rankCode}_${suitCode}`, rankCode, suitCode),
-  ),
-);
+// index.ts が末尾で deal.ts を re-export するため、index.ts の値はモジュール
+// トップレベルで使えない（TDZ）。デッキは毎回組み立てる関数にする。
+export function numberDeck(): NumberCard[] {
+  return RANK_CODES.flatMap((rankCode) =>
+    SUIT_CODES.map((suitCode) =>
+      createNumberCard(`CARD_NUMBER_${rankCode}_${suitCode}`, rankCode, suitCode),
+    ),
+  );
+}
 
-export const SKILL_DECK: readonly SkillCard[] = [
-  createSkillCard("SKILL_CARD_JOKER_HERO", "SKILL_JOKER_HERO"),
-  createSkillCard("SKILL_CARD_JOKER_SAINT", "SKILL_JOKER_SAINT"),
-  createSkillCard("SKILL_CARD_EXTENSION_SEAL_1", "SKILL_EXTENSION_SEAL"),
-  createSkillCard("SKILL_CARD_EXTENSION_SEAL_2", "SKILL_EXTENSION_SEAL"),
-  createSkillCard("SKILL_CARD_REVOLUTION_1", "SKILL_REVOLUTION"),
-  createSkillCard("SKILL_CARD_REVOLUTION_2", "SKILL_REVOLUTION"),
-];
+export function skillDeck(): SkillCard[] {
+  return [
+    createSkillCard("SKILL_CARD_JOKER_HERO", "SKILL_JOKER_HERO"),
+    createSkillCard("SKILL_CARD_JOKER_SAINT", "SKILL_JOKER_SAINT"),
+    createSkillCard("SKILL_CARD_EXTENSION_SEAL_1", "SKILL_EXTENSION_SEAL"),
+    createSkillCard("SKILL_CARD_EXTENSION_SEAL_2", "SKILL_EXTENSION_SEAL"),
+    createSkillCard("SKILL_CARD_REVOLUTION_1", "SKILL_REVOLUTION"),
+    createSkillCard("SKILL_CARD_REVOLUTION_2", "SKILL_REVOLUTION"),
+  ];
+}
 
 export type DealInput = {
   playerIds: readonly string[];
@@ -528,8 +535,8 @@ export function dealRound(input: DealInput): DealResult {
   }
 
   // 乱数消費順序を固定：numbers -> skills -> (8枚席) -> (初局先攻)
-  const numbers = shuffle(rng, NUMBER_DECK);
-  const skills = shuffle(rng, SKILL_DECK);
+  const numbers = shuffle(rng, numberDeck());
+  const skills = shuffle(rng, skillDeck());
 
   let eightSeatIndex: number | null = null;
   if (n === 5) {
@@ -571,7 +578,7 @@ export * from "./deal.js";
 
 - [ ] **Step 5: テストと型検査** — Run: `npm run game-core:test && npm run game-core:typecheck`。Expected: PASS。
 
-- [ ] **Step 6: 進捗ドキュメント** — `docs/progress/M2-EX-01.md` を作成（既存 `docs/progress/M1-EX-09.md` の書式に合わせ、日本語で）。含める内容：状態=完了 / 日付=2026-09-01 / 概要（`dealRound` + `NUMBER_DECK` / `SKILL_DECK`）/ 成果物の表（`deal.ts`, `deal.test.ts`）/ 確認（`npm run game-core:test` / `:typecheck` PASS 件数）/ メモ（乱数消費順序の固定、再戦ローテーションは `baselineFirstPlayerId` + `rematchIndex` で呼び出し側が駆動）。
+- [ ] **Step 6: 進捗ドキュメント** — `docs/progress/M2-EX-01.md` を作成（既存 `docs/progress/M1-EX-09.md` の書式に合わせ、日本語で）。含める内容：状態=完了 / 日付=2026-09-01 / 概要（`dealRound` + `numberDeck()` / `skillDeck()`）/ 成果物の表（`deal.ts`, `deal.test.ts`）/ 確認（`npm run game-core:test` / `:typecheck` PASS 件数）/ メモ（乱数消費順序の固定、再戦ローテーションは `baselineFirstPlayerId` + `rematchIndex` で呼び出し側が駆動）。
 
 - [ ] **Step 7: コミット**
 
@@ -1185,7 +1192,7 @@ git commit -m "feat(game-core): [M2-EX-03] add selectable CPU policy registry an
 - Create: `docs/progress/M2-EX-07.md`
 
 **Interfaces:**
-- Consumes: `createRng`, `Rng`（Task 1）／`dealRound`, `DealResult`（Task 2）／`enumerateLegalPlays`（Task 3）／`CpuPolicyId`, `resolveCpuPolicy`, `rollThinkDelayMillis`（Task 4）／`RoundState`, `PlayInput`, `PlayActionKind`, `DayNight`, `createRoundState`, `resolvePlay`, `INITIAL_RULESET_VERSION`（既存）
+- Consumes: `createRng`, `Rng`（Task 1）／`numberDeck`, `dealRound`, `DealResult`（Task 2）／`enumerateLegalPlays`（Task 3）／`CpuPolicyId`, `resolveCpuPolicy`, `rollThinkDelayMillis`（Task 4）／`RoundState`, `PlayInput`, `PlayActionKind`, `DayNight`, `createRoundState`, `resolvePlay`, `INITIAL_RULESET_VERSION`（既存）
 - Produces:
   - `type PlayRoundInput`, `type TurnRecord`, `type RoundStopReason`, `type RoundResult`
   - `function playRound(input: PlayRoundInput): RoundResult`
@@ -1198,7 +1205,7 @@ git commit -m "feat(game-core): [M2-EX-03] add selectable CPU policy registry an
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { type CpuPolicyId, NUMBER_DECK, playRound } from "./index.ts";
+import { type CpuPolicyId, numberDeck, playRound } from "./index.ts";
 
 const seats = (n: number) => Array.from({ length: n }, (_, i) => `p${i + 1}`);
 const allStandard = (ids: string[]): Record<string, CpuPolicyId> =>
@@ -1220,7 +1227,7 @@ test("card conservation holds on every turn", () => {
   const result = playRound({ playerIds: ids, seed: 4242, seatPolicies: allStandard(ids) });
   for (const turn of result.turns) {
     const inHands = Object.values(turn.handCountsAfter).reduce((a, b) => a + b, 0);
-    assert.ok(inHands <= NUMBER_DECK.length);
+    assert.ok(inHands <= numberDeck().length);
   }
   const finalInHands = result.finalState.players.reduce((a, p) => a + p.hand.length, 0);
   const field = result.finalState.activeField?.combination.cards.length ?? 0;
@@ -1538,7 +1545,7 @@ git commit -m "test(game-core): [M2-QA-01] add CPU self-play harness"
 - Modify: `packages/game-core/src/index.ts`（必要なら re-export の並び整理のみ）
 - Create: `docs/progress/M2-EX-02.md` 等が未作成なら補完（通常は各タスクで作成済み）
 
-- [ ] **Step 1: 公開シンボル監査** — `packages/game-core/src/index.ts` を読み、Task 1〜5 の全公開シンボル（`Rng`, `createRng`, `shuffle`, `NUMBER_DECK`, `SKILL_DECK`, `dealRound`, `DealInput`, `DealResult`, `LegalPlay`, `enumerateLegalPlays`, `resultStrength`, `CpuPolicyId`, `CPU_POLICY_IDS`, `CpuDecisionInput`, `CpuPolicy`, `resolveCpuPolicy`, `rollThinkDelayMillis`, `standardPolicy`, `PlayRoundInput`, `TurnRecord`, `RoundStopReason`, `RoundResult`, `playRound`, `combinationStrength`）が re-export されていることを確認。漏れがあれば追加。
+- [ ] **Step 1: 公開シンボル監査** — `packages/game-core/src/index.ts` を読み、Task 1〜5 の全公開シンボル（`Rng`, `createRng`, `shuffle`, `numberDeck`, `skillDeck`, `dealRound`, `DealInput`, `DealResult`, `LegalPlay`, `enumerateLegalPlays`, `resultStrength`, `CpuPolicyId`, `CPU_POLICY_IDS`, `CpuDecisionInput`, `CpuPolicy`, `resolveCpuPolicy`, `rollThinkDelayMillis`, `standardPolicy`, `PlayRoundInput`, `TurnRecord`, `RoundStopReason`, `RoundResult`, `playRound`, `combinationStrength`）が re-export されていることを確認。漏れがあれば追加。
 
 - [ ] **Step 2: テストファイルの型健全性を手動監査** — 6つの新規 `.test.ts` を読み、`as never` の乱用や `any` 漏れ、`createRoundState` の引数型との齟齬がないか確認。`tsc` 対象外なので目視。問題があれば修正。
 
