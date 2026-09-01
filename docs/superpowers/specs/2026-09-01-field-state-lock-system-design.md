@@ -206,15 +206,19 @@ export function deriveFieldLock(input: {
 - 入力から `lockedSuitCode` を削除。
 - 判定順:
   1. LEAD（`current` が null）: 従来どおり（parse → INVALID_COMBINATION or LEAD 成立）。
-  2. `tryBuildExtension` が成立:
-     - `extensionSealed` → `EXTENSION_SEALED`
-     - `ruleset.countLock && fieldLock.countLocked` → `COUNT_LOCKED`
-     - `ruleset.suitUniformLock && fieldLock.suitUniform && 追加カードにアクティブセットの属性と異なるものがある` → `SUIT_UNIFORM_REQUIRED`
-     - それ以外は EXTEND 成立
-  3. REPLACE 候補: parse → INVALID_COMBINATION / SHAPE_MISMATCH / NOT_STRONGER は従来どおり。
-     - `ruleset.suitFixedLock && fieldLock.suitFixed && !multisetEqual(suitsOf(candidate.cards), fieldLock.suitFixed)` → `SUIT_FIXED_MISMATCH`
-     - `ruleset.suitUniformLock && fieldLock.suitUniform && !全カード同一属性(candidate.cards)` → `SUIT_UNIFORM_REQUIRED`
+  2. `tryBuildExtension` が成立: 拡張のブロック要因を調べる（**即 return しない**）。
+     - `extensionSealed` → `extensionBlockReason = "EXTENSION_SEALED"`
+     - else `ruleset.countLock && fieldLock.countLocked` → `extensionBlockReason = "COUNT_LOCKED"`
+     - else `ruleset.suitUniformLock && fieldLock.suitUniform && 追加カードにアクティブセットの属性と異なるものがある` → `extensionBlockReason = "SUIT_UNIFORM_REQUIRED"`
+     - ブロック要因が無ければ **EXTEND 成立で return**。
+     - ブロック要因があるときは **return せず 3. の REPLACE 評価へフォールスルーする**。同じカード列が「同種別・同枚数のより強い REPLACE」（枚数ロックの許容範囲、SEAL-005 / §2.1 / §2.3）を構成し得るため。
+  3. REPLACE 候補: `parse` → `INVALID_COMBINATION`、種別/枚数不一致 → `SHAPE_MISMATCH`、`compareCombinations !== 1` → `NOT_STRONGER`。
+     - これら3つの早期 return は `extensionBlockReason ?? <本来の理由>` を返す（拡張がブロックされ、かつ REPLACE も不成立なら、ユーザーには拡張ブロックの理由を伝える方が有益）。
+     - 候補が有効な同種別・同枚数のより強い組み合わせなら、`extensionBlockReason` は **破棄**して評価を続ける（例: `水4水5水6` の場に `水7水8水9` — 拡張は枚数ロックで不可だが REPLACE としては合法）。
+     - `ruleset.suitFixedLock && fieldLock.suitFixed && !multisetEqual(suitsOf(candidate.cards), fieldLock.suitFixed)` → `SUIT_FIXED_MISMATCH`（REPLACE 固有。`extensionBlockReason` より優先）
+     - `ruleset.suitUniformLock && fieldLock.suitUniform && !全カード同一属性(candidate.cards)` → `SUIT_UNIFORM_REQUIRED`（REPLACE 固有）
      - それ以外は REPLACE 成立
+  - 実装参照: `packages/game-core/src/index.ts` の `evaluateNumberPlay`（`extensionBlockReason` 変数）。この挙動は `playRules.test.ts` の「locked-replace-abuts-edge」「SEAL-005 regression」ケースで検証済み。
 
 ### 4.5 削除するもの
 
