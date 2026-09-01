@@ -1109,3 +1109,5 @@ function resolveCardPlay(
 export * from "./rng.js";
 export * from "./deal.js";
 export * from "./legalMoves.js";
+export * from "./cpuPolicy.js";
+export * from "./cpuPolicyStandard.js";

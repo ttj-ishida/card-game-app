@@ -1,0 +1,32 @@
+import type { PlayInput, RoundState } from "./index.js";
+import type { LegalPlay } from "./legalMoves.js";
+import type { Rng } from "./rng.js";
+import { standardPolicy } from "./cpuPolicyStandard.js";
+
+export type CpuPolicyId = "STANDARD";
+
+/** UI のセレクタ用一覧。順序は表示順。 */
+export const CPU_POLICY_IDS: readonly CpuPolicyId[] = ["STANDARD"];
+
+export type CpuDecisionInput = {
+  state: RoundState;
+  legalPlays: LegalPlay[];
+  rng: Rng;
+};
+
+export type CpuPolicy = (input: CpuDecisionInput) => PlayInput;
+
+const REGISTRY: Record<CpuPolicyId, CpuPolicy> = {
+  STANDARD: standardPolicy,
+};
+
+export function resolveCpuPolicy(id: CpuPolicyId): CpuPolicy {
+  const policy = REGISTRY[id];
+  if (!policy) throw new Error(`resolveCpuPolicy: unknown CPU policy id "${id}"`);
+  return policy;
+}
+
+/** CPU-007 / TBD-009: 手決定後の表示待ち。game-core は待たず数値のみ返す。 */
+export function rollThinkDelayMillis(rng: Rng): number {
+  return 600 + rng.nextInt(601);
+}
