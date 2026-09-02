@@ -12,6 +12,7 @@ import { configureCpuGameStore, cpuGameStore } from '../state/cpuGameStore';
 import { configureCpuGameSettingsStore, cpuGameSettingsStore } from '../state/cpuGameSettingsStore';
 import { configureCpuGameHistoryStore } from '../state/cpuGameHistoryStore';
 import { configureCpuGameStatsStore } from '../state/cpuGameStatsStore';
+import { configureCpuGameTutorialStore, cpuGameTutorialStore } from '../state/cpuGameTutorialStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
@@ -22,6 +23,7 @@ try {
   configureCpuGameSettingsStore({ storage: deps.storage });
   configureCpuGameHistoryStore(cpuGameHistoryDeps());
   configureCpuGameStatsStore(cpuGameStatsDeps());
+  configureCpuGameTutorialStore({ storage: deps.storage, now: deps.now });
 } catch (error) {
   console.warn('configureCpuGameStore skipped:', error);
 }
@@ -32,6 +34,7 @@ export default function RootLayout() {
   // swallows its own errors, so this is safe to fire unconditionally.
   useEffect(() => {
     void cpuGameSettingsStore.getState().load();
+    void cpuGameTutorialStore.getState().load();
     void cpuGameStore.getState().flushQueue();
     const sub = AppState.addEventListener('change', (status) => {
       if (status === 'active') void cpuGameStore.getState().flushQueue();
@@ -67,6 +70,10 @@ export default function RootLayout() {
       <Stack.Screen
         name="cpu-game/settings"
         options={{ title: translate('cpuGame.settings.title') }}
+      />
+      <Stack.Screen
+        name="cpu-game/tutorial"
+        options={{ title: translate('cpuGame.tutorial.title') }}
       />
     </Stack>
   );

@@ -6,7 +6,10 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-config.watchFolders = [path.resolve(monorepoRoot, 'packages')];
+config.watchFolders = [
+  path.resolve(monorepoRoot, 'packages'),
+  path.resolve(monorepoRoot, 'assets'),
+];
 config.resolver.extraNodeModules = {
   '@card-game-app/game-core': path.resolve(monorepoRoot, 'packages/game-core'),
   '@card-game-app/ui': path.resolve(monorepoRoot, 'packages/ui'),

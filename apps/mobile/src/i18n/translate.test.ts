@@ -216,3 +216,36 @@ test('jaDictionary includes every cpu-game history, stats, and settings key requ
     assert.equal(translate(key), jaDictionary[key]);
   }
 });
+test('jaDictionary includes every initial tutorial key required by M3-EX-06', () => {
+  const requiredKeys: TranslationKey[] = [
+    'cpuGame.menu.tutorial',
+    'cpuGame.tutorial.title',
+    'cpuGame.tutorial.recommended',
+    'cpuGame.tutorial.skip',
+    'cpuGame.tutorial.previous',
+    'cpuGame.tutorial.next',
+    'cpuGame.tutorial.complete',
+    'cpuGame.tutorial.saveFailed',
+    'cpuGame.tutorial.page.deal.title',
+    'cpuGame.tutorial.page.deal.title.imageLabel',
+    'cpuGame.tutorial.page.deal.body',
+    'cpuGame.tutorial.page.leadUpdate.title',
+    'cpuGame.tutorial.page.leadUpdate.title.imageLabel',
+    'cpuGame.tutorial.page.leadUpdate.body',
+    'cpuGame.tutorial.page.passClear.title',
+    'cpuGame.tutorial.page.passClear.title.imageLabel',
+    'cpuGame.tutorial.page.passClear.body',
+    'cpuGame.tutorial.page.dayNight.title',
+    'cpuGame.tutorial.page.dayNight.title.imageLabel',
+    'cpuGame.tutorial.page.dayNight.body',
+    'cpuGame.tutorial.page.skills.title',
+    'cpuGame.tutorial.page.skills.title.imageLabel',
+    'cpuGame.tutorial.page.skills.body',
+  ];
+
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+});

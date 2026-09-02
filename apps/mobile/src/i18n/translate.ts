@@ -214,6 +214,34 @@ export const jaDictionary = {
   'cpuGame.settings.lowMotion': '動きを控えめにする',
   'cpuGame.settings.loading': '設定を読み込み中です。',
   'cpuGame.settings.failed': '設定を保存できませんでした。',
+  'cpuGame.menu.tutorial': 'チュートリアル',
+  'cpuGame.tutorial.title': '初回チュートリアル',
+  'cpuGame.tutorial.recommended': '初回おすすめ: ルールを3分で確認',
+  'cpuGame.tutorial.skip': '設定へ戻る',
+  'cpuGame.tutorial.previous': '前へ',
+  'cpuGame.tutorial.next': '次へ',
+  'cpuGame.tutorial.complete': '完了して戻る',
+  'cpuGame.tutorial.saveFailed': '完了状態を保存できませんでした。もう一度お試しください。',
+  'cpuGame.tutorial.page.deal.title': '配られた手札を見て、先に上がる',
+  'cpuGame.tutorial.page.deal.title.imageLabel': '配布後に履歴と戦績へつながる流れの図',
+  'cpuGame.tutorial.page.deal.body':
+    '数字カードとスキルカードを使い、手札を先になくした人が勝ちです。CPU戦ではあなた以外の席はCPUが自動で操作します。',
+  'cpuGame.tutorial.page.leadUpdate.title': '場なしなら自由に出し、場ありなら強い手で更新',
+  'cpuGame.tutorial.page.leadUpdate.title.imageLabel': 'カードを出して場を更新する流れの図',
+  'cpuGame.tutorial.page.leadUpdate.body':
+    '場が空ならリードできます。場にカードがあるときは、同じ形でより強い手を出すと場を更新できます。選べない手は理由が表示されます。',
+  'cpuGame.tutorial.page.passClear.title': '出せないときはパス。全員が続けてパスすると場流し',
+  'cpuGame.tutorial.page.passClear.title.imageLabel': 'パス、ロック、場流しの図',
+  'cpuGame.tutorial.page.passClear.body':
+    'パスしても脱落ではありません。ほかの全員が続けてパスすると場が流れ、最後に出したプレイヤーから新しくリードします。',
+  'cpuGame.tutorial.page.dayNight.title': '昼と夜で数字の強弱が反転',
+  'cpuGame.tutorial.page.dayNight.title.imageLabel': '昼と夜で強弱順が反転する図',
+  'cpuGame.tutorial.page.dayNight.body':
+    '昼は数字が大きいほど強く、夜は数字が小さいほど強くなります。革命が起きると昼夜が切り替わります。',
+  'cpuGame.tutorial.page.skills.title': 'スキルで場を流す、変化する、封印する、革命する',
+  'cpuGame.tutorial.page.skills.title.imageLabel': '4つの初期スキルを説明する図',
+  'cpuGame.tutorial.page.skills.body':
+    'Joker系は場流しや変化Jokerに使えます。追加封印は以後の追加を止め、革命は昼夜を反転してから提出判定します。スキルは1手番に1枚だけ使えます。',
 } as const satisfies Record<string, string>;
 
 export function translate(key: string): string {

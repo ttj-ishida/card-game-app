@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useStore } from 'zustand/react';
 import { Link, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,6 +7,7 @@ import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
 import { isValidTotalPlayers, MAX_PLAYERS, MIN_PLAYERS } from '../../features/cpu-game/matchConfig';
 import { cpuGameStore } from '../../state/cpuGameStore';
+import { cpuGameTutorialStore } from '../../state/cpuGameTutorialStore';
 import { translate } from '../../i18n/translate';
 
 const COUNTS = Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => MIN_PLAYERS + i);
@@ -15,6 +17,7 @@ export default function CpuGameSetupScreen() {
   const [count, setCount] = useState(MIN_PLAYERS);
   const [startError, setStartError] = useState<string | null>(null);
   const canStart = isValidTotalPlayers(count);
+  const tutorial = useStore(cpuGameTutorialStore, (s) => s.progress);
 
   const start = () => {
     if (!canStart) return;
@@ -63,6 +66,16 @@ export default function CpuGameSetupScreen() {
 
       {startError ? <Text style={styles.error}>{startError}</Text> : null}
 
+      {!tutorial.completed ? (
+        <Link href="/cpu-game/tutorial" asChild>
+          <Pressable accessibilityRole="button" style={styles.tutorialButton}>
+            <Text style={styles.tutorialButtonText}>
+              {translate('cpuGame.tutorial.recommended')}
+            </Text>
+          </Pressable>
+        </Link>
+      ) : null}
+
       <View style={styles.menuRow}>
         <Link href="/cpu-game/history" asChild>
           <Pressable accessibilityRole="button" style={styles.menuButton}>
@@ -72,6 +85,11 @@ export default function CpuGameSetupScreen() {
         <Link href="/cpu-game/stats" asChild>
           <Pressable accessibilityRole="button" style={styles.menuButton}>
             <Text style={styles.menuText}>{translate('cpuGame.menu.stats')}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/cpu-game/tutorial" asChild>
+          <Pressable accessibilityRole="button" style={styles.menuButton}>
+            <Text style={styles.menuText}>{translate('cpuGame.menu.tutorial')}</Text>
           </Pressable>
         </Link>
         <Link href="/cpu-game/settings" asChild>
@@ -121,6 +139,21 @@ const styles = StyleSheet.create({
   },
   startDisabled: { backgroundColor: colors.state.disabled },
   menuRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' },
+  tutorialButton: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.ink.primary,
+    borderRadius: radius.control,
+    backgroundColor: colors.surface.card.face,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  tutorialButtonText: {
+    color: colors.ink.primary,
+    fontSize: typography.size.body,
+    fontWeight: typography.weight.bold,
+    textAlign: 'center',
+  },
   menuButton: {
     borderWidth: 1,
     borderColor: colors.ink.primary,
