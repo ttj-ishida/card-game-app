@@ -1,6 +1,6 @@
 # M3-QA-04: CPUアルファ配布用ビルド プリフライト
 
-日付: 2026-09-02
+日付: 2026-09-03
 状態: ブロック中（M3-QA-02 の実機確認待ち）
 
 ## 目的
@@ -9,12 +9,12 @@ M3-QA-04 は「テスターがインストール・完走できる」配布用�
 
 ## 自動確認結果
 
-`npm run qa:m3:preflight` を追加し、2026-09-02 に実行した。
+`npm run qa:m3:preflight` を2026-09-03に再実行し、自然革命修正後の最新HEADで通過を確認した。
 
 | コマンド                        | 目的                       | 結果                                           |
 | ------------------------------- | -------------------------- | ---------------------------------------------- |
-| `npm run game-core:test`        | ルールエンジン回帰         | PASS（209 件）                                 |
-| `npm run mobile:test`           | モバイル純関数・ストア回帰 | PASS（248 件）                                 |
+| `npm run game-core:test`        | ルールエンジン回帰         | PASS（210 件）                                 |
+| `npm run mobile:test`           | モバイル純関数・ストア回帰 | PASS（251 件）                                 |
 | `npm run mobile:typecheck`      | 画面含む TypeScript 検査   | PASS                                           |
 | `npm run mobile:lint`           | ESLint                     | PASS                                           |
 | `npm run mobile:format:check`   | Prettier                   | PASS                                           |
@@ -33,7 +33,7 @@ M3-QA-04 は「テスターがインストール・完走できる」配布用�
 
 ## ブロッカー
 
-- M3-QA-02 は実機操作が完了条件であり、現時点ではチェックリスト作成まで完了している。
+- M3-QA-02 は実機操作が完了条件であり、現時点では結果保存・履歴・戦績保存のみユーザー確認済み。全スキル・全上がり境界の実機確認は未完了。
 - Expo export はバンドル確認であり、インストール可能な APK/AAB の生成ではない。配布形式を Expo development build / EAS build / ローカル native build のどれにするかは M3-QA-02 PASS 後に決める。
 
 ## 次の一歩
