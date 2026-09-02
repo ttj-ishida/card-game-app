@@ -42,7 +42,7 @@ function assertSvg(path, size) {
 const manifest = readJson("assets/manifests/m4-room-ui-assets.json");
 
 assert(
-  JSON.stringify(manifest.todoIds) === JSON.stringify(["M4-GR-01"]),
+  JSON.stringify(manifest.todoIds) === JSON.stringify(["M4-GR-01", "M4-GR-03"]),
   "manifest todoIds are incomplete",
 );
 assert(
@@ -58,6 +58,14 @@ assert(
 assert(
   manifest.connectionBadges.length === 3,
   "connection badge count must be 3",
+);
+assert(
+  manifest.opponentHandBacks.length === 3,
+  "opponent hand back count must be 3",
+);
+assert(
+  manifest.opponentSkillBadges.length === 3,
+  "opponent skill badge count must be 3",
 );
 
 for (let players = 2; players <= 6; players += 1) {
@@ -88,14 +96,31 @@ for (const state of ["ONLINE", "CONNECTING", "OFFLINE"]) {
   );
 }
 
+for (const band of ["LOW", "MID", "HIGH"]) {
+  assert(
+    manifest.opponentHandBacks.some((asset) => asset.handCountBand === band),
+    `missing ${band} opponent hand back`,
+  );
+}
+
+for (const state of ["UNKNOWN", "HELD", "USED"]) {
+  assert(
+    manifest.opponentSkillBadges.some((asset) => asset.skillState === state),
+    `missing ${state} opponent skill badge`,
+  );
+}
+
 const allAssets = [
   ...manifest.roomLayouts,
   ...manifest.seatBadges,
   ...manifest.readyStateBadges,
   ...manifest.connectionBadges,
+  ...manifest.opponentHandBacks,
+  ...manifest.opponentSkillBadges,
 ];
 let checked = 0;
 const ids = new Set();
+const todoIds = new Set(manifest.todoIds);
 
 for (const asset of allAssets) {
   assert(!ids.has(asset.assetId), `${asset.assetId}: duplicate asset id`);
@@ -103,8 +128,8 @@ for (const asset of allAssets) {
   const size = manifest.sizes[asset.size];
   assert(size, `${asset.assetId}: unknown size ${asset.size}`);
   assert(
-    asset.todoId === "M4-GR-01",
-    `${asset.assetId}: todoId must be M4-GR-01`,
+    todoIds.has(asset.todoId),
+    `${asset.assetId}: unexpected todoId ${asset.todoId}`,
   );
   assert(
     asset.sourcePath.endsWith(".source.svg"),

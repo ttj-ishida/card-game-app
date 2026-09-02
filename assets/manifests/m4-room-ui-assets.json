@@ -1,5 +1,5 @@
 {
-  "todoIds": ["M4-GR-01"],
+  "todoIds": ["M4-GR-01", "M4-GR-03"],
   "version": "0.1.0",
   "status": "rough-svg-for-m4-alpha",
   "sizes": {
@@ -141,6 +141,61 @@
       "runtimePath": "assets/runtime/m4/room-ui/connection-badges/m4-connection-offline.svg",
       "todoId": "M4-GR-01",
       "connectionState": "OFFLINE",
+      "size": "badge"
+    }
+  ],
+  "opponentHandBacks": [
+    {
+      "assetId": "m4-opponent-hand-low",
+      "sourcePath": "assets/source/m4/room-ui/opponent-hand-backs/m4-opponent-hand-low.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-hand-backs/m4-opponent-hand-low.svg",
+      "todoId": "M4-GR-03",
+      "handCountBand": "LOW",
+      "remainingCardsLabel": "1-4",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-opponent-hand-mid",
+      "sourcePath": "assets/source/m4/room-ui/opponent-hand-backs/m4-opponent-hand-mid.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-hand-backs/m4-opponent-hand-mid.svg",
+      "todoId": "M4-GR-03",
+      "handCountBand": "MID",
+      "remainingCardsLabel": "5-9",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-opponent-hand-high",
+      "sourcePath": "assets/source/m4/room-ui/opponent-hand-backs/m4-opponent-hand-high.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-hand-backs/m4-opponent-hand-high.svg",
+      "todoId": "M4-GR-03",
+      "handCountBand": "HIGH",
+      "remainingCardsLabel": "10+",
+      "size": "badge"
+    }
+  ],
+  "opponentSkillBadges": [
+    {
+      "assetId": "m4-opponent-skill-unknown",
+      "sourcePath": "assets/source/m4/room-ui/opponent-skill-badges/m4-opponent-skill-unknown.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-skill-badges/m4-opponent-skill-unknown.svg",
+      "todoId": "M4-GR-03",
+      "skillState": "UNKNOWN",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-opponent-skill-held",
+      "sourcePath": "assets/source/m4/room-ui/opponent-skill-badges/m4-opponent-skill-held.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-skill-badges/m4-opponent-skill-held.svg",
+      "todoId": "M4-GR-03",
+      "skillState": "HELD",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-opponent-skill-used",
+      "sourcePath": "assets/source/m4/room-ui/opponent-skill-badges/m4-opponent-skill-used.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/opponent-skill-badges/m4-opponent-skill-used.svg",
+      "todoId": "M4-GR-03",
+      "skillState": "USED",
       "size": "badge"
     }
   ]

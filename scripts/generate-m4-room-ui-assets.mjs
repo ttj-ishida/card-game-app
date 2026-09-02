@@ -12,6 +12,7 @@ const RED = "#D84A2B";
 const VIOLET = "#6B5DA8";
 const GRAY = "#59636E";
 const MUTED = "#C8D0D8";
+const NIGHT = "#263645";
 
 const SIZES = {
   roomLayout: {
@@ -100,6 +101,52 @@ const CONNECTION_BADGES = [
     shape: "slash",
   },
 ];
+const OPPONENT_HAND_BACKS = [
+  {
+    assetId: "m4-opponent-hand-low",
+    handCountBand: "LOW",
+    label: "1-4",
+    stackCount: 2,
+    color: BLUE,
+  },
+  {
+    assetId: "m4-opponent-hand-mid",
+    handCountBand: "MID",
+    label: "5-9",
+    stackCount: 4,
+    color: GOLD,
+  },
+  {
+    assetId: "m4-opponent-hand-high",
+    handCountBand: "HIGH",
+    label: "10+",
+    stackCount: 6,
+    color: VIOLET,
+  },
+];
+const OPPONENT_SKILL_BADGES = [
+  {
+    assetId: "m4-opponent-skill-unknown",
+    skillState: "UNKNOWN",
+    label: "?",
+    color: GRAY,
+    shape: "question",
+  },
+  {
+    assetId: "m4-opponent-skill-held",
+    skillState: "HELD",
+    label: "SKILL",
+    color: GOLD,
+    shape: "spark",
+  },
+  {
+    assetId: "m4-opponent-skill-used",
+    skillState: "USED",
+    label: "USED",
+    color: MUTED,
+    shape: "spent",
+  },
+];
 
 function write(path, content) {
   mkdirSync(dirname(path), { recursive: true });
@@ -179,6 +226,12 @@ function badgeCenter(shape, color) {
     return `<circle cx="160" cy="206" r="16" fill="${color}"/><path d="M104 166 C136 134 184 134 216 166 M72 128 C122 78 198 78 248 128" fill="none" stroke="${color}" stroke-width="20" stroke-linecap="round"/>`;
   if (shape === "sync")
     return `<path d="M92 128 C126 82 196 82 228 130 L244 114 M228 130 L212 104" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><path d="M228 194 C194 238 124 238 92 190 L76 206 M92 190 L108 216" fill="none" stroke="${INK}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (shape === "question")
+    return `<circle cx="160" cy="148" r="96" fill="${color}" stroke="${INK}" stroke-width="8"/><text x="160" y="184" font-family="Arial, sans-serif" font-size="116" font-weight="700" text-anchor="middle" fill="${PAPER}">?</text>`;
+  if (shape === "spark")
+    return `<path d="M160 56 L184 124 L256 148 L184 172 L160 244 L136 172 L64 148 L136 124 Z" fill="${color}" stroke="${INK}" stroke-width="8" stroke-linejoin="round"/><circle cx="160" cy="148" r="34" fill="${PAPER}" stroke="${INK}" stroke-width="6"/>`;
+  if (shape === "spent")
+    return `<path d="M94 92 H226 V206 H94 Z" fill="${color}" stroke="${INK}" stroke-width="8"/><path d="M86 226 H234 M102 74 L218 224" stroke="${RED}" stroke-width="16" stroke-linecap="round"/>`;
   return `<path d="M90 90 L230 230" stroke="${color}" stroke-width="28" stroke-linecap="round"/><circle cx="160" cy="160" r="100" fill="none" stroke="${INK}" stroke-width="10"/>`;
 }
 
@@ -194,8 +247,35 @@ function badgeSvg(group, item) {
   );
 }
 
+function cardBack(x, y, rotate, color) {
+  return `<g transform="translate(${x} ${y}) rotate(${rotate})"><rect x="-44" y="-62" width="88" height="124" rx="12" fill="${NIGHT}" stroke="${INK}" stroke-width="5"/><rect x="-32" y="-50" width="64" height="100" rx="8" fill="${color}" opacity="0.86"/><path d="M-22 -30 H22 M-22 -6 H22 M-22 18 H22" stroke="${PAPER}" stroke-width="7" stroke-linecap="round"/><circle cx="0" cy="38" r="10" fill="${PAPER}"/></g>`;
+}
+
+function opponentHandBackSvg(item) {
+  const spread = Array.from({ length: item.stackCount }, (_, index) => {
+    const offset = index - (item.stackCount - 1) / 2;
+    return cardBack(
+      160 + offset * 18,
+      142 + Math.abs(offset) * 3,
+      offset * 7,
+      item.color,
+    );
+  }).join("");
+
+  return svg(
+    "badge",
+    `M4 opponent hidden hand rough: ${item.handCountBand}`,
+    `Opponent hidden hand indicator for the ${item.label} remaining-card band; count is visible without revealing card faces.`,
+    `<rect width="320" height="320" fill="none"/>` +
+      `<rect x="18" y="24" width="284" height="272" rx="36" fill="${PANEL}" stroke="${INK}" stroke-width="6"/>` +
+      spread +
+      `<rect x="88" y="224" width="144" height="52" rx="16" fill="${PAPER}" stroke="${INK}" stroke-width="5"/>` +
+      `<text x="160" y="262" font-family="Arial, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="${INK}">${item.label}</text>`,
+  );
+}
+
 const manifest = {
-  todoIds: ["M4-GR-01"],
+  todoIds: ["M4-GR-01", "M4-GR-03"],
   version: "0.1.0",
   status: "rough-svg-for-m4-alpha",
   sizes: SIZES,
@@ -203,6 +283,8 @@ const manifest = {
   seatBadges: [],
   readyStateBadges: [],
   connectionBadges: [],
+  opponentHandBacks: [],
+  opponentSkillBadges: [],
 };
 
 function emit(assetId, subdir, content, extra) {
@@ -259,6 +341,37 @@ for (const badge of CONNECTION_BADGES) {
   );
 }
 
+for (const handBack of OPPONENT_HAND_BACKS) {
+  manifest.opponentHandBacks.push(
+    emit(
+      handBack.assetId,
+      "opponent-hand-backs",
+      opponentHandBackSvg(handBack),
+      {
+        todoId: "M4-GR-03",
+        handCountBand: handBack.handCountBand,
+        remainingCardsLabel: handBack.label,
+        size: "badge",
+      },
+    ),
+  );
+}
+
+for (const badge of OPPONENT_SKILL_BADGES) {
+  manifest.opponentSkillBadges.push(
+    emit(
+      badge.assetId,
+      "opponent-skill-badges",
+      badgeSvg("opponent skill", badge),
+      {
+        todoId: "M4-GR-03",
+        skillState: badge.skillState,
+        size: "badge",
+      },
+    ),
+  );
+}
+
 write(
   "assets/manifests/m4-room-ui-assets.json",
   await prettier.format(JSON.stringify(manifest), { parser: "json" }),
@@ -268,5 +381,7 @@ const total =
   manifest.roomLayouts.length +
   manifest.seatBadges.length +
   manifest.readyStateBadges.length +
-  manifest.connectionBadges.length;
+  manifest.connectionBadges.length +
+  manifest.opponentHandBacks.length +
+  manifest.opponentSkillBadges.length;
 console.log(`M4 room UI rough assets generated (${total} assets)`);
