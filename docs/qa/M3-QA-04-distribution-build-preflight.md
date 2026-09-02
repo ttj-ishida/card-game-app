@@ -1,7 +1,7 @@
 # M3-QA-04: CPUアルファ配布用ビルド プリフライト
 
 日付: 2026-09-03
-状態: 配布ビルド設定済み（EASログイン後にAPK生成）
+状態: EAS previewビルド投入済み（APK生成待ち）
 
 ## 目的
 
@@ -22,22 +22,23 @@ M3-QA-04 は「テスターがインストール・完走できる」配布用�
 
 ## 配布前チェック
 
-| ID            | 項目                     | 期待結果                                            | 状態    |
-| ------------- | ------------------------ | --------------------------------------------------- | ------- |
-| QA04-READY-01 | M3-QA-01                 | CPU 1,000局自動対戦レポート完了                     | PASS    |
-| QA04-READY-02 | M3-QA-02                 | 全スキル・全上がり境界の実機確認完了                | PASS    |
-| QA04-READY-03 | M3-QA-03                 | 5人対戦の配布席・先攻ローテーション確認完了         | PASS    |
-| QA04-BUILD-01 | Android export           | `npm run mobile:export:android` が成功              | PASS    |
-| QA04-BUILD-02 | インストール可能な成果物 | `npm run mobile:build:android:preview` で内部配布APKを生成できる | 待機中（EASログイン必要） |
-| QA04-RUN-01   | テスター完走             | 新規テスターが1局完走し、履歴・戦績保存を確認できる | 未着手  |
+| ID            | 項目                     | 期待結果                                            | 状態                        |
+| ------------- | ------------------------ | --------------------------------------------------- | --------------------------- |
+| QA04-READY-01 | M3-QA-01                 | CPU 1,000局自動対戦レポート完了                     | PASS                        |
+| QA04-READY-02 | M3-QA-02                 | 全スキル・全上がり境界の実機確認完了                | PASS                        |
+| QA04-READY-03 | M3-QA-03                 | 5人対戦の配布席・先攻ローテーション確認完了         | PASS                        |
+| QA04-BUILD-01 | Android export           | `npm run mobile:export:android` が成功              | PASS                        |
+| QA04-BUILD-02 | インストール可能な成果物 | EAS previewビルドで内部配布APKを生成できる          | 実行中（EAS Build投入済み） |
+| QA04-RUN-01   | テスター完走             | 新規テスターが1局完走し、履歴・戦績保存を確認できる | 未着手                      |
 
 ## 現在の制約
 
 - M3-QA-02 は2026-09-03にユーザー実機確認済み。
-- このPCにはJavaがPATHになく、`apps/mobile/android` も未生成のためローカルGradleビルドは未実施。EAS CLI は導入済みだが未ログインのため、内部配布APK生成はログイン後に実行する。
+- このPCにはJavaがPATHになく、`apps/mobile/android` も未生成のためローカルGradleビルドは未実施。EAS CLIログイン後、`@tetsuzi/card-game-app` を作成・紐付けし、Android previewビルドを投入した。
+- Preview build: `https://expo.dev/accounts/tetsuzi/projects/card-game-app/builds/cce1ded1-b04d-457f-bf3c-0549652eca21`
 
 ## 次の一歩
 
-1. `eas login` で Expo/EAS にログインする。
-2. `npm run mobile:build:android:preview` を実行し、内部配布APKを生成する。
-3. テスター端末へインストールし、1局完走と履歴・戦績保存を確認する。
+1. EAS previewビルドの完了を待つ。
+2. 生成されたAPKをテスター端末へインストールする。
+3. 1局完走と履歴・戦績保存を確認する。
