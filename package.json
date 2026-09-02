@@ -15,6 +15,7 @@
     "mobile:test": "npm --prefix apps/mobile run test",
     "mobile:lint": "npm --prefix apps/mobile run lint",
     "mobile:format:check": "npm --prefix apps/mobile run format:check",
+    "mobile:export:android": "npm --prefix apps/mobile run export:android",
     "assets:generate": "node scripts/generate-m0-card-placeholders.mjs",
     "assets:check": "node scripts/check-m0-assets.mjs",
     "ui:test": "npm --prefix apps/mobile exec -- tsx --test packages/ui/src/tokens.test.ts",
