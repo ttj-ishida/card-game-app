@@ -244,7 +244,7 @@ test("resolvePlay rejects a revolution skill play that is illegal after the flip
   assert.deepEqual(state, snapshot);
 });
 
-test("resolvePlay resolves a transform Joker play and records natural revolution + lock", () => {
+test("resolvePlay clears the field after a transformed Joker natural revolution", () => {
   const state = round({
     players: [
       skilled(
@@ -265,7 +265,13 @@ test("resolvePlay resolves a transform Joker play and records natural revolution
     jokerDeclarations: [{ skillId: "SK_P1", rankCode: "RANK_6", suitCode: "SUIT_FIRE" }],
   });
   assert.ok(result.ok);
-  assert.equal(result.state.activeField?.lock.suitUniform, true);
+  assert.equal(result.state.activeField, null);
+  assert.equal(result.outcome.fieldCleared, true);
+  assert.equal(result.state.activePlayerId, "P1");
+  assert.equal(
+    result.state.discardPile.some((card) => card.transformedFromSkillId === "SK_P1"),
+    true,
+  );
   assert.equal(result.state.dayNight, "NIGHT");
   assert.equal(result.outcome.naturalRevolution, true);
 });

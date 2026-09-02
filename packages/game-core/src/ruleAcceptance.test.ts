@@ -108,7 +108,7 @@ test("T-RULE-003: day, field 66 rejects 777 for count mismatch", () => {
   assert.equal(result.ok === false && result.reason, "SHAPE_MISMATCH");
 });
 
-test("T-RULE-004: day, field 234 grows to 23456 with one natural revolution", () => {
+test("T-RULE-004: day, field 234 grows to 23456, naturally revolts, and clears", () => {
   const result = play(
     makeRound({
       p1: [c(5, "FIRE"), c(6, "WATER"), c(9, "EARTH")],
@@ -118,12 +118,18 @@ test("T-RULE-004: day, field 234 grows to 23456 with one natural revolution", ()
   );
   assert.ok(result.ok);
   assert.equal(result.outcome.actionKind, "EXTEND");
-  assert.deepEqual(result.state.activeField?.combination.ranks, [2, 3, 4, 5, 6]);
+  assert.equal(result.state.activeField, null);
+  assert.equal(result.outcome.fieldCleared, true);
   assert.equal(result.outcome.naturalRevolution, true);
   assert.equal(result.state.dayNight, "NIGHT");
+  assert.equal(result.state.activePlayerId, "P1");
+  assert.deepEqual(
+    result.state.discardPile.map((card) => card.cardId),
+    ["N_2_FIRE", "N_3_WATER", "N_4_WIND", "N_5_FIRE", "N_6_WATER"],
+  );
 });
 
-test("T-RULE-005: night, field 567 grows to 34567 with one natural revolution", () => {
+test("T-RULE-005: night, field 567 grows to 34567, naturally revolts, and clears", () => {
   const result = play(
     makeRound({
       dayNight: "NIGHT",
@@ -133,7 +139,10 @@ test("T-RULE-005: night, field 567 grows to 34567 with one natural revolution", 
     { kind: "PLAY", playerId: "P1", cardIds: ["N_3_FIRE", "N_4_WATER"] },
   );
   assert.ok(result.ok);
-  assert.deepEqual(result.state.activeField?.combination.ranks, [3, 4, 5, 6, 7]);
+  assert.equal(result.state.activeField, null);
+  assert.equal(result.outcome.fieldCleared, true);
+  assert.equal(result.state.dayNight, "DAY");
+  assert.equal(result.state.activePlayerId, "P1");
   assert.equal(result.outcome.naturalRevolution, true);
 });
 
@@ -359,14 +368,17 @@ test("T-RULE-017: two Jokers declaring distinct identities form a legal sequence
     ],
   });
   assert.ok(result.ok);
-  assert.equal(result.state.activeField?.combination.kind, "SEQUENCE");
-  const transformed = result.state.activeField?.combination.cards.filter(
+  assert.equal(result.state.activeField, null);
+  assert.equal(result.outcome.fieldCleared, true);
+  assert.equal(result.outcome.naturalRevolution, true);
+  assert.equal(result.state.activePlayerId, "P1");
+  const transformed = result.state.discardPile.filter(
     (card) => card.transformedFromSkillId !== undefined,
   );
-  assert.equal(transformed?.length, 2);
+  assert.equal(transformed.length, 2);
   assert.notEqual(
-    transformed?.[0]?.transformedFromSkillId,
-    transformed?.[1]?.transformedFromSkillId,
+    transformed[0]?.transformedFromSkillId,
+    transformed[1]?.transformedFromSkillId,
   );
 });
 
