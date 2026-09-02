@@ -15,7 +15,14 @@ export const storagePort: StoragePort = {
   setItem: (k, v) => AsyncStorage.setItem(k, v),
 };
 
-export const httpPort: HttpPort = {
+export const httpPort: HttpPort & {
+  get(url: string, headers: Record<string, string>): Promise<{ status: number; body: string }>;
+} = {
+  async get(url, headers) {
+    const r = await fetch(url, { method: 'GET', headers });
+    return { status: r.status, body: await r.text() };
+  },
+
   async post(url, headers, body) {
     const r = await fetch(url, { method: 'POST', headers, body });
     return { status: r.status, body: await r.text() };
