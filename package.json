@@ -17,6 +17,7 @@
     "mobile:lint": "npm --prefix apps/mobile run lint",
     "mobile:format:check": "npm --prefix apps/mobile run format:check",
     "mobile:export:android": "npm --prefix apps/mobile run export:android",
+    "qa:m3:preflight": "npm run game-core:test && npm run mobile:test && npm run mobile:typecheck && npm run mobile:lint && npm run mobile:format:check && npm run mobile:export:android",
     "assets:generate": "node scripts/generate-m0-card-placeholders.mjs",
     "assets:check": "node scripts/check-m0-assets.mjs",
     "ui:test": "npm --prefix apps/mobile exec -- tsx --test packages/ui/src/tokens.test.ts",
