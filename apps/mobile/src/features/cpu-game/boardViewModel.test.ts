@@ -288,3 +288,95 @@ test('M2-QA-03: hand shows exactly 18 cards for a 2-player deal and 6 for a 6-pl
   assert.equal(buildBoardViewModel(start(2), [], []).hand.length, 18);
   assert.equal(buildBoardViewModel(start(6), [], []).hand.length, 6);
 });
+
+function humanSkillState(effectCode: string): DriverState {
+  for (let seed = 0; seed < 400; seed += 1) {
+    for (const n of [2, 3, 4, 5, 6]) {
+      let g = initGame({ config: buildMatchConfig(n), seed });
+      const human = g.round.players.find((p) => p.playerId === 'seat-0');
+      if (!(human?.skill && !human.skill.used && human.skill.effectCode === effectCode)) continue;
+      let guard = 0;
+      while (g.phase === 'CPU_PENDING' && guard < 200) { g = cpuStep(g).next; guard += 1; }
+      if (g.phase === 'HUMAN_TURN') return g;
+    }
+  }
+  throw new Error(`no human ${effectCode} state`);
+}
+
+test('skillPanel is null when it is not the human turn or the held skill is used', () => {
+  // seat-0 に配られたスキルは常に存在するため、「未保有」相当は
+  //  (a) 人間手番でない  (b) スキル使用済み  の2経路で検証する。
+  let notHumanTurn: DriverState | null = null;
+  for (let seed = 0; seed < 200 && !notHumanTurn; seed += 1) {
+    const g = start(6, seed);
+    if (g.phase === 'CPU_PENDING') notHumanTurn = g;
+  }
+  assert.ok(notHumanTurn);
+  assert.equal(buildBoardViewModel(notHumanTurn, [], []).skillPanel, null);
+
+  const held = humanSkillState('SKILL_REVOLUTION');
+  const used: DriverState = {
+    ...held,
+    round: {
+      ...held.round,
+      players: held.round.players.map((p) =>
+        p.playerId === 'seat-0' && p.skill ? { ...p, skill: { ...p.skill, used: true } } : p,
+      ),
+    },
+  };
+  assert.equal(buildBoardViewModel(used, [], legalPlaysForHuman(used)).skillPanel, null);
+});
+
+test('skillPanel reports the held revolution skill with a preview', () => {
+  const g = humanSkillState('SKILL_REVOLUTION');
+  const vm = buildBoardViewModel(g, [], legalPlaysForHuman(g));
+  assert.ok(vm.skillPanel);
+  assert.equal(vm.skillPanel!.heldEffectKey, 'sandbox.skill.SKILL_REVOLUTION');
+  assert.equal(vm.skillPanel!.heldEffectDescKey, 'cpuGame.skill.effect.SKILL_REVOLUTION');
+  assert.equal(vm.skillPanel!.revolutionAvailable, true);
+  assert.ok(vm.skillPanel!.revolutionPreview);
+  assert.equal(vm.skillPanel!.sealAvailable, false);
+  assert.equal(vm.skillPanel!.jokerTransformAvailable, false);
+});
+
+test('skillPanel jokerClearAvailable follows field presence for a Joker holder', () => {
+  const g = humanSkillState('SKILL_JOKER_HERO');
+  const vm = buildBoardViewModel(g, [], legalPlaysForHuman(g));
+  assert.ok(vm.skillPanel);
+  assert.equal(vm.skillPanel!.jokerTransformAvailable, true);
+  assert.equal(vm.skillPanel!.jokerClearAvailable, g.round.activeField != null);
+});
+
+test('submitOptions.plain mirrors canSubmitPlain and skills mirrors submitOptionsForSelection', () => {
+  const g = humanSkillState('SKILL_EXTENSION_SEAL');
+  const legal = legalPlaysForHuman(g);
+  const plainPlay = legal.find((p) => p.input.kind === 'PLAY' && p.input.useSkill === undefined);
+  assert.ok(plainPlay && plainPlay.input.kind === 'PLAY');
+  const vm = buildBoardViewModel(g, plainPlay.input.cardIds, legal);
+  assert.equal(vm.submitOptions.plain, true);
+  for (const s of vm.submitOptions.skills) {
+    assert.match(s.labelKey, /^cpuGame\.skill\.submit\.(JOKER_CLEAR|EXTENSION_SEAL|REVOLUTION)$/);
+  }
+});
+
+test('jokerTransform reflects the draft and resolution status', () => {
+  const g = humanSkillState('SKILL_JOKER_HERO');
+  const legal = legalPlaysForHuman(g);
+  const inactive = buildBoardViewModel(g, [], legal);
+  assert.equal(inactive.jokerTransform.active, false);
+  assert.equal(inactive.jokerTransform.canConfirm, false);
+  const active = buildBoardViewModel(g, [], legal, {
+    jokerTransform: { active: true, rankCode: null, suitCode: null },
+  });
+  assert.equal(active.jokerTransform.active, true);
+  assert.equal(active.jokerTransform.previewCard, null);
+});
+
+test('selectionHint carries a legal-move count and a null reason on an empty selection', () => {
+  const g = humanSkillState('SKILL_REVOLUTION');
+  const legal = legalPlaysForHuman(g);
+  const vm = buildBoardViewModel(g, [], legal);
+  assert.equal(vm.selectionHint.rejectionReasonKey, null);
+  assert.equal(typeof vm.selectionHint.legalMoveCount, 'number');
+  assert.ok(vm.selectionHint.legalMoveCount >= 0);
+});

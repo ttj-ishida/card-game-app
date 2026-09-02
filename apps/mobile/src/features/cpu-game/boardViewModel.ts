@@ -5,9 +5,20 @@ import {
   type DayNight,
   type LegalPlay,
   type NumberCard,
+  type RankCode,
   type SuitCode,
 } from '@card-game-app/game-core';
-import { canPass, canSelectCard, canSubmit, type HandSelection } from './handSelection';
+import { canPass, canSelectCard, canSubmit, canSubmitPlain, type HandSelection } from './handSelection';
+import {
+  heldSkillEffect,
+  jokerPreviewCard,
+  legalMoveCount,
+  resolveJokerTransform,
+  revolutionPreview,
+  selectionRejectionReasonKey,
+  submitOptionsForSelection,
+  type JokerDeclarationDraft,
+} from './skillPlayOptions';
 import type { MatchConfig } from './matchConfig';
 import type { DriverState, GamePhase, TurnActionKind } from './turnDriver';
 
@@ -64,6 +75,32 @@ export type BoardViewModel = {
   opponents: OpponentView[];
   turnLog: TurnLogLineView[];
   humanSkillNameKey: string | null;
+  skillPanel: {
+    heldEffectKey: string;
+    heldEffectDescKey: string;
+    jokerClearAvailable: boolean;
+    jokerTransformAvailable: boolean;
+    sealAvailable: boolean;
+    revolutionAvailable: boolean;
+    revolutionPreview: { dayNightAfter: DayNight; strengthOrderAfter: number[] } | null;
+  } | null;
+  submitOptions: {
+    plain: boolean;
+    skills: { useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION'; labelKey: string }[];
+  };
+  jokerTransform: {
+    active: boolean;
+    rankCode: RankCode | null;
+    suitCode: SuitCode | null;
+    canConfirm: boolean;
+    forbiddenGoOut: boolean;
+    rejectionReasonKey: string | null;
+    previewCard: { rank: number; suitCode: SuitCode } | null;
+  };
+  selectionHint: {
+    rejectionReasonKey: string | null;
+    legalMoveCount: number;
+  };
   hand: HandCardView[];
   canSubmit: boolean;
   canPass: boolean;
@@ -100,7 +137,10 @@ export function buildBoardViewModel(
   state: DriverState,
   selection: HandSelection,
   legalPlays: LegalPlay[],
-  opts?: { cpuThinking?: boolean },
+  opts?: {
+    cpuThinking?: boolean;
+    jokerTransform?: { active: boolean } & JokerDeclarationDraft;
+  },
 ): BoardViewModel {
   const { config, round } = state;
   const humanSeatId = config.seats.find((s) => s.kind === 'HUMAN')?.seatId ?? null;
@@ -155,6 +195,56 @@ export function buildBoardViewModel(
   const humanSkillNameKey =
     humanPlayer?.skill != null ? `sandbox.skill.${humanPlayer.skill.effectCode}` : null;
 
+  const isHumanTurn = state.phase === 'HUMAN_TURN';
+  const heldEffect = heldSkillEffect(state);
+  const jtDraft = opts?.jokerTransform ?? { active: false, rankCode: null, suitCode: null };
+
+  const isJoker = heldEffect === 'SKILL_JOKER_HERO' || heldEffect === 'SKILL_JOKER_SAINT';
+  const skillPanel =
+    isHumanTurn && heldEffect != null
+      ? {
+          heldEffectKey: `sandbox.skill.${heldEffect}`,
+          heldEffectDescKey: `cpuGame.skill.effect.${heldEffect}`,
+          jokerClearAvailable: isJoker && round.activeField != null,
+          jokerTransformAvailable: isJoker,
+          sealAvailable: heldEffect === 'SKILL_EXTENSION_SEAL',
+          revolutionAvailable: heldEffect === 'SKILL_REVOLUTION',
+          revolutionPreview: heldEffect === 'SKILL_REVOLUTION' ? revolutionPreview(state) : null,
+        }
+      : null;
+
+  const skillSubmit = submitOptionsForSelection(legalPlays, selection);
+  const submitOptions = {
+    plain: canSubmitPlain(selection, legalPlays),
+    skills: skillSubmit.map((s) => ({
+      useSkill: s.useSkill,
+      labelKey: `cpuGame.skill.submit.${s.useSkill}`,
+    })),
+  };
+
+  const jtRes = jtDraft.active
+    ? resolveJokerTransform(state, selection, {
+        rankCode: jtDraft.rankCode,
+        suitCode: jtDraft.suitCode,
+      })
+    : null;
+  const jokerTransform = {
+    active: jtDraft.active,
+    rankCode: jtDraft.rankCode,
+    suitCode: jtDraft.suitCode,
+    canConfirm: jtRes?.status === 'ok',
+    forbiddenGoOut: jtRes?.status === 'forbidden-go-out',
+    rejectionReasonKey: jtRes?.status === 'illegal' ? jtRes.rejectionReasonKey : null,
+    previewCard: jokerPreviewCard({ rankCode: jtDraft.rankCode, suitCode: jtDraft.suitCode }),
+  };
+
+  const selectionHint = {
+    rejectionReasonKey: isHumanTurn
+      ? selectionRejectionReasonKey(state, selection, legalPlays)
+      : null,
+    legalMoveCount: isHumanTurn ? legalMoveCount(legalPlays) : 0,
+  };
+
   return {
     phase: state.phase,
     dayNight: round.dayNight,
@@ -167,6 +257,10 @@ export function buildBoardViewModel(
     opponents,
     turnLog,
     humanSkillNameKey,
+    skillPanel,
+    submitOptions,
+    jokerTransform,
+    selectionHint,
     hand,
     canSubmit: canSubmit(selection, legalPlays),
     canPass: canPass(legalPlays),
