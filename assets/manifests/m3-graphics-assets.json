@@ -1,0 +1,294 @@
+{
+  "todoIds": ["M3-GR-01", "M3-GR-02", "M3-GR-03", "M3-GR-04", "M3-GR-05"],
+  "version": "0.1.0",
+  "status": "rough-svg-for-m3-alpha",
+  "sizes": {
+    "cardIllust": {
+      "width": 630,
+      "height": 882,
+      "viewBox": "0 0 630 882",
+      "maxBytes": 30000
+    },
+    "frame": {
+      "width": 750,
+      "height": 1050,
+      "viewBox": "0 0 750 1050",
+      "maxBytes": 24000
+    },
+    "emblem": {
+      "width": 200,
+      "height": 200,
+      "viewBox": "0 0 200 200",
+      "maxBytes": 12000
+    },
+    "skillCard": {
+      "width": 750,
+      "height": 1050,
+      "viewBox": "0 0 750 1050",
+      "maxBytes": 32000
+    },
+    "tutorialPanel": {
+      "width": 1280,
+      "height": 720,
+      "viewBox": "0 0 1280 720",
+      "maxBytes": 48000
+    }
+  },
+  "rankIllustrations": [
+    {
+      "assetId": "m3-rank-1-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-1-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-1-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 1,
+      "rankCode": "RANK_1",
+      "nameJa": "大魔王",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-2-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-2-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-2-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 2,
+      "rankCode": "RANK_2",
+      "nameJa": "魔王",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-3-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-3-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-3-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 3,
+      "rankCode": "RANK_3",
+      "nameJa": "竜騎士",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-4-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-4-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-4-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 4,
+      "rankCode": "RANK_4",
+      "nameJa": "騎士",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-5-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-5-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-5-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 5,
+      "rankCode": "RANK_5",
+      "nameJa": "人間の戦士",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-6-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-6-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-6-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 6,
+      "rankCode": "RANK_6",
+      "nameJa": "貴族",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-7-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-7-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-7-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 7,
+      "rankCode": "RANK_7",
+      "nameJa": "王",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-8-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-8-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-8-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 8,
+      "rankCode": "RANK_8",
+      "nameJa": "天使",
+      "size": "cardIllust"
+    },
+    {
+      "assetId": "m3-rank-9-rough",
+      "sourcePath": "assets/source/m3/card-illustrations/m3-rank-9-rough.source.svg",
+      "runtimePath": "assets/runtime/m3/card-illustrations/m3-rank-9-rough.svg",
+      "todoId": "M3-GR-01",
+      "rank": 9,
+      "rankCode": "RANK_9",
+      "nameJa": "神",
+      "size": "cardIllust"
+    }
+  ],
+  "attributeFrames": [
+    {
+      "assetId": "m3-frame-fire",
+      "sourcePath": "assets/source/m3/frames/m3-frame-fire.source.svg",
+      "runtimePath": "assets/runtime/m3/frames/m3-frame-fire.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_FIRE",
+      "nameJa": "火",
+      "shapeCue": "spikes",
+      "size": "frame"
+    },
+    {
+      "assetId": "m3-frame-water",
+      "sourcePath": "assets/source/m3/frames/m3-frame-water.source.svg",
+      "runtimePath": "assets/runtime/m3/frames/m3-frame-water.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_WATER",
+      "nameJa": "水",
+      "shapeCue": "waves",
+      "size": "frame"
+    },
+    {
+      "assetId": "m3-frame-wind",
+      "sourcePath": "assets/source/m3/frames/m3-frame-wind.source.svg",
+      "runtimePath": "assets/runtime/m3/frames/m3-frame-wind.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_WIND",
+      "nameJa": "風",
+      "shapeCue": "swirls",
+      "size": "frame"
+    },
+    {
+      "assetId": "m3-frame-earth",
+      "sourcePath": "assets/source/m3/frames/m3-frame-earth.source.svg",
+      "runtimePath": "assets/runtime/m3/frames/m3-frame-earth.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_EARTH",
+      "nameJa": "土",
+      "shapeCue": "diamonds",
+      "size": "frame"
+    }
+  ],
+  "attributeEmblems": [
+    {
+      "assetId": "m3-emblem-fire",
+      "sourcePath": "assets/source/m3/emblems/m3-emblem-fire.source.svg",
+      "runtimePath": "assets/runtime/m3/emblems/m3-emblem-fire.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_FIRE",
+      "nameJa": "火",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m3-emblem-water",
+      "sourcePath": "assets/source/m3/emblems/m3-emblem-water.source.svg",
+      "runtimePath": "assets/runtime/m3/emblems/m3-emblem-water.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_WATER",
+      "nameJa": "水",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m3-emblem-wind",
+      "sourcePath": "assets/source/m3/emblems/m3-emblem-wind.source.svg",
+      "runtimePath": "assets/runtime/m3/emblems/m3-emblem-wind.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_WIND",
+      "nameJa": "風",
+      "size": "emblem"
+    },
+    {
+      "assetId": "m3-emblem-earth",
+      "sourcePath": "assets/source/m3/emblems/m3-emblem-earth.source.svg",
+      "runtimePath": "assets/runtime/m3/emblems/m3-emblem-earth.svg",
+      "todoId": "M3-GR-02",
+      "suitCode": "SUIT_EARTH",
+      "nameJa": "土",
+      "size": "emblem"
+    }
+  ],
+  "skillCandidates": [
+    {
+      "assetId": "m3-skill-joker-hero",
+      "sourcePath": "assets/source/m3/skill-candidates/m3-skill-joker-hero.source.svg",
+      "runtimePath": "assets/runtime/m3/skill-candidates/m3-skill-joker-hero.svg",
+      "todoId": "M3-GR-03",
+      "skillCode": "SKILL_JOKER_HERO",
+      "nameJa": "勇者Joker",
+      "size": "skillCard"
+    },
+    {
+      "assetId": "m3-skill-joker-saint",
+      "sourcePath": "assets/source/m3/skill-candidates/m3-skill-joker-saint.source.svg",
+      "runtimePath": "assets/runtime/m3/skill-candidates/m3-skill-joker-saint.svg",
+      "todoId": "M3-GR-03",
+      "skillCode": "SKILL_JOKER_SAINT",
+      "nameJa": "聖女Joker",
+      "size": "skillCard"
+    },
+    {
+      "assetId": "m3-skill-extension-seal",
+      "sourcePath": "assets/source/m3/skill-candidates/m3-skill-extension-seal.source.svg",
+      "runtimePath": "assets/runtime/m3/skill-candidates/m3-skill-extension-seal.svg",
+      "todoId": "M3-GR-04",
+      "skillCode": "SKILL_EXTENSION_SEAL",
+      "nameJa": "追加封印",
+      "size": "skillCard"
+    },
+    {
+      "assetId": "m3-skill-revolution",
+      "sourcePath": "assets/source/m3/skill-candidates/m3-skill-revolution.source.svg",
+      "runtimePath": "assets/runtime/m3/skill-candidates/m3-skill-revolution.svg",
+      "todoId": "M3-GR-04",
+      "skillCode": "SKILL_REVOLUTION",
+      "nameJa": "革命",
+      "size": "skillCard"
+    }
+  ],
+  "tutorialPanels": [
+    {
+      "assetId": "m3-tutorial-strength-order",
+      "sourcePath": "assets/source/m3/tutorial/m3-tutorial-strength-order.source.svg",
+      "runtimePath": "assets/runtime/m3/tutorial/m3-tutorial-strength-order.svg",
+      "todoId": "M3-GR-05",
+      "panelId": "m3-tutorial-strength-order",
+      "titleJa": "昼夜で強弱が反転",
+      "size": "tutorialPanel"
+    },
+    {
+      "assetId": "m3-tutorial-lead-update",
+      "sourcePath": "assets/source/m3/tutorial/m3-tutorial-lead-update.source.svg",
+      "runtimePath": "assets/runtime/m3/tutorial/m3-tutorial-lead-update.svg",
+      "todoId": "M3-GR-05",
+      "panelId": "m3-tutorial-lead-update",
+      "titleJa": "場なしから更新とパス",
+      "size": "tutorialPanel"
+    },
+    {
+      "assetId": "m3-tutorial-locks",
+      "sourcePath": "assets/source/m3/tutorial/m3-tutorial-locks.source.svg",
+      "runtimePath": "assets/runtime/m3/tutorial/m3-tutorial-locks.svg",
+      "todoId": "M3-GR-05",
+      "panelId": "m3-tutorial-locks",
+      "titleJa": "縛りと追加封印",
+      "size": "tutorialPanel"
+    },
+    {
+      "assetId": "m3-tutorial-skills",
+      "sourcePath": "assets/source/m3/tutorial/m3-tutorial-skills.source.svg",
+      "runtimePath": "assets/runtime/m3/tutorial/m3-tutorial-skills.svg",
+      "todoId": "M3-GR-05",
+      "panelId": "m3-tutorial-skills",
+      "titleJa": "4つの初期スキル",
+      "size": "tutorialPanel"
+    },
+    {
+      "assetId": "m3-tutorial-history-stats",
+      "sourcePath": "assets/source/m3/tutorial/m3-tutorial-history-stats.source.svg",
+      "runtimePath": "assets/runtime/m3/tutorial/m3-tutorial-history-stats.svg",
+      "todoId": "M3-GR-05",
+      "panelId": "m3-tutorial-history-stats",
+      "titleJa": "履歴と戦績",
+      "size": "tutorialPanel"
+    }
+  ]
+}

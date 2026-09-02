@@ -26,7 +26,9 @@
     "assets:generate:m1": "node scripts/generate-m1-rule-sandbox-assets.mjs",
     "assets:check:m1": "node scripts/check-m1-assets.mjs",
     "assets:generate:m2": "node scripts/generate-m2-battle-assets.mjs",
-    "assets:check:m2": "node scripts/check-m2-assets.mjs"
+    "assets:check:m2": "node scripts/check-m2-assets.mjs",
+    "assets:generate:m3": "node scripts/generate-m3-graphics-assets.mjs",
+    "assets:check:m3": "node scripts/check-m3-assets.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
