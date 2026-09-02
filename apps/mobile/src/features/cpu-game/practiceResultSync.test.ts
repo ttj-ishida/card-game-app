@@ -5,6 +5,9 @@ import type { PracticeResultPayload } from './resultModel';
 import {
   savePracticeResult,
   recordFinishedRound,
+  savePracticeResultReturningId,
+  saveRoundEvents,
+  fetchActiveRulesetId,
   type HttpPort,
   type SaveOutcome,
 } from './practiceResultSync';
@@ -358,5 +361,87 @@ describe('recordFinishedRound', () => {
     });
     assert.equal(outcome, 'rejected');
     assert.equal(storage.data.get(QUEUE_KEY), undefined);
+  });
+});
+
+describe('M3 result/event sync helpers', () => {
+  it('savePracticeResultReturningId asks PostgREST to return the inserted result id', async () => {
+    const http = createFakeHttp([{ status: 201, body: '[{"id":"round-result-1"}]' }]);
+    const result = await savePracticeResultReturningId(makePayload({ ruleset_id: 'ruleset-1' }), {
+      http,
+      supabaseUrl: SUPABASE_URL,
+      anonKey: ANON_KEY,
+    });
+
+    assert.deepEqual(result, { outcome: 'saved', roundResultId: 'round-result-1' });
+    assert.equal(http.calls[0].url, `${SUPABASE_URL}/rest/v1/practice_round_results?select=id`);
+    assert.equal(http.calls[0].headers.Prefer, 'return=representation');
+    assert.equal(JSON.parse(http.calls[0].body).ruleset_id, 'ruleset-1');
+  });
+
+  it('savePracticeResultReturningId preserves duplicate and failure outcomes without an id', async () => {
+    const duplicate = createFakeHttp([{ status: 409, body: '' }]);
+    assert.deepEqual(
+      await savePracticeResultReturningId(makePayload(), {
+        http: duplicate,
+        supabaseUrl: SUPABASE_URL,
+        anonKey: ANON_KEY,
+      }),
+      { outcome: 'duplicate', roundResultId: null },
+    );
+
+    const failed = createFakeHttp([{ status: 500, body: 'err' }]);
+    assert.deepEqual(
+      await savePracticeResultReturningId(makePayload(), {
+        http: failed,
+        supabaseUrl: SUPABASE_URL,
+        anonKey: ANON_KEY,
+      }),
+      { outcome: 'failed', roundResultId: null },
+    );
+  });
+
+  it('saveRoundEvents posts the public event payload to round_events', async () => {
+    const http = createFakeHttp([{ status: 201, body: '' }]);
+    const outcome = await saveRoundEvents(
+      {
+        round_result_id: 'round-result-1',
+        events: [
+          {
+            index: 0,
+            seat_id: 'seat-0',
+            seat_kind: 'HUMAN',
+            kind: 'PLAY',
+            action_kind: 'LEAD',
+            cards: [{ rank_code: 'RANK_5', suit_code: 'SUIT_FIRE' }],
+            skill_effect: 'JOKER_TRANSFORM',
+            field_cleared: false,
+            day_night_after: 'DAY',
+            hand_counts_after: { 'seat-0': 3 },
+          },
+        ],
+      },
+      { http, supabaseUrl: SUPABASE_URL, anonKey: ANON_KEY },
+    );
+
+    assert.equal(outcome, 'saved');
+    assert.equal(http.calls[0].url, `${SUPABASE_URL}/rest/v1/round_events`);
+    assert.equal(http.calls[0].headers.Prefer, 'return=minimal');
+    assert.equal(JSON.parse(http.calls[0].body).round_result_id, 'round-result-1');
+  });
+
+  it('fetchActiveRulesetId reads the active ruleset id and degrades to null on failures', async () => {
+    const ok = createFakeHttp([{ status: 200, body: '[{"ruleset_id":"ruleset-1"}]' }]);
+    assert.equal(
+      await fetchActiveRulesetId({ http: ok, supabaseUrl: SUPABASE_URL, anonKey: ANON_KEY }),
+      'ruleset-1',
+    );
+    assert.equal(ok.calls[0].url, `${SUPABASE_URL}/rest/v1/rpc/get_active_ruleset`);
+
+    const bad = createFakeHttp([{ status: 500, body: 'err' }]);
+    assert.equal(
+      await fetchActiveRulesetId({ http: bad, supabaseUrl: SUPABASE_URL, anonKey: ANON_KEY }),
+      null,
+    );
   });
 });

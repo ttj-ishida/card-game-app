@@ -187,9 +187,10 @@ describe('M2-QA-02: every player count completes a full round', () => {
       assert.equal(winner?.hand.length, 0, `n=${n}: winner hand not empty`);
       assert.equal(state.saveStatus, 'saved', `n=${n}: saveStatus`);
 
-      assert.equal(deps.http.calls.length, 1, `n=${n}: http POST count`);
-      const call = deps.http.calls[0];
-      assert.equal(call.url, `${SUPABASE_URL}/rest/v1/practice_round_results`);
+      assert.equal(deps.http.calls.length, 2, `n=${n}: http POST count`);
+      assert.equal(deps.http.calls[0].url, `${SUPABASE_URL}/rest/v1/rpc/get_active_ruleset`);
+      const call = deps.http.calls[1];
+      assert.equal(call.url, `${SUPABASE_URL}/rest/v1/practice_round_results?select=id`);
       const body = JSON.parse(call.body);
       assert.deepEqual(Object.keys(body).sort(), PAYLOAD_COLUMNS, `n=${n}: payload columns`);
       assert.equal(body.mode, 'CPU_PRACTICE');
@@ -201,13 +202,40 @@ describe('M2-QA-02: every player count completes a full round', () => {
     });
   }
 
+  it('finishRound saves the active ruleset id and public round events', async () => {
+    const deps = makeFakeDeps({
+      http: createFakeHttp([
+        { status: 200, body: '[{"ruleset_id":"ruleset-1"}]' },
+        { status: 201, body: '[{"id":"round-result-1"}]' },
+        { status: 201, body: '' },
+      ]),
+    });
+    configureCpuGameStore(deps);
+    playToRoundOver(3);
+
+    const publicEventCount = cpuGameStore.getState().driver!.publicEvents.length;
+    await cpuGameStore.getState().finishRound();
+
+    assert.equal(cpuGameStore.getState().saveStatus, 'saved');
+    assert.equal(deps.http.calls.length, 3);
+    assert.equal(deps.http.calls[0].url, `${SUPABASE_URL}/rest/v1/rpc/get_active_ruleset`);
+    assert.equal(
+      deps.http.calls[1].url,
+      `${SUPABASE_URL}/rest/v1/practice_round_results?select=id`,
+    );
+    assert.equal(JSON.parse(deps.http.calls[1].body).ruleset_id, 'ruleset-1');
+    assert.equal(deps.http.calls[2].url, `${SUPABASE_URL}/rest/v1/round_events`);
+    const eventsPayload = JSON.parse(deps.http.calls[2].body);
+    assert.equal(eventsPayload.round_result_id, 'round-result-1');
+    assert.equal(eventsPayload.events.length, publicEventCount);
+  });
   it('finishRound is idempotent (second call does not POST again)', async () => {
     const deps = makeFakeDeps();
     configureCpuGameStore(deps);
     playToRoundOver(3);
     await cpuGameStore.getState().finishRound();
     await cpuGameStore.getState().finishRound();
-    assert.equal(deps.http.calls.length, 1);
+    assert.equal(deps.http.calls.length, 2);
   });
 });
 

@@ -11,8 +11,17 @@ import type {
 
 import { getAnonPlayerId, type StoragePort } from '../features/cpu-game/anonPlayerId';
 import { buildMatchConfig, isValidTotalPlayers } from '../features/cpu-game/matchConfig';
-import { recordFinishedRound, type HttpPort } from '../features/cpu-game/practiceResultSync';
-import { flushPracticeResultQueue } from '../features/cpu-game/practiceResultQueue';
+import {
+  fetchActiveRulesetId,
+  savePracticeResultReturningId,
+  saveRoundEvents,
+  type HttpPort,
+} from '../features/cpu-game/practiceResultSync';
+import {
+  enqueuePracticeResult,
+  flushPracticeResultQueue,
+} from '../features/cpu-game/practiceResultQueue';
+import { buildRoundEventsPayload } from '../features/cpu-game/roundEventsPayload';
 import {
   buildPracticeResultPayload,
   describeRoundResult,
@@ -290,18 +299,33 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         set({ result: view, clientResultId });
 
         const anonPlayerId = await getAnonPlayerId({ storage: d.storage, makeId: d.makeId });
+        const rulesetId = await fetchActiveRulesetId({
+          http: d.http,
+          supabaseUrl: d.supabaseUrl,
+          anonKey: d.anonKey,
+        });
         const payload = buildPracticeResultPayload({
           view,
           state: driver,
           anonPlayerId,
           clientResultId,
+          rulesetId,
         });
-        const outcome = await recordFinishedRound(payload, {
-          storage: d.storage,
+        const { outcome, roundResultId } = await savePracticeResultReturningId(payload, {
           http: d.http,
           supabaseUrl: d.supabaseUrl,
           anonKey: d.anonKey,
         });
+        if (outcome === 'failed') {
+          await enqueuePracticeResult(d.storage, payload);
+        }
+        if (outcome === 'saved' && roundResultId) {
+          await saveRoundEvents(buildRoundEventsPayload(roundResultId, driver.publicEvents), {
+            http: d.http,
+            supabaseUrl: d.supabaseUrl,
+            anonKey: d.anonKey,
+          });
+        }
         set({
           saveStatus:
             outcome === 'saved'
