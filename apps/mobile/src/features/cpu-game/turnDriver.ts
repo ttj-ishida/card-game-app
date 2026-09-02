@@ -240,7 +240,9 @@ export function cpuStep(state: DriverState): CpuStepResult {
 }
 
 export function legalPlaysForHuman(state: DriverState): LegalPlay[] {
-  return state.phase === 'HUMAN_TURN' ? enumerateLegalPlays(state.round, { includeSkills: true }) : [];
+  return state.phase === 'HUMAN_TURN'
+    ? enumerateLegalPlays(state.round, { includeSkills: true })
+    : [];
 }
 
 export function activeSeatId(state: DriverState): string {

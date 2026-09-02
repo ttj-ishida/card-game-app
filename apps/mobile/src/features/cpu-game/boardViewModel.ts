@@ -8,7 +8,13 @@ import {
   type RankCode,
   type SuitCode,
 } from '@card-game-app/game-core';
-import { canPass, canSelectCard, canSubmit, canSubmitPlain, type HandSelection } from './handSelection';
+import {
+  canPass,
+  canSelectCard,
+  canSubmit,
+  canSubmitPlain,
+  type HandSelection,
+} from './handSelection';
 import {
   heldSkillEffect,
   jokerPreviewCard,

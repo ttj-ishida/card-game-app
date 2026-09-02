@@ -525,9 +525,15 @@ describe('skill actions', () => {
       if (!st.driver || st.driver.phase !== 'HUMAN_TURN') continue;
       const human = st.driver.round.players.find((p) => p.playerId === 'seat-0');
       if (!human?.skill || human.skill.used) continue;
-      if (human.skill.effectCode !== 'SKILL_EXTENSION_SEAL' && human.skill.effectCode !== 'SKILL_REVOLUTION') continue;
+      if (
+        human.skill.effectCode !== 'SKILL_EXTENSION_SEAL' &&
+        human.skill.effectCode !== 'SKILL_REVOLUTION'
+      )
+        continue;
       const opt = st.legalPlays.find(
-        (p) => p.input.kind === 'PLAY' && (p.input.useSkill === 'EXTENSION_SEAL' || p.input.useSkill === 'REVOLUTION'),
+        (p) =>
+          p.input.kind === 'PLAY' &&
+          (p.input.useSkill === 'EXTENSION_SEAL' || p.input.useSkill === 'REVOLUTION'),
       );
       if (!opt || opt.input.kind !== 'PLAY') continue;
       cpuGameStore.setState({ selection: [...opt.input.cardIds] });

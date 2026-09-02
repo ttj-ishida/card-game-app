@@ -296,7 +296,10 @@ function humanSkillState(effectCode: string): DriverState {
       const human = g.round.players.find((p) => p.playerId === 'seat-0');
       if (!(human?.skill && !human.skill.used && human.skill.effectCode === effectCode)) continue;
       let guard = 0;
-      while (g.phase === 'CPU_PENDING' && guard < 200) { g = cpuStep(g).next; guard += 1; }
+      while (g.phase === 'CPU_PENDING' && guard < 200) {
+        g = cpuStep(g).next;
+        guard += 1;
+      }
       if (g.phase === 'HUMAN_TURN') return g;
     }
   }
