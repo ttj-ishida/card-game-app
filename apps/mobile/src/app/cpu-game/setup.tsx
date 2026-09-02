@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
@@ -62,6 +62,24 @@ export default function CpuGameSetupScreen() {
       </Pressable>
 
       {startError ? <Text style={styles.error}>{startError}</Text> : null}
+
+      <View style={styles.menuRow}>
+        <Link href="/cpu-game/history" asChild>
+          <Pressable accessibilityRole="button" style={styles.menuButton}>
+            <Text style={styles.menuText}>{translate('cpuGame.menu.history')}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/cpu-game/stats" asChild>
+          <Pressable accessibilityRole="button" style={styles.menuButton}>
+            <Text style={styles.menuText}>{translate('cpuGame.menu.stats')}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/cpu-game/settings" asChild>
+          <Pressable accessibilityRole="button" style={styles.menuButton}>
+            <Text style={styles.menuText}>{translate('cpuGame.menu.settings')}</Text>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -102,6 +120,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   startDisabled: { backgroundColor: colors.state.disabled },
+  menuRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' },
+  menuButton: {
+    borderWidth: 1,
+    borderColor: colors.ink.primary,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  menuText: { fontSize: typography.size.caption, color: colors.ink.primary },
   error: { fontSize: typography.size.caption, color: colors.suit.fire, textAlign: 'center' },
   startText: {
     fontSize: typography.size.body,

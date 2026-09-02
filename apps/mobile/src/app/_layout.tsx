@@ -3,9 +3,15 @@ import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 
 import { translate } from '../i18n/translate';
-import { cpuGameDeps } from '../features/cpu-game/cpuGameAdapters';
+import {
+  cpuGameDeps,
+  cpuGameHistoryDeps,
+  cpuGameStatsDeps,
+} from '../features/cpu-game/cpuGameAdapters';
 import { configureCpuGameStore, cpuGameStore } from '../state/cpuGameStore';
 import { configureCpuGameSettingsStore, cpuGameSettingsStore } from '../state/cpuGameSettingsStore';
+import { configureCpuGameHistoryStore } from '../state/cpuGameHistoryStore';
+import { configureCpuGameStatsStore } from '../state/cpuGameStatsStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
@@ -14,6 +20,8 @@ try {
   const deps = cpuGameDeps();
   configureCpuGameStore(deps);
   configureCpuGameSettingsStore({ storage: deps.storage });
+  configureCpuGameHistoryStore(cpuGameHistoryDeps());
+  configureCpuGameStatsStore(cpuGameStatsDeps());
 } catch (error) {
   console.warn('configureCpuGameStore skipped:', error);
 }
@@ -50,6 +58,15 @@ export default function RootLayout() {
       <Stack.Screen
         name="cpu-game/result"
         options={{ title: translate('cpuGame.result.title'), headerBackVisible: false }}
+      />
+      <Stack.Screen
+        name="cpu-game/history"
+        options={{ title: translate('cpuGame.history.title') }}
+      />
+      <Stack.Screen name="cpu-game/stats" options={{ title: translate('cpuGame.stats.title') }} />
+      <Stack.Screen
+        name="cpu-game/settings"
+        options={{ title: translate('cpuGame.settings.title') }}
       />
     </Stack>
   );

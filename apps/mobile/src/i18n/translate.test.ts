@@ -175,3 +175,44 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     }
   }
 });
+
+test('jaDictionary includes every cpu-game history, stats, and settings key required by M3 sub-project 4', () => {
+  const requiredKeys: TranslationKey[] = [
+    'cpuGame.menu.history',
+    'cpuGame.menu.stats',
+    'cpuGame.menu.settings',
+    'cpuGame.history.title',
+    'cpuGame.history.loading',
+    'cpuGame.history.empty',
+    'cpuGame.history.failed',
+    'cpuGame.history.win',
+    'cpuGame.history.loss',
+    'cpuGame.history.players',
+    'cpuGame.history.turns',
+    'cpuGame.history.eventsMissing',
+    'cpuGame.history.noCards',
+    'cpuGame.history.fieldCleared',
+    'cpuGame.stats.title',
+    'cpuGame.stats.loading',
+    'cpuGame.stats.empty',
+    'cpuGame.stats.failed',
+    'cpuGame.stats.roundsPlayed',
+    'cpuGame.stats.roundsWon',
+    'cpuGame.stats.winRate',
+    'cpuGame.stats.lastPlayedAt',
+    'cpuGame.settings.title',
+    'cpuGame.settings.animationSpeed',
+    'cpuGame.settings.animationSpeed.FAST',
+    'cpuGame.settings.animationSpeed.NORMAL',
+    'cpuGame.settings.animationSpeed.SLOW',
+    'cpuGame.settings.lowMotion',
+    'cpuGame.settings.loading',
+    'cpuGame.settings.failed',
+  ];
+
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+});
