@@ -27,17 +27,14 @@ test("numberDeck returns a fresh array on each call", () => {
 test("skillDeck returns 6 physical skill cards, all unused", () => {
   const deck = skillDeck();
   assert.equal(deck.length, 6);
-  assert.deepEqual(
-    deck.map((c) => c.skillId).sort(),
-    [
-      "SKILL_CARD_EXTENSION_SEAL_1",
-      "SKILL_CARD_EXTENSION_SEAL_2",
-      "SKILL_CARD_JOKER_HERO",
-      "SKILL_CARD_JOKER_SAINT",
-      "SKILL_CARD_REVOLUTION_1",
-      "SKILL_CARD_REVOLUTION_2",
-    ],
-  );
+  assert.deepEqual(deck.map((c) => c.skillId).sort(), [
+    "SKILL_CARD_EXTENSION_SEAL_1",
+    "SKILL_CARD_EXTENSION_SEAL_2",
+    "SKILL_CARD_JOKER_HERO",
+    "SKILL_CARD_JOKER_SAINT",
+    "SKILL_CARD_REVOLUTION_1",
+    "SKILL_CARD_REVOLUTION_2",
+  ]);
   assert.ok(deck.every((c) => c.used === false));
 });
 
@@ -74,7 +71,10 @@ test("dealRound gives exactly one 8-card seat for 5 players", () => {
 });
 
 test("dealRound returns null eightCardSeatId for non-5 players", () => {
-  assert.equal(dealRound({ playerIds: seats(4), rng: createRng(1) }).eightCardSeatId, null);
+  assert.equal(
+    dealRound({ playerIds: seats(4), rng: createRng(1) }).eightCardSeatId,
+    null,
+  );
 });
 
 test("dealRound distributes all 36 number cards with no duplicates or gaps", () => {
@@ -109,7 +109,10 @@ test("dealRound sorts each hand ascending by rank then suit", () => {
 });
 
 test("dealRound always starts in DAY", () => {
-  assert.equal(dealRound({ playerIds: seats(2), rng: createRng(1) }).dayNight, "DAY");
+  assert.equal(
+    dealRound({ playerIds: seats(2), rng: createRng(1) }).dayNight,
+    "DAY",
+  );
 });
 
 test("dealRound is fully reproducible for the same seed", () => {
@@ -121,7 +124,9 @@ test("dealRound is fully reproducible for the same seed", () => {
 test("first round first player is random for non-5 players", () => {
   const firsts = new Set<string>();
   for (let seed = 0; seed < 40; seed += 1) {
-    firsts.add(dealRound({ playerIds: seats(4), rng: createRng(seed) }).firstPlayerId);
+    firsts.add(
+      dealRound({ playerIds: seats(4), rng: createRng(seed) }).firstPlayerId,
+    );
   }
   assert.ok(firsts.size > 1);
 });
@@ -141,29 +146,43 @@ test("rematch rotates the first player clockwise (non-5)", () => {
   }
 });
 
-test("rematch rotates both the 8-card seat and the first player (5 players)", () => {
+test("rematch rotates both the 8-card seat and the first player across multiple 5-player rounds", () => {
   const ids = seats(5);
   const base = dealRound({ playerIds: ids, rng: createRng(1) }).firstPlayerId;
   const baseIdx = ids.indexOf(base);
-  const r = dealRound({
-    playerIds: ids,
-    rng: createRng(2),
-    rematchIndex: 2,
-    baselineFirstPlayerId: base,
-  });
-  assert.equal(r.eightCardSeatId, ids[(baseIdx + 2) % 5]);
-  assert.equal(r.firstPlayerId, r.eightCardSeatId);
+  for (let k = 1; k <= 7; k += 1) {
+    const r = dealRound({
+      playerIds: ids,
+      rng: createRng(1000 + k),
+      rematchIndex: k,
+      baselineFirstPlayerId: base,
+    });
+    const expected = ids[(baseIdx + k) % ids.length];
+    assert.equal(r.eightCardSeatId, expected);
+    assert.equal(r.firstPlayerId, expected);
+    assert.deepEqual(
+      r.players.map((p) => p.hand.length).sort(),
+      [7, 7, 7, 7, 8],
+    );
+  }
 });
 
 test("dealRound rejects invalid player counts and missing rematch baseline", () => {
-  assert.throws(() => dealRound({ playerIds: seats(1), rng: createRng(1) }), RangeError);
-  assert.throws(() => dealRound({ playerIds: seats(7), rng: createRng(1) }), RangeError);
+  assert.throws(
+    () => dealRound({ playerIds: seats(1), rng: createRng(1) }),
+    RangeError,
+  );
+  assert.throws(
+    () => dealRound({ playerIds: seats(7), rng: createRng(1) }),
+    RangeError,
+  );
   assert.throws(
     () => dealRound({ playerIds: ["a", "a", "b"], rng: createRng(1) }),
     RangeError,
   );
   assert.throws(
-    () => dealRound({ playerIds: seats(3), rng: createRng(1), rematchIndex: 1 }),
+    () =>
+      dealRound({ playerIds: seats(3), rng: createRng(1), rematchIndex: 1 }),
     RangeError,
   );
 });

@@ -364,6 +364,27 @@ describe('rematch and exit', () => {
     assert.equal(activeSeatId(after), expectedFirst);
   });
 
+  it('five-player rematches keep the 8-card seat and first seat rotating together', () => {
+    const deps = makeFakeDeps();
+    configureCpuGameStore(deps);
+    cpuGameStore.getState().startMatch(5, 1);
+
+    const base = cpuGameStore.getState().driver!;
+    const baselineIndex = base.config.seats.findIndex((s) => s.seatId === base.baselineFirstSeatId);
+
+    for (let k = 1; k <= 7; k += 1) {
+      cpuGameStore.getState().rematch();
+      const driver = cpuGameStore.getState().driver!;
+      const expectedSeat =
+        driver.config.seats[(baselineIndex + k) % driver.config.seats.length].seatId;
+      const handSizes = driver.round.players.map((p) => p.hand.length).sort();
+
+      assert.equal(driver.rematchIndex, k);
+      assert.equal(activeSeatId(driver), expectedSeat);
+      assert.equal(driver.round.players.find((p) => p.hand.length === 8)?.playerId, expectedSeat);
+      assert.deepEqual(handSizes, [7, 7, 7, 7, 8]);
+    }
+  });
   it('exit fully resets the store', async () => {
     const deps = makeFakeDeps();
     configureCpuGameStore(deps);
