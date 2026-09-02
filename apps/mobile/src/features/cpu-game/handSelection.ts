@@ -43,6 +43,16 @@ export function canSubmit(selection: HandSelection, legalPlays: LegalPlay[]): bo
   });
 }
 
+export function canSubmitPlain(selection: HandSelection, legalPlays: LegalPlay[]): boolean {
+  if (selection.length === 0) return false;
+  const sel = new Set(selection);
+  return legalPlays.some((p) => {
+    if (p.input.kind !== 'PLAY' || p.input.useSkill !== undefined) return false;
+    const ids = p.input.cardIds;
+    return ids.length === sel.size && ids.every((id) => sel.has(id));
+  });
+}
+
 export function toPlayInput(selection: HandSelection, seatId: string): PlayInput {
   return { kind: 'PLAY', playerId: seatId, cardIds: [...selection] };
 }

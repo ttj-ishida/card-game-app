@@ -7,6 +7,7 @@ import {
   canSelectCard,
   toggleCard,
   canSubmit,
+  canSubmitPlain,
   toPlayInput,
   canPass,
   type HandSelection,
@@ -247,4 +248,30 @@ test('canPass: returns false if no PASS in legal plays', () => {
     },
   ];
   assert.equal(canPass(noPassPlays), false, 'should return false when no PASS is legal');
+});
+
+test('canSubmitPlain: true only for an exact match against a non-skill play', () => {
+  const noSkill: LegalPlay[] = [
+    {
+      input: { kind: 'PLAY', playerId: 'seat-0', cardIds: ['a', 'b'] },
+      actionKind: 'LEAD',
+      resultingCombination: null,
+      goesOut: false,
+    },
+  ];
+  assert.equal(canSubmitPlain(['a', 'b'], noSkill), true);
+  assert.equal(canSubmitPlain(['a'], noSkill), false);
+  assert.equal(canSubmitPlain([], noSkill), false);
+});
+
+test('canSubmitPlain: ignores skill plays even on an exact cardIds match', () => {
+  const skillOnly: LegalPlay[] = [
+    {
+      input: { kind: 'PLAY', playerId: 'seat-0', cardIds: ['a'], useSkill: 'EXTENSION_SEAL' },
+      actionKind: 'LEAD',
+      resultingCombination: null,
+      goesOut: false,
+    },
+  ];
+  assert.equal(canSubmitPlain(['a'], skillOnly), false);
 });
