@@ -35,7 +35,7 @@ M3-QA-04 は「テスターがインストール・完走できる」配布用�
 
 - M3-QA-02 は2026-09-03にユーザー実機確認済み。
 - このPCにはJavaがPATHになく、`apps/mobile/android` も未生成のためローカルGradleビルドは未実施。EAS CLIログイン後、`@tetsuzi/card-game-app` を作成・紐付けし、Android previewビルドを投入した。
-- Preview build: `https://expo.dev/accounts/tetsuzi/projects/card-game-app/builds/cce1ded1-b04d-457f-bf3c-0549652eca21`
+- Preview build: `https://expo.dev/accounts/tetsuzi/projects/card-game-app/builds/2fcd8190-584e-4d6b-86d3-f211f83dc347`
 
 ## 次の一歩
 
