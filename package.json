@@ -10,6 +10,7 @@
     "db:reset": "supabase db reset",
     "db:link": "supabase link --project-ref evzmtxwdsoebekxlqxeo",
     "mobile:start": "npm --prefix apps/mobile run start",
+    "android": "npm run mobile:android",
     "mobile:android": "npm --prefix apps/mobile run android",
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
     "mobile:test": "npm --prefix apps/mobile run test",
