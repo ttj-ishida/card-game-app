@@ -28,8 +28,8 @@ function playToEnd(n: number, seed: number): DriverState {
   return s;
 }
 
-// _findseed で確認したシード: n=2 seed=6 は人間(seat-0)勝ち、seed=0 は CPU 勝ち。
-const HUMAN_WINS = playToEnd(2, 6);
+// _findseed で確認したシード: n=2 seed=3 は人間(seat-0)勝ち、seed=0 は CPU 勝ち。
+const HUMAN_WINS = playToEnd(2, 3);
 const CPU_WINS = playToEnd(2, 0);
 
 test('describeRoundResult returns every RoundResultView field', () => {
@@ -168,8 +168,8 @@ test('buildPracticeResultPayload throws when the view contradicts the state (ups
 });
 
 test('both a human-wins and a CPU-wins seed produce constraint-valid payloads for 3 players', () => {
-  const h3 = playToEnd(3, 6); // human wins
-  const c3 = playToEnd(3, 3); // CPU wins
+  const h3 = playToEnd(3, 2); // human wins
+  const c3 = playToEnd(3, 0); // CPU wins
   assert.equal(h3.winnerSeatId, 'seat-0');
   assert.notEqual(c3.winnerSeatId, 'seat-0');
   for (const state of [h3, c3]) {

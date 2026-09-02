@@ -109,12 +109,14 @@ function playToRoundOver(n: number): void {
     if (driver.phase === 'HUMAN_TURN') {
       const legal = state.legalPlays;
       assert.ok(legal.length > 0, `n=${n}: no legal human plays`);
-      const first = legal[0];
-      if (first.input.kind === 'PASS') {
+      // Find first non-skill play (or pass); skip skill plays since submitPlay doesn't support them
+      const play = legal.find((p) => p.input.kind === 'PASS' || !p.input.useSkill);
+      assert.ok(play, `n=${n}: no non-skill legal plays`);
+      if (play.input.kind === 'PASS') {
         const res = cpuGameStore.getState().pass();
         assert.ok(res.ok, `n=${n}: pass rejected (${res.reason})`);
       } else {
-        for (const cardId of first.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+        for (const cardId of play.input.cardIds) cpuGameStore.getState().selectCard(cardId);
         const res = cpuGameStore.getState().submitPlay();
         assert.ok(res.ok, `n=${n}: submit rejected (${res.reason})`);
       }

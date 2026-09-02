@@ -229,3 +229,35 @@ test('publicEvents surface every skill effect across the standard sweep, with ca
   }
   assert.ok(transformHasCards, 'a JOKER_TRANSFORM event should carry at least one public card');
 });
+
+test('legalPlaysForHuman includes skill plays when the human seat holds an unused skill', () => {
+  // seat-0 (human) が未使用スキルを持つ最初の seed を線形探索する。
+  let found: DriverState | null = null;
+  for (let seed = 0; seed < 200 && !found; seed += 1) {
+    for (const n of [2, 3, 4, 5, 6]) {
+      const g = start(n, seed);
+      const human = g.round.players.find((p) => p.playerId === 'seat-0');
+      if (human?.skill && !human.skill.used && g.phase === 'HUMAN_TURN') {
+        found = g;
+        break;
+      }
+    }
+  }
+  assert.ok(found, 'expected a seed where the human seat holds a skill on its own turn');
+  const plays = legalPlaysForHuman(found);
+  assert.ok(
+    plays.some((p) => p.input.kind === 'PLAY' && p.input.useSkill !== undefined),
+    'expected at least one skill play in the human legal plays',
+  );
+});
+
+test('legalPlaysForHuman is empty on a non-human turn even with includeSkills', () => {
+  let s = start(3, 99);
+  while (isHumanTurn(s)) {
+    const res = humanPlay(s, legalPlaysForHuman(s)[0].input);
+    if (!res.ok) throw new Error(res.reason);
+    s = res.next;
+  }
+  assert.equal(s.phase, 'CPU_PENDING');
+  assert.deepEqual(legalPlaysForHuman(s), []);
+});
