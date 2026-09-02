@@ -98,11 +98,11 @@ export function revolutionPreview(state: DriverState): {
   return { dayNightAfter, strengthOrderAfter };
 }
 
-/** 素の数字手（useSkill なし）の distinct cardId 集合の数。 */
+/** 非PASS手の distinct なカード集合の数（素・スキル問わず）。 */
 export function legalMoveCount(legalPlays: LegalPlay[]): number {
   const sets = new Set<string>();
   for (const p of legalPlays) {
-    if (p.input.kind === 'PLAY' && p.input.useSkill === undefined) {
+    if (p.input.kind === 'PLAY') {
       sets.add([...p.input.cardIds].sort().join(','));
     }
   }

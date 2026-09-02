@@ -11,6 +11,15 @@ import {
   type DriverState,
 } from './turnDriver';
 import { buildBoardViewModel } from './boardViewModel';
+import {
+  createActiveField,
+  createNumberCard,
+  createPlayerState,
+  createRoundState,
+  enumerateLegalPlays,
+  INITIAL_RULESET_VERSION,
+  parseNumberCombination,
+} from '@card-game-app/game-core';
 
 const start = (n: number, seed = n * 1000 + 1): DriverState =>
   initGame({ config: buildMatchConfig(n), seed });
@@ -214,17 +223,6 @@ test('cpuThinking defaults to false and echoes the opt', () => {
   assert.equal(buildBoardViewModel(s, [], [], { cpuThinking: true }).cpuThinking, true);
 });
 
-test('humanSkillNameKey reuses the existing sandbox.skill.* key or is null', () => {
-  const s = start(2);
-  const vm = buildBoardViewModel(s, [], []);
-  const human = s.round.players.find((p) => p.playerId === 'seat-0')!;
-  if (human.skill) {
-    assert.equal(vm.humanSkillNameKey, `sandbox.skill.${human.skill.effectCode}`);
-  } else {
-    assert.equal(vm.humanSkillNameKey, null);
-  }
-});
-
 test('turnLog mirrors state.turnLog with per-seat name keys and no card contents', () => {
   const s = advance(start(4, 404), 6);
   const vm = buildBoardViewModel(s, [], []);
@@ -357,6 +355,12 @@ test('submitOptions.plain mirrors canSubmitPlain and skills mirrors submitOption
   assert.ok(plainPlay && plainPlay.input.kind === 'PLAY');
   const vm = buildBoardViewModel(g, plainPlay.input.cardIds, legal);
   assert.equal(vm.submitOptions.plain, true);
+  // The seat holds SKILL_EXTENSION_SEAL and the selection is a legal plain play,
+  // so the seal variant must be present (not a vacuous loop).
+  assert.deepEqual(
+    vm.submitOptions.skills.map((s) => s.useSkill),
+    ['EXTENSION_SEAL'],
+  );
   for (const s of vm.submitOptions.skills) {
     assert.match(s.labelKey, /^cpuGame\.skill\.submit\.(JOKER_CLEAR|EXTENSION_SEAL|REVOLUTION)$/);
   }
@@ -380,6 +384,68 @@ test('selectionHint carries a legal-move count and a null reason on an empty sel
   const legal = legalPlaysForHuman(g);
   const vm = buildBoardViewModel(g, [], legal);
   assert.equal(vm.selectionHint.rejectionReasonKey, null);
-  assert.equal(typeof vm.selectionHint.legalMoveCount, 'number');
-  assert.ok(vm.selectionHint.legalMoveCount >= 0);
+  const expected = new Set(
+    legal
+      .filter((p) => p.input.kind === 'PLAY')
+      .map((p) => [...(p.input.kind === 'PLAY' ? p.input.cardIds : [])].sort().join(',')),
+  ).size;
+  assert.equal(vm.selectionHint.legalMoveCount, expected);
+  assert.ok(expected > 0);
+});
+
+test('canSubmit is true for a skill-only selection while submitOptions.plain stays false', () => {
+  // seat-0 (HUMAN) holds unused SKILL_REVOLUTION, hand RANK_3/FIRE + RANK_2/WATER.
+  // Field: seat-1 led SINGLE RANK_7/EARTH in DAY (strength 7).
+  //  - plain [RANK_3] -> strength 3 < 7 -> NOT_STRONGER (no plain play).
+  //  - [RANK_3] + REVOLUTION -> flips to NIGHT, strength(3)=7 > strength(7)=3 -> legal.
+  const fieldCombo = parseNumberCombination([createNumberCard('f7', 'RANK_7', 'SUIT_EARTH')])!;
+  const round = createRoundState({
+    rulesetCode: 'INITIAL',
+    rulesetVersion: INITIAL_RULESET_VERSION,
+    dayNight: 'DAY',
+    players: [
+      createPlayerState(
+        'seat-0',
+        [
+          createNumberCard('h0', 'RANK_3', 'SUIT_FIRE'),
+          createNumberCard('h1', 'RANK_2', 'SUIT_WATER'),
+        ],
+        { skillId: 'sk-0', effectCode: 'SKILL_REVOLUTION', used: false },
+      ),
+      createPlayerState('seat-1', [createNumberCard('s9', 'RANK_9', 'SUIT_WATER')]),
+    ],
+    activePlayerId: 'seat-0',
+    activeField: createActiveField(fieldCombo, 'seat-1'),
+  });
+  const g: DriverState = {
+    config: buildMatchConfig(2),
+    seed: 0,
+    rematchIndex: 0,
+    baselineFirstSeatId: 'seat-0',
+    round,
+    phase: 'HUMAN_TURN',
+    turnLog: [],
+    publicEvents: [],
+    winnerSeatId: null,
+  };
+  const legal = enumerateLegalPlays(g.round, { includeSkills: true });
+  // Guard: the skill play exists and there is no plain equivalent for the same cards.
+  assert.ok(
+    legal.some(
+      (p) =>
+        p.input.kind === 'PLAY' && p.input.useSkill === 'REVOLUTION' && p.input.cardIds[0] === 'h0',
+    ),
+  );
+  assert.ok(
+    !legal.some(
+      (p) =>
+        p.input.kind === 'PLAY' &&
+        p.input.useSkill === undefined &&
+        p.input.cardIds.length === 1 &&
+        p.input.cardIds[0] === 'h0',
+    ),
+  );
+  const vm = buildBoardViewModel(g, ['h0'], legal);
+  assert.equal(vm.canSubmit, true);
+  assert.equal(vm.submitOptions.plain, false);
 });

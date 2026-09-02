@@ -58,7 +58,7 @@ test('revolutionPreview flips day/night and reverses the strength order', () => 
   assert.deepEqual(pv.strengthOrderAfter, expected);
 });
 
-test('legalMoveCount counts distinct plain number plays only', () => {
+test('legalMoveCount counts distinct card-sets across plain and skill plays', () => {
   const legal: LegalPlay[] = [
     {
       input: { kind: 'PLAY', playerId: 's', cardIds: ['a'] },
@@ -66,6 +66,7 @@ test('legalMoveCount counts distinct plain number plays only', () => {
       resultingCombination: null,
       goesOut: false,
     },
+    // Same real cardIds as the plain ['a'] play, only a skill differs -> collapses.
     {
       input: { kind: 'PLAY', playerId: 's', cardIds: ['a'], useSkill: 'REVOLUTION' },
       actionKind: 'LEAD',
@@ -78,6 +79,13 @@ test('legalMoveCount counts distinct plain number plays only', () => {
       resultingCombination: null,
       goesOut: false,
     },
+    // Skill-only card-set with no plain equivalent -> must be counted.
+    {
+      input: { kind: 'PLAY', playerId: 's', cardIds: ['d'], useSkill: 'EXTENSION_SEAL' },
+      actionKind: 'LEAD',
+      resultingCombination: null,
+      goesOut: false,
+    },
     {
       input: { kind: 'PASS', playerId: 's' },
       actionKind: 'PASS',
@@ -85,7 +93,8 @@ test('legalMoveCount counts distinct plain number plays only', () => {
       goesOut: false,
     },
   ];
-  assert.equal(legalMoveCount(legal), 2);
+  // { a } (plain + REVOLUTION collapse), { b, c }, { d } (skill-only) = 3 distinct sets.
+  assert.equal(legalMoveCount(legal), 3);
 });
 
 test('submitOptionsForSelection returns one option per matching skill variant', () => {
@@ -182,6 +191,49 @@ test('resolveJokerTransform: forbidden-go-out when the transform would empty the
     suitCode: 'SUIT_WATER' as never,
   });
   assert.equal(r.status, 'forbidden-go-out');
+});
+
+test('resolveJokerTransform: illegal when the declared identity duplicates a real card', () => {
+  // seat-0: 手札 RANK_5/FIRE + RANK_7/WATER（生きた局面にするための予備札）+ 未使用の変化Joker。
+  // 選択 [RANK_5/FIRE] を宣言 RANK_5/FIRE で出す → 実カードと宣言が完全重複
+  //   → evaluateJokerTransformPlay が DUPLICATE_JOKER_DECLARATION で棄却（illegal）。
+  const round = createRoundState({
+    rulesetCode: 'INITIAL',
+    rulesetVersion: INITIAL_RULESET_VERSION,
+    dayNight: 'DAY',
+    players: [
+      createPlayerState(
+        'seat-0',
+        [
+          createNumberCard('h0', 'RANK_5', 'SUIT_FIRE'),
+          createNumberCard('h1', 'RANK_7', 'SUIT_WATER'),
+        ],
+        { skillId: 'sk-0', effectCode: 'SKILL_JOKER_HERO', used: false },
+      ),
+      createPlayerState('seat-1', [
+        createNumberCard('s1a', 'RANK_5', 'SUIT_WATER'),
+        createNumberCard('s1b', 'RANK_6', 'SUIT_WATER'),
+      ]),
+    ],
+    activePlayerId: 'seat-0',
+  });
+  const g: DriverState = {
+    config: buildMatchConfig(2),
+    seed: 0,
+    rematchIndex: 0,
+    baselineFirstSeatId: 'seat-0',
+    round,
+    phase: 'HUMAN_TURN',
+    turnLog: [],
+    publicEvents: [],
+    winnerSeatId: null,
+  };
+  const r = resolveJokerTransform(g, ['h0'], { rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' });
+  assert.equal(r.status, 'illegal');
+  assert.equal(
+    r.status === 'illegal' && r.rejectionReasonKey,
+    'sandbox.reason.DUPLICATE_JOKER_DECLARATION',
+  );
 });
 
 test('selectionRejectionReasonKey: null for an empty selection and for a legal selection', () => {

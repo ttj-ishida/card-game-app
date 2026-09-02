@@ -80,7 +80,6 @@ export type BoardViewModel = {
   extensionSealed: boolean;
   opponents: OpponentView[];
   turnLog: TurnLogLineView[];
-  humanSkillNameKey: string | null;
   skillPanel: {
     heldEffectKey: string;
     heldEffectDescKey: string;
@@ -198,9 +197,6 @@ export function buildBoardViewModel(
     actionKind: entry.actionKind,
   }));
 
-  const humanSkillNameKey =
-    humanPlayer?.skill != null ? `sandbox.skill.${humanPlayer.skill.effectCode}` : null;
-
   const isHumanTurn = state.phase === 'HUMAN_TURN';
   const heldEffect = heldSkillEffect(state);
   const jtDraft = opts?.jokerTransform ?? { active: false, rankCode: null, suitCode: null };
@@ -262,7 +258,6 @@ export function buildBoardViewModel(
     extensionSealed: round.extensionSealed,
     opponents,
     turnLog,
-    humanSkillNameKey,
     skillPanel,
     submitOptions,
     jokerTransform,

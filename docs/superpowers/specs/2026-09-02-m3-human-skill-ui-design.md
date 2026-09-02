@@ -1,7 +1,7 @@
 # M3 サブプロジェクト3：人間のスキル使用UI 設計書
 
 - 文書ID：GAME-SPEC-M3-HUMAN-SKILL-UI
-- 版数：0.1
+- 版数：0.2
 - 作成日：2026-09-02
 - 基準文書：`独自カードゲーム_要件定義書_v0.2.md`（v0.4 本文）、`独自カードゲーム_M3_詳細TODO_v0.2.md` §M3-EX-01/02/07
 - 対象 TODO：M3-EX-01（Jokerの場流し／変化選択UI）、M3-EX-02（追加封印・革命カード使用UI）、M3-EX-07（不正選択理由と出せるカード支援表示）
@@ -152,7 +152,7 @@ export function revolutionPreview(
   state: DriverState,
 ): { dayNightAfter: DayNight; strengthOrderAfter: number[] };
 
-/** その手番の非PASS合法手の数（M3-EX-07）。legalPlays から数える。 */
+/** その手番の非PASS手の distinct なカード集合の数（素・スキル問わず）（M3-EX-07）。legalPlays から数える。 */
 export function legalMoveCount(legalPlays: LegalPlay[]): number;
 
 /**
@@ -302,10 +302,10 @@ submitJokerTransform: () => CpuGamePlayResult;
 | `cpuGame.skill.jokerTransform.forbiddenGoOut` | `最後の数字カードと変化Jokerでは上がれません` |
 | `cpuGame.skill.jokerTransform.preview` | `宣言後のカード` |
 | `cpuGame.skill.revolutionPreviewLabel` | `革命後` |
-| `cpuGame.hint.legalMoveCount` | `出せる手：{count}通り`（`{count}` は画面で差し込み。既存の差し込みパターンに合わせる） |
+| `cpuGame.hint.legalMoveCountPrefix` / `cpuGame.hint.legalMoveCountSuffix` | `出せる手` / `通り`（画面で `{prefix}: {count}{suffix}` に組む） |
 | `cpuGame.hint.noMoves` | `出せる手がありません` |
 
-`cpuGame.skill.heldNote`（現在「M3で使用可能」）は「保有中」等に更新するか、画面から参照を外す。`translate.test.ts` の M2 必須キー一覧に新キーを追加。
+`cpuGame.skill.heldNote` は Task 8 以降どこからも参照されないため、`jaDictionary` と `translate.test.ts` の M2 必須キー一覧から削除する。`translate.test.ts` の `cpuGame.skill.effect.*` 検証は `SKILL_EFFECT_CODES` から導出する。
 
 ## 12. テスト
 

@@ -4,7 +4,7 @@ import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } fro
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
-import { RANK_CODES, SUIT_CODES } from '@card-game-app/game-core';
+import { RANK_CODES, SUIT_CODES, rankNumber } from '@card-game-app/game-core';
 
 import type { PlayRejectionReason } from '@card-game-app/game-core';
 
@@ -317,7 +317,7 @@ export default function CpuGamePlayScreen() {
                 {translate('cpuGame.skill.jokerTransform.declareRank')}
               </Text>
               <View style={styles.pickerRow}>
-                {RANK_CODES.map((rc, i) => (
+                {RANK_CODES.map((rc) => (
                   <Pressable
                     key={rc}
                     accessibilityRole="button"
@@ -330,7 +330,7 @@ export default function CpuGamePlayScreen() {
                       vm.jokerTransform.rankCode === rc && styles.pickerCellOn,
                     ]}
                   >
-                    <Text style={styles.pickerText}>{i + 1}</Text>
+                    <Text style={styles.pickerText}>{rankNumber(rc)}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -440,16 +440,18 @@ export default function CpuGamePlayScreen() {
         {invalidReason ? <Text style={styles.invalid}>{invalidReason}</Text> : null}
       </View>
 
-      <View style={styles.hintRow}>
-        {vm.selectionHint.rejectionReasonKey ? (
-          <Text style={styles.invalid}>{translate(vm.selectionHint.rejectionReasonKey)}</Text>
-        ) : null}
-        <Text style={styles.muted}>
-          {vm.selectionHint.legalMoveCount > 0
-            ? `${translate('cpuGame.hint.legalMoveCountPrefix')}: ${vm.selectionHint.legalMoveCount}`
-            : translate('cpuGame.hint.noMoves')}
-        </Text>
-      </View>
+      {vm.phase === 'HUMAN_TURN' ? (
+        <View style={styles.hintRow}>
+          {vm.selectionHint.rejectionReasonKey ? (
+            <Text style={styles.invalid}>{translate(vm.selectionHint.rejectionReasonKey)}</Text>
+          ) : null}
+          <Text style={styles.muted}>
+            {vm.selectionHint.legalMoveCount > 0
+              ? `${translate('cpuGame.hint.legalMoveCountPrefix')}: ${vm.selectionHint.legalMoveCount}${translate('cpuGame.hint.legalMoveCountSuffix')}`
+              : translate('cpuGame.hint.noMoves')}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

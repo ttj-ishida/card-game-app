@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { type PlayRejectionReason } from '@card-game-app/game-core';
+import { SKILL_EFFECT_CODES, type PlayRejectionReason } from '@card-game-app/game-core';
 
 import { jaDictionary, translate, type TranslationKey } from './translate';
 
@@ -119,7 +119,6 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     'cpuGame.opponent.hasSkill',
     'cpuGame.opponent.status.PASSED',
     'cpuGame.opponent.status.OUT',
-    'cpuGame.skill.heldNote',
     'cpuGame.invalid',
     'cpuGame.result.title',
     'cpuGame.result.youWin',
@@ -140,10 +139,6 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     'cpuGame.exit.confirmOk',
     'cpuGame.exit.confirmCancel',
     'cpuGame.history',
-    'cpuGame.skill.effect.SKILL_JOKER_HERO',
-    'cpuGame.skill.effect.SKILL_JOKER_SAINT',
-    'cpuGame.skill.effect.SKILL_EXTENSION_SEAL',
-    'cpuGame.skill.effect.SKILL_REVOLUTION',
     'cpuGame.skill.submit.JOKER_CLEAR',
     'cpuGame.skill.submit.EXTENSION_SEAL',
     'cpuGame.skill.submit.REVOLUTION',
@@ -157,6 +152,7 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     'cpuGame.skill.revolutionPreviewLabel',
     'cpuGame.skill.held',
     'cpuGame.hint.legalMoveCountPrefix',
+    'cpuGame.hint.legalMoveCountSuffix',
     'cpuGame.hint.noMoves',
   ];
 
@@ -164,6 +160,12 @@ test('jaDictionary includes every cpu-game screen key required by the M2 flow', 
     assert.equal(typeof jaDictionary[key], 'string');
     assert.notEqual(jaDictionary[key].length, 0);
     assert.equal(translate(key), jaDictionary[key]);
+  }
+
+  // Effect-description keys derived from game-core so a future 5th skill fails
+  // this test instead of crashing the screen at render time.
+  for (const code of SKILL_EFFECT_CODES) {
+    assert.equal(typeof jaDictionary[`cpuGame.skill.effect.${code}` as TranslationKey], 'string');
   }
 
   // Every cpuGame.* key in the dictionary must resolve through translate().
