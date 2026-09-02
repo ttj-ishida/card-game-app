@@ -34,7 +34,7 @@
 | C-1 | 単体へ同数追加 | SINGLE-001 / RANKSET-001 | 昼 単体`6` に `6・6` | 場は `666`（EXTEND） | `T-RULE-022` |
 | C-2 | 単体をより強い単体へ更新 | SINGLE-002 | 昼 単体`6` に `7` | REPLACE で合法 | `T-RULE-021` |
 | C-3 | 枚数不一致の更新拒否 | RANKSET-003 | 昼 `66` に `777` | `SHAPE_MISMATCH` | `T-RULE-003` |
-| C-4 | 連番の拡張方向 | SEQ-004/005 | 昼 `234`+`56` / 夜 `567`+`34` | 自然革命で場流し / 自然革命で場流し | `T-RULE-004` / `T-RULE-005` / `evaluateNumberPlay handles sequence extension direction and same-length replacement` |
+| C-4 | 連番の拡張方向 | SEQ-004/005 | 昼 `234`+`56` / 夜 `567`+`34` | `23456` / `34567`（自然革命後も場に残り、次プレイヤーが更新可） | `T-RULE-004` / `T-RULE-005` / `evaluateNumberPlay handles sequence extension direction and same-length replacement` |
 | C-5 | 更新時に旧セットを捨て札へ | FIELD-002 | 場 `6(水)` を `8` で更新 | 捨て札に `6(水)` | `resolvePlay moves the replaced set to the discard pile` |
 | C-6 | 追加は旧カードを場に残す | FIELD-001 | 場 `6` に `6・6` 追加 | 場は3枚、捨て札は増えない | `T-RULE-022` |
 
@@ -70,7 +70,7 @@
 | # | 確認項目 | 要件ID | 代表ケース | 期待結果 | 自動テスト |
 |---|---|---|---|---|---|
 | F-1 | 新4枚組で自然革命 | REV-001 | 場空に `6666` | 自然革命1回、昼夜反転 | `detectNaturalRevolution triggers ...` |
-| F-2 | 3枚以下→4枚以上の追加で自然革命1回 | REV-002/005/007 | `234`+`56` | 自然革命1回、場流し、追加者が先頭 | `T-RULE-004` |
+| F-2 | 3枚以下→4枚以上の追加で自然革命1回 | REV-002/005/007 | `234`+`56` | 自然革命1回、次プレイヤーが更新可。全員パスなら追加者が先頭 | `T-RULE-004` |
 | F-3 | 既存4枚連番への追加は非革命 | REV-004 | `2345`+`6` | 自然革命なし | `T-RULE-006` |
 | F-4 | 新4枚組での更新は再度革命 | REV-003 | `6666`→`7777` | 自然革命発生 | `T-RULE-007` |
 | F-5 | 革命カードは事前反転 | REVSKILL-002/003 | 昼 `77` に 革命＋`66` | 夜へ反転後に合法 | `T-RULE-011` / `revolution skill flips day/night ...` |

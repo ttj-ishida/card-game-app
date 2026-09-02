@@ -28,8 +28,8 @@ function playToEnd(n: number, seed: number): DriverState {
   return s;
 }
 
-// _findseed で確認したシード: n=2 seed=4 は人間(seat-0)勝ち、seed=0 は CPU 勝ち。
-const HUMAN_WINS = playToEnd(2, 4);
+// _findseed で確認したシード: n=2 seed=3 は人間(seat-0)勝ち、seed=0 は CPU 勝ち。
+const HUMAN_WINS = playToEnd(2, 3);
 const CPU_WINS = playToEnd(2, 0);
 
 test('describeRoundResult returns every RoundResultView field', () => {

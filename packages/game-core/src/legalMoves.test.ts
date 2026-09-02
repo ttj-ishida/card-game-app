@@ -178,7 +178,6 @@ test("enumerateLegalPlays exactly matches a brute-force resolvePlay oracle (empt
     n(6, "FIRE"),
     n(8, "WATER"),
     n(8, "WIND"),
-    n(9, "EARTH"),
   ];
   const state = round({
     players: [createPlayerState("P1", hand), createPlayerState("P2", [n(9, "WATER")])],
@@ -196,7 +195,6 @@ test("enumerateLegalPlays exactly matches the oracle over an active SEQUENCE fie
     n(6, "FIRE"),
     n(8, "WATER"),
     n(8, "WIND"),
-    n(9, "EARTH"),
   ];
   const state = round({
     players: [createPlayerState("P1", hand), createPlayerState("P2", [n(9, "WATER")])],
@@ -477,7 +475,7 @@ test("includeSkills: EXTENSION_SEAL / REVOLUTION keep the no-options invariance"
   }
 });
 
-test("the sequence candidate cap (1024) does not skip a legal 5-card window on a 19-card hand", () => {
+test("the sequence candidate cap (1024) does not skip a legal 5-card window on an 18-card hand", () => {
   // rank counts 4/4/4/3/3 over ranks 1-5 -> full-window product 4*4*4*3*3 = 576 (> old cap 512).
   const suits = ["FIRE", "WATER", "WIND", "EARTH"] as const;
   const hand = [
@@ -486,9 +484,8 @@ test("the sequence candidate cap (1024) does not skip a legal 5-card window on a
     ...suits.map((s) => n(3, s)),
     ...suits.slice(0, 3).map((s) => n(4, s)),
     ...suits.slice(0, 3).map((s) => n(5, s)),
-    n(9, "EARTH"),
   ];
-  assert.equal(hand.length, 19);
+  assert.equal(hand.length, 18);
   const state = round({
     players: [createPlayerState("P1", hand), createPlayerState("P2", [n(8, "EARTH")])],
     activePlayerId: "P1",
@@ -499,7 +496,10 @@ test("the sequence candidate cap (1024) does not skip a legal 5-card window on a
       (p) =>
         p.actionKind === "LEAD" &&
         p.input.kind === "PLAY" &&
-        p.input.cardIds.length === 5,
+        p.input.cardIds.length === 5 &&
+        p.resultingCombination?.kind === "SEQUENCE" &&
+        p.resultingCombination?.cards.length === 5 &&
+        p.resultingCombination?.ranks.join(",") === "1,2,3,4,5",
     ),
   );
 });

@@ -107,6 +107,42 @@ test("resolvePlay clears the field once every responder passed and hands the lea
   assert.ok(second.state.players.every((p) => p.status === "ACTIVE"));
 });
 
+test("resolvePlay lets responders act after natural revolution and clears only after passes", () => {
+  const state = round({
+    players: [
+      createPlayerState("P1", [c(5, "EARTH"), c(9, "WATER")]),
+      createPlayerState("P2", [c(1, "EARTH")]),
+    ],
+    activePlayerId: "P1",
+    activeField: field([c(5, "FIRE"), c(5, "WATER"), c(5, "WIND")], "P2"),
+  });
+
+  const revolution = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_5_EARTH"],
+  });
+
+  assert.ok(revolution.ok);
+  assert.equal(revolution.outcome.naturalRevolution, true);
+  assert.equal(revolution.outcome.fieldCleared, false);
+  assert.equal(revolution.state.dayNight, "NIGHT");
+  assert.equal(revolution.state.activeField?.lastPlayerId, "P1");
+  assert.equal(revolution.state.activeField?.combination.cards.length, 4);
+  assert.equal(revolution.state.activePlayerId, "P2");
+
+  const pass = resolvePlay(revolution.state, { kind: "PASS", playerId: "P2" });
+
+  assert.ok(pass.ok);
+  assert.equal(pass.outcome.fieldCleared, true);
+  assert.equal(pass.state.activeField, null);
+  assert.equal(pass.state.activePlayerId, "P1");
+  assert.deepEqual(
+    pass.state.discardPile.map((card) => card.cardId),
+    ["N_5_FIRE", "N_5_WATER", "N_5_WIND", "N_5_EARTH"],
+  );
+});
+
 test("resolvePlay leads a combination, consumes the cards, and moves on", () => {
   const state = round();
   const result = resolvePlay(state, {
@@ -244,7 +280,7 @@ test("resolvePlay rejects a revolution skill play that is illegal after the flip
   assert.deepEqual(state, snapshot);
 });
 
-test("resolvePlay clears the field after a transformed Joker natural revolution", () => {
+test("resolvePlay resolves a transform Joker play and records natural revolution + lock", () => {
   const state = round({
     players: [
       skilled(
@@ -265,11 +301,13 @@ test("resolvePlay clears the field after a transformed Joker natural revolution"
     jokerDeclarations: [{ skillId: "SK_P1", rankCode: "RANK_6", suitCode: "SUIT_FIRE" }],
   });
   assert.ok(result.ok);
-  assert.equal(result.state.activeField, null);
-  assert.equal(result.outcome.fieldCleared, true);
-  assert.equal(result.state.activePlayerId, "P1");
+  assert.equal(result.state.activeField?.lock.suitUniform, true);
+  assert.equal(result.outcome.fieldCleared, false);
+  assert.equal(result.state.activePlayerId, "P2");
   assert.equal(
-    result.state.discardPile.some((card) => card.transformedFromSkillId === "SK_P1"),
+    result.state.activeField?.combination.cards.some(
+      (card) => card.transformedFromSkillId === "SK_P1",
+    ),
     true,
   );
   assert.equal(result.state.dayNight, "NIGHT");

@@ -1056,17 +1056,12 @@ function resolveCardPlay(
 
   const dayNightAfter = numberResult.dayNightAfter ?? state.dayNight;
 
-  const naturalRevolution = numberResult.naturalRevolution ?? false;
-
   const discardPile = [...state.discardPile];
   if (isJokerClear && state.activeField) {
     discardPile.push(...state.activeField.combination.cards);
   }
   if (numberResult.actionKind === "REPLACE" && state.activeField) {
     discardPile.push(...state.activeField.combination.cards);
-  }
-  if (naturalRevolution) {
-    discardPile.push(...numberResult.resultingCombination.cards);
   }
 
   const players = state.players.map((p) => {
@@ -1083,33 +1078,26 @@ function resolveCardPlay(
     return reactivate(p);
   });
 
-  const activeField = naturalRevolution
-    ? null
-    : createActiveField(
-        numberResult.resultingCombination,
-        player.playerId,
-        deriveFieldLock({
-          previous: isJokerClear ? null : state.activeField,
-          actionKind: numberResult.actionKind,
-          playedCombination: numberResult.combination,
-          resultingCombination: numberResult.resultingCombination,
-          ruleset: RULESET_INITIAL,
-        }),
-      );
   const winnerId = goesOut ? player.playerId : null;
-  const nextPlayerId = goesOut || naturalRevolution
-    ? player.playerId
-    : nextActivePlayerId(players, player.playerId);
   const next = buildState(state, {
     dayNight: dayNightAfter,
     players,
-    activePlayerId: nextPlayerId,
-    activeField,
-    extensionSealed: naturalRevolution
-      ? false
-      : play.useSkill === "EXTENSION_SEAL"
-        ? true
-        : extensionSealed,
+    activePlayerId: goesOut
+      ? player.playerId
+      : nextActivePlayerId(players, player.playerId),
+    activeField: createActiveField(
+      numberResult.resultingCombination,
+      player.playerId,
+      deriveFieldLock({
+        previous: isJokerClear ? null : state.activeField,
+        actionKind: numberResult.actionKind,
+        playedCombination: numberResult.combination,
+        resultingCombination: numberResult.resultingCombination,
+        ruleset: RULESET_INITIAL,
+      }),
+    ),
+    extensionSealed:
+      play.useSkill === "EXTENSION_SEAL" ? true : extensionSealed,
     discardPile,
     consecutivePasses: 0,
     winnerId,
@@ -1120,7 +1108,7 @@ function resolveCardPlay(
     state: next,
     outcome: {
       actionKind: numberResult.actionKind,
-      fieldCleared: isJokerClear || naturalRevolution,
+      fieldCleared: isJokerClear,
       naturalRevolution: numberResult.naturalRevolution ?? false,
       dayNightAfter,
       winnerId,
