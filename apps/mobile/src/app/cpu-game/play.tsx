@@ -4,6 +4,8 @@ import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } fro
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
+import { RANK_CODES, SUIT_CODES } from '@card-game-app/game-core';
+
 import type { PlayRejectionReason } from '@card-game-app/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
@@ -28,6 +30,7 @@ export default function CpuGamePlayScreen() {
   const state = useStore(cpuGameStore, (s) => s);
   const { driver, selection, legalPlays, cpuThinking } = state;
   const pending = useStore(cpuGameStore, (s) => s.pendingCpuReveal);
+  const jokerTransform = useStore(cpuGameStore, (s) => s.jokerTransform);
 
   const [invalidReason, setInvalidReason] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -95,8 +98,11 @@ export default function CpuGamePlayScreen() {
   );
 
   const vm = useMemo(
-    () => (driver ? buildBoardViewModel(driver, selection, legalPlays, { cpuThinking }) : null),
-    [driver, selection, legalPlays, cpuThinking],
+    () =>
+      driver
+        ? buildBoardViewModel(driver, selection, legalPlays, { cpuThinking, jokerTransform })
+        : null,
+    [driver, selection, legalPlays, cpuThinking, jokerTransform],
   );
 
   if (!driver || !vm) {
@@ -109,6 +115,14 @@ export default function CpuGamePlayScreen() {
 
   const onSubmit = () => {
     const res = cpuGameStore.getState().submitPlay();
+    setInvalidReason(res.ok ? null : reasonText(res.reason));
+  };
+  const onSubmitSkill = (useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION') => {
+    const res = cpuGameStore.getState().submitSkillPlay(useSkill);
+    setInvalidReason(res.ok ? null : reasonText(res.reason));
+  };
+  const onSubmitJoker = () => {
+    const res = cpuGameStore.getState().submitJokerTransform();
     setInvalidReason(res.ok ? null : reasonText(res.reason));
   };
   const onPass = () => {
@@ -257,19 +271,150 @@ export default function CpuGamePlayScreen() {
         ))}
       </ScrollView>
 
-      {vm.humanSkillNameKey ? (
-        <Text style={styles.muted}>
-          {translate(vm.humanSkillNameKey)}（{translate('cpuGame.skill.heldNote')}）
-        </Text>
+      {vm.skillPanel ? (
+        <View style={styles.skillPanel}>
+          <Text style={styles.skillTitle}>
+            {translate('cpuGame.skill.held')}: {translate(vm.skillPanel.heldEffectKey)}
+          </Text>
+          <Text style={styles.muted}>{translate(vm.skillPanel.heldEffectDescKey)}</Text>
+
+          {vm.submitOptions.skills.map((opt) => (
+            <Pressable
+              key={opt.useSkill}
+              accessibilityRole="button"
+              onPress={() => onSubmitSkill(opt.useSkill)}
+              style={styles.actionBtn}
+            >
+              <Text style={styles.actionText}>{translate(opt.labelKey)}</Text>
+            </Pressable>
+          ))}
+
+          {vm.skillPanel.revolutionPreview ? (
+            <Text style={styles.muted}>
+              {translate('cpuGame.skill.revolutionPreviewLabel')}:{' '}
+              {vm.skillPanel.revolutionPreview.dayNightAfter === 'DAY'
+                ? translate('cpuGame.dayNight.day')
+                : translate('cpuGame.dayNight.night')}{' '}
+              / {vm.skillPanel.revolutionPreview.strengthOrderAfter.join('→')}
+            </Text>
+          ) : null}
+
+          {vm.skillPanel.jokerTransformAvailable && !vm.jokerTransform.active ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => cpuGameStore.getState().openJokerTransform()}
+              style={styles.actionBtnGhost}
+            >
+              <Text style={styles.actionTextGhost}>
+                {translate('cpuGame.skill.jokerTransform.open')}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {vm.jokerTransform.active ? (
+            <View style={styles.jokerPanel}>
+              <Text style={styles.muted}>
+                {translate('cpuGame.skill.jokerTransform.declareRank')}
+              </Text>
+              <View style={styles.pickerRow}>
+                {RANK_CODES.map((rc, i) => (
+                  <Pressable
+                    key={rc}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: vm.jokerTransform.rankCode === rc }}
+                    onPress={() =>
+                      cpuGameStore.getState().setJokerDeclaration(rc, vm.jokerTransform.suitCode)
+                    }
+                    style={[
+                      styles.pickerCell,
+                      vm.jokerTransform.rankCode === rc && styles.pickerCellOn,
+                    ]}
+                  >
+                    <Text style={styles.pickerText}>{i + 1}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={styles.muted}>
+                {translate('cpuGame.skill.jokerTransform.declareSuit')}
+              </Text>
+              <View style={styles.pickerRow}>
+                {SUIT_CODES.map((sc) => (
+                  <Pressable
+                    key={sc}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: vm.jokerTransform.suitCode === sc }}
+                    onPress={() =>
+                      cpuGameStore.getState().setJokerDeclaration(vm.jokerTransform.rankCode, sc)
+                    }
+                    style={[
+                      styles.pickerCell,
+                      vm.jokerTransform.suitCode === sc && styles.pickerCellOn,
+                    ]}
+                  >
+                    <Text style={styles.pickerText}>{translate(`sandbox.suit.${sc}`)}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {vm.jokerTransform.previewCard ? (
+                <View style={styles.jokerPreview}>
+                  <Text style={styles.muted}>
+                    {translate('cpuGame.skill.jokerTransform.preview')}
+                  </Text>
+                  <CardFace
+                    rank={vm.jokerTransform.previewCard.rank}
+                    suitCode={vm.jokerTransform.previewCard.suitCode}
+                    isJoker
+                    size="hand"
+                  />
+                </View>
+              ) : null}
+
+              {vm.jokerTransform.forbiddenGoOut ? (
+                <Text style={styles.invalid}>
+                  {translate('cpuGame.skill.jokerTransform.forbiddenGoOut')}
+                </Text>
+              ) : null}
+              {vm.jokerTransform.rejectionReasonKey ? (
+                <Text style={styles.invalid}>
+                  {translate(vm.jokerTransform.rejectionReasonKey)}
+                </Text>
+              ) : null}
+
+              <View style={styles.actions}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !vm.jokerTransform.canConfirm }}
+                  disabled={!vm.jokerTransform.canConfirm}
+                  onPress={onSubmitJoker}
+                  style={[styles.actionBtn, !vm.jokerTransform.canConfirm && styles.actionDisabled]}
+                >
+                  <Text style={styles.actionText}>
+                    {translate('cpuGame.skill.jokerTransform.confirm')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => cpuGameStore.getState().closeJokerTransform()}
+                  style={styles.actionBtnGhost}
+                >
+                  <Text style={styles.actionTextGhost}>
+                    {translate('cpuGame.skill.jokerTransform.cancel')}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ disabled: !vm.canSubmit }}
-          disabled={!vm.canSubmit}
+          accessibilityState={{ disabled: !vm.submitOptions.plain }}
+          disabled={!vm.submitOptions.plain}
           onPress={onSubmit}
-          style={[styles.actionBtn, !vm.canSubmit && styles.actionDisabled]}
+          style={[styles.actionBtn, !vm.submitOptions.plain && styles.actionDisabled]}
         >
           <Text style={styles.actionText}>{translate('cpuGame.action.submit')}</Text>
         </Pressable>
@@ -293,6 +438,17 @@ export default function CpuGamePlayScreen() {
           <Text style={styles.actionTextGhost}>{translate('cpuGame.action.clear')}</Text>
         </Pressable>
         {invalidReason ? <Text style={styles.invalid}>{invalidReason}</Text> : null}
+      </View>
+
+      <View style={styles.hintRow}>
+        {vm.selectionHint.rejectionReasonKey ? (
+          <Text style={styles.invalid}>{translate(vm.selectionHint.rejectionReasonKey)}</Text>
+        ) : null}
+        <Text style={styles.muted}>
+          {vm.selectionHint.legalMoveCount > 0
+            ? `${translate('cpuGame.hint.legalMoveCountPrefix')}: ${vm.selectionHint.legalMoveCount}`
+            : translate('cpuGame.hint.noMoves')}
+        </Text>
       </View>
     </View>
   );
@@ -373,6 +529,31 @@ const styles = StyleSheet.create({
   handCardSelected: { borderColor: colors.ink.primary },
   handCardDim: { opacity: 0.4 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  skillPanel: {
+    borderWidth: 1,
+    borderColor: colors.state.disabled,
+    borderRadius: radius.control,
+    padding: spacing.xs,
+    gap: spacing.xs,
+  },
+  skillTitle: {
+    fontSize: typography.size.caption,
+    fontWeight: typography.weight.bold,
+    color: colors.ink.primary,
+  },
+  jokerPanel: { gap: spacing.xs },
+  pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  pickerCell: {
+    borderWidth: 1,
+    borderColor: colors.state.disabled,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  pickerCellOn: { borderColor: colors.ink.primary, borderWidth: 2 },
+  pickerText: { fontSize: typography.size.caption, color: colors.ink.primary },
+  jokerPreview: { alignItems: 'flex-start', gap: 2 },
+  hintRow: { gap: 2 },
   actionBtn: {
     backgroundColor: colors.ink.primary,
     borderRadius: radius.control,
