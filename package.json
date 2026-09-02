@@ -31,7 +31,9 @@
     "assets:generate:m3": "node scripts/generate-m3-graphics-assets.mjs",
     "assets:check:m3": "node scripts/check-m3-assets.mjs",
     "mobile:build:android:preview": "npm --prefix apps/mobile run build:android:preview",
-    "mobile:build:android:production": "npm --prefix apps/mobile run build:android:production"
+    "mobile:build:android:production": "npm --prefix apps/mobile run build:android:production",
+    "assets:generate:m4": "node scripts/generate-m4-room-ui-assets.mjs",
+    "assets:check:m4": "node scripts/check-m4-assets.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"

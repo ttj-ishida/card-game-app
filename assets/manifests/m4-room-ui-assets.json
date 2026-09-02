@@ -1,0 +1,147 @@
+{
+  "todoIds": ["M4-GR-01"],
+  "version": "0.1.0",
+  "status": "rough-svg-for-m4-alpha",
+  "sizes": {
+    "roomLayout": {
+      "width": 1280,
+      "height": 720,
+      "viewBox": "0 0 1280 720",
+      "maxBytes": 52000
+    },
+    "badge": {
+      "width": 320,
+      "height": 320,
+      "viewBox": "0 0 320 320",
+      "maxBytes": 18000
+    }
+  },
+  "roomLayouts": [
+    {
+      "assetId": "m4-room-layout-2p",
+      "sourcePath": "assets/source/m4/room-ui/layouts/m4-room-layout-2p.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/layouts/m4-room-layout-2p.svg",
+      "todoId": "M4-GR-01",
+      "playerCount": 2,
+      "size": "roomLayout"
+    },
+    {
+      "assetId": "m4-room-layout-3p",
+      "sourcePath": "assets/source/m4/room-ui/layouts/m4-room-layout-3p.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/layouts/m4-room-layout-3p.svg",
+      "todoId": "M4-GR-01",
+      "playerCount": 3,
+      "size": "roomLayout"
+    },
+    {
+      "assetId": "m4-room-layout-4p",
+      "sourcePath": "assets/source/m4/room-ui/layouts/m4-room-layout-4p.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/layouts/m4-room-layout-4p.svg",
+      "todoId": "M4-GR-01",
+      "playerCount": 4,
+      "size": "roomLayout"
+    },
+    {
+      "assetId": "m4-room-layout-5p",
+      "sourcePath": "assets/source/m4/room-ui/layouts/m4-room-layout-5p.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/layouts/m4-room-layout-5p.svg",
+      "todoId": "M4-GR-01",
+      "playerCount": 5,
+      "size": "roomLayout"
+    },
+    {
+      "assetId": "m4-room-layout-6p",
+      "sourcePath": "assets/source/m4/room-ui/layouts/m4-room-layout-6p.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/layouts/m4-room-layout-6p.svg",
+      "todoId": "M4-GR-01",
+      "playerCount": 6,
+      "size": "roomLayout"
+    }
+  ],
+  "seatBadges": [
+    {
+      "assetId": "m4-seat-host",
+      "sourcePath": "assets/source/m4/room-ui/seat-badges/m4-seat-host.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/seat-badges/m4-seat-host.svg",
+      "todoId": "M4-GR-01",
+      "role": "HOST",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-seat-guest",
+      "sourcePath": "assets/source/m4/room-ui/seat-badges/m4-seat-guest.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/seat-badges/m4-seat-guest.svg",
+      "todoId": "M4-GR-01",
+      "role": "GUEST",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-seat-empty",
+      "sourcePath": "assets/source/m4/room-ui/seat-badges/m4-seat-empty.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/seat-badges/m4-seat-empty.svg",
+      "todoId": "M4-GR-01",
+      "role": "EMPTY",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-seat-cpu-takeover",
+      "sourcePath": "assets/source/m4/room-ui/seat-badges/m4-seat-cpu-takeover.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/seat-badges/m4-seat-cpu-takeover.svg",
+      "todoId": "M4-GR-01",
+      "role": "CPU_TAKEOVER",
+      "size": "badge"
+    }
+  ],
+  "readyStateBadges": [
+    {
+      "assetId": "m4-ready-ready",
+      "sourcePath": "assets/source/m4/room-ui/ready-badges/m4-ready-ready.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/ready-badges/m4-ready-ready.svg",
+      "todoId": "M4-GR-01",
+      "readyState": "READY",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-ready-waiting",
+      "sourcePath": "assets/source/m4/room-ui/ready-badges/m4-ready-waiting.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/ready-badges/m4-ready-waiting.svg",
+      "todoId": "M4-GR-01",
+      "readyState": "WAITING",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-ready-locked",
+      "sourcePath": "assets/source/m4/room-ui/ready-badges/m4-ready-locked.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/ready-badges/m4-ready-locked.svg",
+      "todoId": "M4-GR-01",
+      "readyState": "LOCKED",
+      "size": "badge"
+    }
+  ],
+  "connectionBadges": [
+    {
+      "assetId": "m4-connection-online",
+      "sourcePath": "assets/source/m4/room-ui/connection-badges/m4-connection-online.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/connection-badges/m4-connection-online.svg",
+      "todoId": "M4-GR-01",
+      "connectionState": "ONLINE",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-connection-connecting",
+      "sourcePath": "assets/source/m4/room-ui/connection-badges/m4-connection-connecting.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/connection-badges/m4-connection-connecting.svg",
+      "todoId": "M4-GR-01",
+      "connectionState": "CONNECTING",
+      "size": "badge"
+    },
+    {
+      "assetId": "m4-connection-offline",
+      "sourcePath": "assets/source/m4/room-ui/connection-badges/m4-connection-offline.source.svg",
+      "runtimePath": "assets/runtime/m4/room-ui/connection-badges/m4-connection-offline.svg",
+      "todoId": "M4-GR-01",
+      "connectionState": "OFFLINE",
+      "size": "badge"
+    }
+  ]
+}
