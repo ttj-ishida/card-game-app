@@ -1,5 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 
+import { scaleThinkMillis } from '../features/cpu-game/cpuGameSettings';
+import { cpuGameSettingsStore } from './cpuGameSettingsStore';
 import type {
   LegalPlay,
   PlayInput,
@@ -268,7 +270,12 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         pendingCpuReveal: { decided: step.decided, nextDriver: step.next },
         cpuThinking: true,
       });
-      return { thinkMillis: step.decided.thinkMillis };
+      return {
+        thinkMillis: scaleThinkMillis(
+          step.decided.thinkMillis,
+          cpuGameSettingsStore.getState().settings,
+        ),
+      };
     },
 
     commitCpuReveal: () => {

@@ -8,6 +8,7 @@ import { __resetAnonPlayerIdMemoForTest } from '../features/cpu-game/anonPlayerI
 import type { HttpPort } from '../features/cpu-game/practiceResultSync';
 import { QUEUE_KEY } from '../features/cpu-game/practiceResultQueue';
 import { activeSeatId, type DriverState } from '../features/cpu-game/turnDriver';
+import { __resetCpuGameSettingsStoreForTest, cpuGameSettingsStore } from './cpuGameSettingsStore';
 import {
   cpuGameStore,
   configureCpuGameStore,
@@ -147,6 +148,7 @@ function playToRoundOver(n: number): void {
 beforeEach(() => {
   __resetAnonPlayerIdMemoForTest();
   __resetCpuGameStoreForTest();
+  __resetCpuGameSettingsStoreForTest();
   cpuGameStore.getState().exit();
 });
 
@@ -467,6 +469,27 @@ describe('finishRound failure handling', () => {
   });
 });
 
+describe('animation settings', () => {
+  it('advanceCpu scales CPU think time using the selected animation speed', async () => {
+    const deps = makeFakeDeps({ makeSeed: () => 12345 });
+    configureCpuGameStore(deps);
+    cpuGameSettingsStore.setState({
+      settings: { animationSpeed: 'FAST', lowMotion: false },
+      status: 'ready',
+    });
+
+    cpuGameStore.getState().startMatch(2);
+    while (cpuGameStore.getState().driver!.phase === 'HUMAN_TURN') {
+      const legal = cpuGameStore.getState().legalPlays.find((p) => p.input.kind === 'PLAY');
+      assert.ok(legal && legal.input.kind === 'PLAY');
+      for (const cardId of legal.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+      assert.ok(cpuGameStore.getState().submitPlay().ok);
+    }
+
+    const { thinkMillis } = cpuGameStore.getState().advanceCpu();
+    assert.ok(thinkMillis >= 300 && thinkMillis <= 600, `scaled thinkMillis ${thinkMillis}`);
+  });
+});
 describe('selection and rejection behaviour', () => {
   it('submitPlay on an empty selection is a no-op returning ok:false', () => {
     const deps = makeFakeDeps();

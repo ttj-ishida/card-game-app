@@ -5,12 +5,15 @@ import { Stack } from 'expo-router';
 import { translate } from '../i18n/translate';
 import { cpuGameDeps } from '../features/cpu-game/cpuGameAdapters';
 import { configureCpuGameStore, cpuGameStore } from '../state/cpuGameStore';
+import { configureCpuGameSettingsStore, cpuGameSettingsStore } from '../state/cpuGameSettingsStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
 // still loads; the CPU-game screens then surface "store not configured".
 try {
-  configureCpuGameStore(cpuGameDeps());
+  const deps = cpuGameDeps();
+  configureCpuGameStore(deps);
+  configureCpuGameSettingsStore({ storage: deps.storage });
 } catch (error) {
   console.warn('configureCpuGameStore skipped:', error);
 }
@@ -20,6 +23,7 @@ export default function RootLayout() {
   // back to the foreground (spec §4.7). `flushQueue` no-ops when unconfigured and
   // swallows its own errors, so this is safe to fire unconditionally.
   useEffect(() => {
+    void cpuGameSettingsStore.getState().load();
     void cpuGameStore.getState().flushQueue();
     const sub = AppState.addEventListener('change', (status) => {
       if (status === 'active') void cpuGameStore.getState().flushQueue();
