@@ -31,6 +31,7 @@ export default function CpuGamePlayScreen() {
   const { driver, selection, legalPlays, cpuThinking } = state;
   const pending = useStore(cpuGameStore, (s) => s.pendingCpuReveal);
   const jokerTransform = useStore(cpuGameStore, (s) => s.jokerTransform);
+  const pendingSkill = useStore(cpuGameStore, (s) => s.pendingSkill);
 
   const [invalidReason, setInvalidReason] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -100,9 +101,13 @@ export default function CpuGamePlayScreen() {
   const vm = useMemo(
     () =>
       driver
-        ? buildBoardViewModel(driver, selection, legalPlays, { cpuThinking, jokerTransform })
+        ? buildBoardViewModel(driver, selection, legalPlays, {
+            cpuThinking,
+            jokerTransform,
+            pendingSkill,
+          })
         : null,
-    [driver, selection, legalPlays, cpuThinking, jokerTransform],
+    [driver, selection, legalPlays, cpuThinking, jokerTransform, pendingSkill],
   );
 
   if (!driver || !vm) {
@@ -244,33 +249,6 @@ export default function CpuGamePlayScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
-        {vm.hand.map((card) => (
-          <Pressable
-            key={card.cardId}
-            accessibilityRole="button"
-            accessibilityState={{ selected: card.selected, disabled: !card.selectable }}
-            disabled={!card.selectable}
-            onPress={() => {
-              cpuGameStore.getState().selectCard(card.cardId);
-              setInvalidReason(null);
-            }}
-            style={[
-              styles.handCard,
-              card.selected && styles.handCardSelected,
-              !card.selectable && styles.handCardDim,
-            ]}
-          >
-            <CardFace
-              rank={card.rank}
-              suitCode={card.suitCode}
-              isJoker={card.isJoker}
-              size="hand"
-            />
-          </Pressable>
-        ))}
-      </ScrollView>
-
       {vm.skillPanel ? (
         <View style={styles.skillPanel}>
           <Text style={styles.skillTitle}>
@@ -282,8 +260,12 @@ export default function CpuGamePlayScreen() {
             <Pressable
               key={opt.useSkill}
               accessibilityRole="button"
+              accessibilityState={{ selected: pendingSkill?.useSkill === opt.useSkill }}
               onPress={() => onSubmitSkill(opt.useSkill)}
-              style={styles.actionBtn}
+              style={[
+                styles.actionBtn,
+                pendingSkill?.useSkill === opt.useSkill && styles.actionBtnSelected,
+              ]}
             >
               <Text style={styles.actionText}>{translate(opt.labelKey)}</Text>
             </Pressable>
@@ -302,8 +284,12 @@ export default function CpuGamePlayScreen() {
           {vm.skillPanel.jokerTransformAvailable && !vm.jokerTransform.active ? (
             <Pressable
               accessibilityRole="button"
+              accessibilityState={{ selected: pendingSkill?.useSkill === 'JOKER_TRANSFORM' }}
               onPress={() => cpuGameStore.getState().openJokerTransform()}
-              style={styles.actionBtnGhost}
+              style={[
+                styles.actionBtnGhost,
+                pendingSkill?.useSkill === 'JOKER_TRANSFORM' && styles.actionBtnGhostSelected,
+              ]}
             >
               <Text style={styles.actionTextGhost}>
                 {translate('cpuGame.skill.jokerTransform.open')}
@@ -408,6 +394,34 @@ export default function CpuGamePlayScreen() {
         </View>
       ) : null}
 
+      <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
+        {vm.hand.map((card) => (
+          <Pressable
+            key={card.cardId}
+            accessibilityRole="button"
+            accessibilityState={{ selected: card.selected, disabled: !card.selectable }}
+            disabled={!card.selectable}
+            onPress={() => {
+              cpuGameStore.getState().selectCard(card.cardId);
+              setInvalidReason(null);
+            }}
+            style={[
+              styles.handCard,
+              card.selected && styles.handCardSelected,
+              card.selectionLocked && styles.handCardLocked,
+              !card.selectable && !card.selectionLocked && styles.handCardDim,
+            ]}
+          >
+            <CardFace
+              rank={card.rank}
+              suitCode={card.suitCode}
+              isJoker={card.isJoker}
+              size="hand"
+            />
+          </Pressable>
+        ))}
+      </ScrollView>
+
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
@@ -439,7 +453,6 @@ export default function CpuGamePlayScreen() {
         </Pressable>
         {invalidReason ? <Text style={styles.invalid}>{invalidReason}</Text> : null}
       </View>
-
       {vm.phase === 'HUMAN_TURN' ? (
         <View style={styles.hintRow}>
           {vm.selectionHint.rejectionReasonKey ? (
@@ -529,6 +542,7 @@ const styles = StyleSheet.create({
   handRow: { gap: spacing.xs, paddingVertical: spacing.xs, alignItems: 'flex-end' },
   handCard: { borderRadius: radius.control, borderWidth: 2, borderColor: 'transparent' },
   handCardSelected: { borderColor: colors.ink.primary },
+  handCardLocked: { borderColor: colors.state.warning, opacity: 1 },
   handCardDim: { opacity: 0.4 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   skillPanel: {
@@ -563,6 +577,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   actionDisabled: { backgroundColor: colors.state.disabled },
+  actionBtnSelected: { backgroundColor: colors.state.warning },
   actionText: {
     fontSize: typography.size.body,
     fontWeight: typography.weight.bold,
@@ -576,6 +591,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   actionTextGhost: { fontSize: typography.size.body, color: colors.ink.primary },
+  actionBtnGhostSelected: { borderColor: colors.state.warning, borderWidth: 2 },
   invalid: {
     fontSize: typography.size.caption,
     color: colors.suit.fire,

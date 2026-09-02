@@ -587,33 +587,80 @@ describe('skill actions', () => {
     assert.equal(cpuGameStore.getState().jokerTransform.active, false);
   });
 
-  it('submitSkillPlay applies a legal skill play and keeps card conservation', () => {
+  it('stages extension seal first, then submits it with the later hand selection', () => {
     configureCpuGameStore(makeFakeDeps());
-    // seat-0 が革命 or 封印を持ち、素の選択 + スキル併用が合法な局面を探す
     let seed = -1;
     for (let s = 0; s < 400 && seed < 0; s += 1) {
       cpuGameStore.getState().startMatch(2, s);
       const st = cpuGameStore.getState();
       if (!st.driver || st.driver.phase !== 'HUMAN_TURN') continue;
       const human = st.driver.round.players.find((p) => p.playerId === 'seat-0');
-      if (!human?.skill || human.skill.used) continue;
-      if (
-        human.skill.effectCode !== 'SKILL_EXTENSION_SEAL' &&
-        human.skill.effectCode !== 'SKILL_REVOLUTION'
-      )
-        continue;
+      if (human?.skill?.effectCode !== 'SKILL_EXTENSION_SEAL' || human.skill.used) continue;
       const opt = st.legalPlays.find(
-        (p) =>
-          p.input.kind === 'PLAY' &&
-          (p.input.useSkill === 'EXTENSION_SEAL' || p.input.useSkill === 'REVOLUTION'),
+        (p) => p.input.kind === 'PLAY' && p.input.useSkill === 'EXTENSION_SEAL',
       );
-      if (!opt || opt.input.kind !== 'PLAY') continue;
-      cpuGameStore.setState({ selection: [...opt.input.cardIds] });
-      const res = cpuGameStore.getState().submitSkillPlay(opt.input.useSkill as never);
-      assert.equal(res.ok, true);
+      if (!opt || opt.input.kind !== 'PLAY' || opt.input.cardIds.length === 0) continue;
+
+      const before = st.driver;
+      const staged = cpuGameStore.getState().submitSkillPlay('EXTENSION_SEAL');
+      assert.equal(staged.ok, true);
+      assert.equal(cpuGameStore.getState().driver, before);
+      assert.deepEqual(cpuGameStore.getState().pendingSkill, { useSkill: 'EXTENSION_SEAL' });
+
+      for (const cardId of opt.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+      assert.deepEqual(cpuGameStore.getState().selection, opt.input.cardIds);
+      const submitted = cpuGameStore.getState().submitPlay();
+      assert.equal(submitted.ok, true);
+      assert.equal(cpuGameStore.getState().pendingSkill, null);
+      assert.equal(
+        cpuGameStore.getState().driver!.round.players.find((p) => p.playerId === 'seat-0')?.skill
+          ?.used,
+        true,
+      );
+      assert.equal(cpuGameStore.getState().driver!.round.extensionSealed, true);
       seed = s;
     }
-    assert.ok(seed >= 0, 'expected a seed with a legal human skill play');
+    assert.ok(seed >= 0, 'expected a seed with a legal human extension-seal play');
+  });
+
+  it('stages a joker clear first, then submits the next lead from the same turn', () => {
+    configureCpuGameStore(makeFakeDeps());
+    let seed = -1;
+    for (let s = 0; s < 600 && seed < 0; s += 1) {
+      cpuGameStore.getState().startMatch(2, s);
+      while (cpuGameStore.getState().driver?.phase === 'CPU_PENDING') {
+        cpuGameStore.getState().advanceCpu();
+        cpuGameStore.getState().commitCpuReveal();
+      }
+      const st = cpuGameStore.getState();
+      if (!st.driver || st.driver.phase !== 'HUMAN_TURN' || !st.driver.round.activeField) continue;
+      const human = st.driver.round.players.find((p) => p.playerId === 'seat-0');
+      if (
+        human?.skill?.used ||
+        (human?.skill?.effectCode !== 'SKILL_JOKER_HERO' &&
+          human?.skill?.effectCode !== 'SKILL_JOKER_SAINT')
+      ) {
+        continue;
+      }
+      const opt = st.legalPlays.find(
+        (p) => p.input.kind === 'PLAY' && p.input.useSkill === 'JOKER_CLEAR',
+      );
+      if (!opt || opt.input.kind !== 'PLAY' || opt.input.cardIds.length === 0) continue;
+
+      const before = st.driver;
+      const staged = cpuGameStore.getState().submitSkillPlay('JOKER_CLEAR');
+      assert.equal(staged.ok, true);
+      assert.equal(cpuGameStore.getState().driver, before);
+      assert.deepEqual(cpuGameStore.getState().pendingSkill, { useSkill: 'JOKER_CLEAR' });
+
+      for (const cardId of opt.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+      const submitted = cpuGameStore.getState().submitPlay();
+      assert.equal(submitted.ok, true);
+      assert.equal(cpuGameStore.getState().pendingSkill, null);
+      assert.equal(cpuGameStore.getState().driver!.turnLog.at(-1)?.fieldCleared, true);
+      seed = s;
+    }
+    assert.ok(seed >= 0, 'expected a seed with a legal human joker-clear play');
   });
 
   it('submitJokerTransform requires a complete declaration', () => {
@@ -625,9 +672,8 @@ describe('skill actions', () => {
     assert.equal(cpuGameStore.getState().jokerTransform.active, true);
   });
 
-  it('submitSkillPlay / submitJokerTransform drive a full happy-path skill play', () => {
+  it('stages joker transform as a fixed declared card before the final submit', () => {
     configureCpuGameStore(makeFakeDeps());
-    // seat-0 が JOKER_HERO/SAINT を未使用で持ち、JOKER_TRANSFORM の合法手がある局面を探す
     let seed = -1;
     for (let n = 2; n <= 6 && seed < 0; n += 1) {
       for (let s = 0; s < 400 && seed < 0; s += 1) {
@@ -643,17 +689,36 @@ describe('skill actions', () => {
           continue;
         }
         const opt = st.legalPlays.find(
-          (p) => p.input.kind === 'PLAY' && p.input.useSkill === 'JOKER_TRANSFORM',
+          (p) =>
+            p.input.kind === 'PLAY' &&
+            p.input.useSkill === 'JOKER_TRANSFORM' &&
+            p.input.cardIds.length > 0,
         );
         if (!opt || opt.input.kind !== 'PLAY' || !opt.input.jokerDeclarations?.[0]) continue;
         const decl = opt.input.jokerDeclarations[0];
-        cpuGameStore.setState({ selection: [...opt.input.cardIds] });
+
+        const before = st.driver;
         cpuGameStore.getState().openJokerTransform();
         cpuGameStore.getState().setJokerDeclaration(decl.rankCode, decl.suitCode);
-        const res = cpuGameStore.getState().submitJokerTransform();
-        assert.equal(res.ok, true);
+        const staged = cpuGameStore.getState().submitJokerTransform();
+        assert.equal(staged.ok, true);
+        assert.equal(cpuGameStore.getState().driver, before);
+        assert.deepEqual(cpuGameStore.getState().pendingSkill, {
+          useSkill: 'JOKER_TRANSFORM',
+          jokerDeclaration: { rankCode: decl.rankCode, suitCode: decl.suitCode },
+        });
         assert.equal(cpuGameStore.getState().jokerTransform.active, false);
-        assert.equal(cpuGameStore.getState().selection.length, 0);
+        assert.deepEqual(cpuGameStore.getState().selection, []);
+
+        for (const cardId of opt.input.cardIds) cpuGameStore.getState().selectCard(cardId);
+        const submitted = cpuGameStore.getState().submitPlay();
+        assert.equal(submitted.ok, true);
+        assert.equal(cpuGameStore.getState().pendingSkill, null);
+        assert.equal(
+          cpuGameStore.getState().driver!.round.players.find((p) => p.playerId === 'seat-0')?.skill
+            ?.used,
+          true,
+        );
         seed = s;
       }
     }

@@ -5,6 +5,7 @@ import {
   type DayNight,
   type LegalPlay,
   type NumberCard,
+  type PlayInput,
   type RankCode,
   type SuitCode,
 } from '@card-game-app/game-core';
@@ -24,6 +25,7 @@ import {
   selectionRejectionReasonKey,
   submitOptionsForSelection,
   type JokerDeclarationDraft,
+  type PendingHumanSkill,
 } from './skillPlayOptions';
 import type { MatchConfig } from './matchConfig';
 import type { DriverState, GamePhase, TurnActionKind } from './turnDriver';
@@ -55,6 +57,7 @@ export type HandCardView = {
   isJoker: boolean;
   selected: boolean;
   selectable: boolean;
+  selectionLocked?: boolean;
 };
 
 /**
@@ -132,6 +135,34 @@ function cardFace(card: NumberCard): CardFaceData {
   };
 }
 
+function sameJokerDeclaration(
+  input: PlayInput,
+  pending: Extract<PendingHumanSkill, { useSkill: 'JOKER_TRANSFORM' }>,
+): boolean {
+  if (input.kind !== 'PLAY') return false;
+  const declaration = input.jokerDeclarations?.[0];
+  return (
+    input.jokerDeclarations?.length === 1 &&
+    declaration?.rankCode === pending.jokerDeclaration.rankCode &&
+    declaration.suitCode === pending.jokerDeclaration.suitCode
+  );
+}
+
+function legalPlaysForPendingSkill(
+  legalPlays: LegalPlay[],
+  pendingSkill: PendingHumanSkill | null,
+): LegalPlay[] {
+  if (!pendingSkill) {
+    return legalPlays.filter(
+      (play) => play.input.kind !== 'PLAY' || play.input.useSkill === undefined,
+    );
+  }
+  return legalPlays.filter((play) => {
+    if (play.input.kind !== 'PLAY' || play.input.useSkill !== pendingSkill.useSkill) return false;
+    if (pendingSkill.useSkill !== 'JOKER_TRANSFORM') return true;
+    return sameJokerDeclaration(play.input, pendingSkill);
+  });
+}
 function compareCards(a: NumberCard, b: NumberCard): number {
   const byRank = rankNumber(a.rankCode) - rankNumber(b.rankCode);
   if (byRank !== 0) return byRank;
@@ -145,10 +176,13 @@ export function buildBoardViewModel(
   opts?: {
     cpuThinking?: boolean;
     jokerTransform?: { active: boolean } & JokerDeclarationDraft;
+    pendingSkill?: PendingHumanSkill | null;
   },
 ): BoardViewModel {
   const { config, round } = state;
   const humanSeatId = config.seats.find((s) => s.kind === 'HUMAN')?.seatId ?? null;
+  const pendingSkill = opts?.pendingSkill ?? null;
+  const displayAsCleared = pendingSkill?.useSkill === 'JOKER_CLEAR';
   const humanPlayer = round.players.find((p) => p.playerId === humanSeatId) ?? null;
 
   const opponents: OpponentView[] = config.seats
@@ -166,13 +200,15 @@ export function buildBoardViewModel(
     });
 
   const field: FieldView | null =
-    round.activeField == null
+    displayAsCleared || round.activeField == null
       ? null
       : {
           cards: round.activeField.combination.cards.map(cardFace),
           kind: round.activeField.combination.kind,
           lastPlayerNameKey: seatNameKey(config, round.activeField.lastPlayerId) ?? '',
         };
+
+  const selectionLegalPlays = legalPlaysForPendingSkill(legalPlays, pendingSkill);
 
   const hand: HandCardView[] = (humanPlayer?.hand ?? [])
     .slice()
@@ -185,9 +221,21 @@ export function buildBoardViewModel(
         suitCode: card.suitCode,
         isJoker: isTransformedJokerCard(card),
         selected,
-        selectable: selected || canSelectCard(selection, card.cardId, legalPlays),
+        selectable: selected || canSelectCard(selection, card.cardId, selectionLegalPlays),
       };
     });
+
+  if (pendingSkill?.useSkill === 'JOKER_TRANSFORM') {
+    hand.push({
+      cardId: 'PENDING_JOKER_TRANSFORM',
+      rank: rankNumber(pendingSkill.jokerDeclaration.rankCode),
+      suitCode: pendingSkill.jokerDeclaration.suitCode,
+      isJoker: true,
+      selected: true,
+      selectable: false,
+      selectionLocked: true,
+    });
+  }
 
   const turnLog: TurnLogLineView[] = state.turnLog.map((entry) => ({
     index: entry.index,
@@ -216,11 +264,25 @@ export function buildBoardViewModel(
       : null;
 
   const skillSubmit = submitOptionsForSelection(legalPlays, selection);
+  const availableSkillActions = skillPanel
+    ? ([
+        skillPanel.jokerClearAvailable ? 'JOKER_CLEAR' : null,
+        skillPanel.sealAvailable ? 'EXTENSION_SEAL' : null,
+        skillPanel.revolutionAvailable ? 'REVOLUTION' : null,
+      ].filter(Boolean) as ('JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION')[])
+    : [];
   const submitOptions = {
-    plain: canSubmitPlain(selection, legalPlays),
-    skills: skillSubmit.map((s) => ({
-      useSkill: s.useSkill,
-      labelKey: `cpuGame.skill.submit.${s.useSkill}`,
+    plain: pendingSkill
+      ? canSubmit(selection, selectionLegalPlays)
+      : canSubmitPlain(selection, legalPlays),
+    skills: (pendingSkill
+      ? availableSkillActions
+      : availableSkillActions.length > 0
+        ? availableSkillActions
+        : skillSubmit.map((s) => s.useSkill)
+    ).map((useSkill) => ({
+      useSkill,
+      labelKey: `cpuGame.skill.submit.${useSkill}`,
     })),
   };
 
@@ -234,7 +296,7 @@ export function buildBoardViewModel(
     active: jtDraft.active,
     rankCode: jtDraft.rankCode,
     suitCode: jtDraft.suitCode,
-    canConfirm: jtRes?.status === 'ok',
+    canConfirm: jtDraft.active && jtDraft.rankCode != null && jtDraft.suitCode != null,
     forbiddenGoOut: jtRes?.status === 'forbidden-go-out',
     rejectionReasonKey: jtRes?.status === 'illegal' ? jtRes.rejectionReasonKey : null,
     previewCard: jokerPreviewCard({ rankCode: jtDraft.rankCode, suitCode: jtDraft.suitCode }),
@@ -242,9 +304,9 @@ export function buildBoardViewModel(
 
   const selectionHint = {
     rejectionReasonKey: isHumanTurn
-      ? selectionRejectionReasonKey(state, selection, legalPlays)
+      ? selectionRejectionReasonKey(state, selection, selectionLegalPlays)
       : null,
-    legalMoveCount: isHumanTurn ? legalMoveCount(legalPlays) : 0,
+    legalMoveCount: isHumanTurn ? legalMoveCount(selectionLegalPlays) : 0,
   };
 
   return {
@@ -254,8 +316,8 @@ export function buildBoardViewModel(
     activeSeatId: round.activePlayerId,
     activeSeatNameKey: seatNameKey(config, round.activePlayerId) ?? '',
     field,
-    lock: round.activeField?.lock ?? { ...UNLOCKED },
-    extensionSealed: round.extensionSealed,
+    lock: displayAsCleared ? { ...UNLOCKED } : (round.activeField?.lock ?? { ...UNLOCKED }),
+    extensionSealed: displayAsCleared ? false : round.extensionSealed,
     opponents,
     turnLog,
     skillPanel,
@@ -263,8 +325,8 @@ export function buildBoardViewModel(
     jokerTransform,
     selectionHint,
     hand,
-    canSubmit: canSubmit(selection, legalPlays),
-    canPass: canPass(legalPlays),
+    canSubmit: canSubmit(selection, selectionLegalPlays),
+    canPass: pendingSkill ? false : canPass(legalPlays),
     cpuThinking: opts?.cpuThinking ?? false,
     winnerSeatId: state.winnerSeatId,
     winnerNameKey: seatNameKey(config, state.winnerSeatId),

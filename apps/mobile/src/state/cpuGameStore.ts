@@ -6,6 +6,7 @@ import type {
   LegalPlay,
   PlayInput,
   PlayRejectionReason,
+  PlaySkillUse,
   RankCode,
   RoundState,
   SuitCode,
@@ -39,6 +40,7 @@ import {
   type CpuDecision,
   type DriverState,
 } from '../features/cpu-game/turnDriver';
+import type { PendingHumanSkill } from '../features/cpu-game/skillPlayOptions';
 
 const TOTAL_CARDS = 36;
 
@@ -63,6 +65,7 @@ export type CpuGameState = {
   /** Derived convenience mirror of `pendingCpuReveal != null`. */
   cpuThinking: boolean;
   jokerTransform: { active: boolean; rankCode: RankCode | null; suitCode: SuitCode | null };
+  pendingSkill: PendingHumanSkill | null;
 
   startMatch: (totalPlayers: number, seed?: number) => void;
   selectCard: (cardId: string) => void;
@@ -115,6 +118,46 @@ function requireDeps(): CpuGameDeps {
 const isRealCard = (card: { transformedFromSkillId?: string }): boolean =>
   card.transformedFromSkillId === undefined;
 
+function sameCardSet(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const bSet = new Set(b);
+  return a.every((id) => bSet.has(id));
+}
+
+function sameJokerDeclaration(
+  input: PlayInput,
+  pending: Extract<PendingHumanSkill, { useSkill: 'JOKER_TRANSFORM' }>,
+): boolean {
+  if (input.kind !== 'PLAY') return false;
+  const declaration = input.jokerDeclarations?.[0];
+  return (
+    input.jokerDeclarations?.length === 1 &&
+    declaration?.rankCode === pending.jokerDeclaration.rankCode &&
+    declaration.suitCode === pending.jokerDeclaration.suitCode
+  );
+}
+
+function legalPlaysForPendingSkill(
+  legalPlays: LegalPlay[],
+  pendingSkill: PendingHumanSkill | null,
+): LegalPlay[] {
+  if (!pendingSkill) {
+    return legalPlays.filter(
+      (play) => play.input.kind !== 'PLAY' || play.input.useSkill === undefined,
+    );
+  }
+  return legalPlays.filter((play) => {
+    if (play.input.kind !== 'PLAY' || play.input.useSkill !== pendingSkill.useSkill) return false;
+    if (pendingSkill.useSkill !== 'JOKER_TRANSFORM') return true;
+    return sameJokerDeclaration(play.input, pendingSkill);
+  });
+}
+
+function skillUseMatchesHeld(useSkill: PlaySkillUse, heldEffect?: string): boolean {
+  if (useSkill === 'EXTENSION_SEAL') return heldEffect === 'SKILL_EXTENSION_SEAL';
+  if (useSkill === 'REVOLUTION') return heldEffect === 'SKILL_REVOLUTION';
+  return heldEffect === 'SKILL_JOKER_HERO' || heldEffect === 'SKILL_JOKER_SAINT';
+}
 function assertCardConservation(round: RoundState): void {
   const inHands = round.players.reduce(
     (sum, player) => sum + player.hand.filter(isRealCard).length,
@@ -162,6 +205,7 @@ const INITIAL: Omit<
   saveStatus: 'idle',
   cpuThinking: false,
   jokerTransform: { active: false, rankCode: null, suitCode: null },
+  pendingSkill: null,
 };
 
 export const cpuGameStore = createStore<CpuGameState>((set, get) => {
@@ -176,6 +220,7 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
       selection: [],
       legalPlays: legalPlaysForHuman(res.next),
       jokerTransform: { active: false, rankCode: null, suitCode: null },
+      pendingSkill: null,
     });
     return { ok: true };
   };
@@ -200,19 +245,57 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
     },
 
     selectCard: (cardId) =>
-      set((state) => ({ selection: toggleCard(state.selection, cardId, state.legalPlays) })),
+      set((state) => ({
+        selection: toggleCard(
+          state.selection,
+          cardId,
+          legalPlaysForPendingSkill(state.legalPlays, state.pendingSkill),
+        ),
+      })),
 
-    clearSelection: () => set({ selection: [] }),
+    clearSelection: () =>
+      set({
+        selection: [],
+        pendingSkill: null,
+        jokerTransform: { active: false, rankCode: null, suitCode: null },
+      }),
 
     submitPlay: () => {
-      const { driver, selection } = get();
+      const { driver, selection, pendingSkill, legalPlays } = get();
       if (!driver) return { ok: false };
-      return applyHumanInput(toPlayInput(selection, activeSeatId(driver)));
+      if (!pendingSkill) return applyHumanInput(toPlayInput(selection, activeSeatId(driver)));
+
+      const seatId = activeSeatId(driver);
+      const human = driver.round.players.find((p) => p.playerId === seatId);
+      if (!human?.skill || !skillUseMatchesHeld(pendingSkill.useSkill, human.skill.effectCode)) {
+        return { ok: false, reason: 'SKILL_NOT_AVAILABLE' };
+      }
+      const input: PlayInput = {
+        kind: 'PLAY',
+        playerId: seatId,
+        cardIds: [...selection],
+        useSkill: pendingSkill.useSkill,
+        jokerDeclarations:
+          pendingSkill.useSkill === 'JOKER_TRANSFORM'
+            ? [
+                {
+                  skillId: human.skill.skillId,
+                  rankCode: pendingSkill.jokerDeclaration.rankCode,
+                  suitCode: pendingSkill.jokerDeclaration.suitCode,
+                },
+              ]
+            : undefined,
+      };
+      const isKnownLegal = legalPlaysForPendingSkill(legalPlays, pendingSkill).some(
+        (play) => play.input.kind === 'PLAY' && sameCardSet(play.input.cardIds, input.cardIds),
+      );
+      if (!isKnownLegal) return { ok: false };
+      return applyHumanInput(input);
     },
 
     pass: () => {
-      const { driver } = get();
-      if (!driver) return { ok: false };
+      const { driver, pendingSkill } = get();
+      if (!driver || pendingSkill) return { ok: false };
       return applyHumanInput({ kind: 'PASS', playerId: activeSeatId(driver) });
     },
 
@@ -226,38 +309,59 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
       set((s) => ({ jokerTransform: { ...s.jokerTransform, rankCode, suitCode } })),
 
     submitSkillPlay: (useSkill) => {
-      const { driver, selection } = get();
-      if (!driver) return { ok: false };
-      return applyHumanInput({
-        kind: 'PLAY',
-        playerId: activeSeatId(driver),
-        cardIds: [...selection],
-        useSkill,
+      const { driver, legalPlays } = get();
+      if (!driver || driver.phase !== 'HUMAN_TURN') return { ok: false };
+      const seatId = activeSeatId(driver);
+      const human = driver.round.players.find((p) => p.playerId === seatId);
+      if (
+        !human?.skill ||
+        human.skill.used ||
+        !skillUseMatchesHeld(useSkill, human.skill.effectCode)
+      ) {
+        return { ok: false, reason: 'SKILL_NOT_AVAILABLE' };
+      }
+      const hasLegalFollowUp = legalPlays.some(
+        (play) => play.input.kind === 'PLAY' && play.input.useSkill === useSkill,
+      );
+      if (!hasLegalFollowUp) return { ok: false };
+      set({
+        pendingSkill: { useSkill },
+        selection: [],
+        jokerTransform: { active: false, rankCode: null, suitCode: null },
       });
+      return { ok: true };
     },
 
     submitJokerTransform: () => {
-      const { driver, selection, jokerTransform } = get();
-      if (!driver) return { ok: false };
+      const { driver, jokerTransform, legalPlays } = get();
+      if (!driver || driver.phase !== 'HUMAN_TURN') return { ok: false };
       if (jokerTransform.rankCode == null || jokerTransform.suitCode == null) {
         return { ok: false };
       }
       const seatId = activeSeatId(driver);
       const human = driver.round.players.find((p) => p.playerId === seatId);
-      if (!human?.skill) return { ok: false };
-      return applyHumanInput({
-        kind: 'PLAY',
-        playerId: seatId,
-        cardIds: [...selection],
+      if (
+        !human?.skill ||
+        human.skill.used ||
+        !skillUseMatchesHeld('JOKER_TRANSFORM', human.skill.effectCode)
+      ) {
+        return { ok: false, reason: 'SKILL_NOT_AVAILABLE' };
+      }
+      const pendingSkill: PendingHumanSkill = {
         useSkill: 'JOKER_TRANSFORM',
-        jokerDeclarations: [
-          {
-            skillId: human.skill.skillId,
-            rankCode: jokerTransform.rankCode,
-            suitCode: jokerTransform.suitCode,
-          },
-        ],
+        jokerDeclaration: {
+          rankCode: jokerTransform.rankCode,
+          suitCode: jokerTransform.suitCode,
+        },
+      };
+      const hasLegalFollowUp = legalPlaysForPendingSkill(legalPlays, pendingSkill).length > 0;
+      if (!hasLegalFollowUp) return { ok: false };
+      set({
+        pendingSkill,
+        selection: [],
+        jokerTransform: { active: false, rankCode: null, suitCode: null },
       });
+      return { ok: true };
     },
 
     advanceCpu: () => {
@@ -289,6 +393,8 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         cpuThinking: false,
         selection: [],
         legalPlays: legalPlaysForHuman(nextDriver),
+        pendingSkill: null,
+        jokerTransform: { active: false, rankCode: null, suitCode: null },
       });
     },
 

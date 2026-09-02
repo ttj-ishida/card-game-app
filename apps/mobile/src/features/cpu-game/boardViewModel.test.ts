@@ -393,7 +393,7 @@ test('selectionHint carries a legal-move count and a null reason on an empty sel
   assert.ok(expected > 0);
 });
 
-test('canSubmit is true for a skill-only selection while submitOptions.plain stays false', () => {
+test('canSubmit is true after the matching skill is staged for the selection', () => {
   // seat-0 (HUMAN) holds unused SKILL_REVOLUTION, hand RANK_3/FIRE + RANK_2/WATER.
   // Field: seat-1 led SINGLE RANK_7/EARTH in DAY (strength 7).
   //  - plain [RANK_3] -> strength 3 < 7 -> NOT_STRONGER (no plain play).
@@ -445,7 +445,61 @@ test('canSubmit is true for a skill-only selection while submitOptions.plain sta
         p.input.cardIds[0] === 'h0',
     ),
   );
-  const vm = buildBoardViewModel(g, ['h0'], legal);
-  assert.equal(vm.canSubmit, true);
-  assert.equal(vm.submitOptions.plain, false);
+  const withoutSkill = buildBoardViewModel(g, ['h0'], legal);
+  assert.equal(withoutSkill.canSubmit, false);
+  assert.equal(withoutSkill.submitOptions.plain, false);
+
+  const withSkill = buildBoardViewModel(g, ['h0'], legal, {
+    pendingSkill: { useSkill: 'REVOLUTION' },
+  });
+  assert.equal(withSkill.canSubmit, true);
+  assert.equal(withSkill.submitOptions.plain, true);
+});
+
+test('pending joker transform appears in hand as a fixed selected preview card', () => {
+  const s = start(2, 6);
+  const vm = buildBoardViewModel(s, [], legalPlaysForHuman(s), {
+    pendingSkill: {
+      useSkill: 'JOKER_TRANSFORM',
+      jokerDeclaration: { rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' },
+    },
+  });
+
+  const preview = vm.hand.find((card) => card.cardId === 'PENDING_JOKER_TRANSFORM');
+  assert.ok(preview);
+  assert.equal(preview.rank, 5);
+  assert.equal(preview.suitCode, 'SUIT_FIRE');
+  assert.equal(preview.isJoker, true);
+  assert.equal(preview.selected, true);
+  assert.equal(preview.selectable, false);
+  assert.equal(preview.selectionLocked, true);
+});
+
+test('pending joker clear shows an empty unlocked field while the follow-up lead is selected', () => {
+  let s: DriverState | null = null;
+  let legal = [] as ReturnType<typeof legalPlaysForHuman>;
+  for (let seed = 0; seed < 200 && s == null; seed += 1) {
+    let candidate = start(2, seed);
+    for (let step = 0; step < 80 && s == null; step += 1) {
+      if (candidate.phase === 'HUMAN_TURN' && candidate.round.activeField) {
+        const candidateLegal = legalPlaysForHuman(candidate);
+        if (
+          candidateLegal.some((p) => p.input.kind === 'PLAY' && p.input.useSkill === 'JOKER_CLEAR')
+        ) {
+          s = candidate;
+          legal = candidateLegal;
+        }
+      }
+      if (candidate.phase === 'ROUND_OVER') break;
+      candidate = advance(candidate, 1);
+    }
+  }
+  assert.ok(s, 'expected to find a human joker-clear state');
+
+  const vm = buildBoardViewModel(s, [], legal, { pendingSkill: { useSkill: 'JOKER_CLEAR' } });
+
+  assert.equal(vm.field, null);
+  assert.equal(vm.extensionSealed, false);
+  assert.deepEqual(vm.lock, { countLocked: false, suitFixed: null, suitUniform: false });
+  assert.equal(vm.canPass, false);
 });

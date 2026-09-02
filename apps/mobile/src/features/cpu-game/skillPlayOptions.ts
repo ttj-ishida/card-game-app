@@ -19,6 +19,13 @@ export type SkillSubmitOption = {
 
 export type JokerDeclarationDraft = { rankCode: RankCode | null; suitCode: SuitCode | null };
 
+export type PendingHumanSkill =
+  | { useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION' }
+  | {
+      useSkill: 'JOKER_TRANSFORM';
+      jokerDeclaration: { rankCode: RankCode; suitCode: SuitCode };
+    };
+
 export type JokerTransformResolution =
   | { status: 'ok'; input: PlayInput }
   | { status: 'forbidden-go-out' }
