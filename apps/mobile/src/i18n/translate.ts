@@ -94,6 +94,7 @@ export const jaDictionary = {
   'sandbox.reason.MUST_LEAD': '続けてリードする必要があります',
   'sandbox.reason.NO_FIELD_TO_CLEAR': '流す場がありません',
   'sandbox.reason.TRANSFORM_JOKER_GO_OUT': '変化Jokerを含む手では上がれません',
+  'sandbox.reason.INVALID_JOKER_DECLARATION': 'Joker宣言が不正です',
   'sandbox.history.empty': '履歴はまだありません',
   'sandbox.button.undo': '1手戻す',
   'sandbox.button.reset': '初期化',

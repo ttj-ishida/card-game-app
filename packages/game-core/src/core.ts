@@ -799,7 +799,8 @@ export type PlayRejectionReason =
   | "FIELD_EMPTY"
   | "MUST_LEAD"
   | "NO_FIELD_TO_CLEAR"
-  | "TRANSFORM_JOKER_GO_OUT";
+  | "TRANSFORM_JOKER_GO_OUT"
+  | "INVALID_JOKER_DECLARATION";
 
 export type PlayOutcome = {
   actionKind: PlayActionKind | "PASS";
@@ -985,6 +986,16 @@ function resolveCardPlay(
     ) {
       return reject("SKILL_NOT_AVAILABLE");
     }
+  }
+
+  const declarations = play.jokerDeclarations ?? [];
+  if (play.useSkill === "JOKER_TRANSFORM") {
+    if (declarations.length !== 1) return reject("INVALID_JOKER_DECLARATION");
+    if (!player.skill || declarations[0].skillId !== player.skill.skillId) {
+      return reject("INVALID_JOKER_DECLARATION");
+    }
+  } else if (declarations.length > 0) {
+    return reject("INVALID_JOKER_DECLARATION");
   }
 
   const isJokerClear = play.useSkill === "JOKER_CLEAR";

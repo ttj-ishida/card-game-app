@@ -247,7 +247,11 @@ test("resolvePlay rejects a revolution skill play that is illegal after the flip
 test("resolvePlay resolves a transform Joker play and records natural revolution + lock", () => {
   const state = round({
     players: [
-      skilled("P1", [c(3, "FIRE"), c(4, "FIRE"), c(9, "WATER")], "SKILL_JOKER_HERO"),
+      skilled(
+        "P1",
+        [c(3, "FIRE"), c(4, "FIRE"), c(5, "FIRE"), c(9, "WATER")],
+        "SKILL_JOKER_HERO",
+      ),
       createPlayerState("P2", [c(7)]),
     ],
     activePlayerId: "P1",
@@ -256,12 +260,9 @@ test("resolvePlay resolves a transform Joker play and records natural revolution
   const result = resolvePlay(state, {
     kind: "PLAY",
     playerId: "P1",
-    cardIds: ["N_3_FIRE", "N_4_FIRE"],
+    cardIds: ["N_3_FIRE", "N_4_FIRE", "N_5_FIRE"],
     useSkill: "JOKER_TRANSFORM",
-    jokerDeclarations: [
-      { skillId: "SK_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
-      { skillId: "SK_P1_2", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
-    ],
+    jokerDeclarations: [{ skillId: "SK_P1", rankCode: "RANK_6", suitCode: "SUIT_FIRE" }],
   });
   assert.ok(result.ok);
   assert.equal(result.state.activeField?.lock.suitUniform, true);
@@ -393,4 +394,91 @@ test("resolvePlay does not mutate the input on a successful play and is repeatab
   assert.deepEqual(state, snapshot);
   assert.notEqual(first.state, state);
   assert.deepEqual(first.state, second.state);
+});
+
+test("resolvePlay rejects JOKER_TRANSFORM with zero declarations", () => {
+  const state = round({
+    players: [
+      skilled("P1", [c(3, "FIRE"), c(4, "FIRE")], "SKILL_JOKER_HERO"),
+      createPlayerState("P2", [c(7)]),
+    ],
+    activePlayerId: "P1",
+    activeField: null,
+  });
+  const snapshot = structuredClone(state);
+  const result = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_3_FIRE", "N_4_FIRE"],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [],
+  });
+  assert.equal(result.ok === false && result.reason, "INVALID_JOKER_DECLARATION");
+  assert.deepEqual(state, snapshot);
+});
+
+test("resolvePlay rejects JOKER_TRANSFORM with two declarations", () => {
+  const state = round({
+    players: [
+      skilled("P1", [c(3, "FIRE"), c(4, "FIRE")], "SKILL_JOKER_HERO"),
+      createPlayerState("P2", [c(7)]),
+    ],
+    activePlayerId: "P1",
+    activeField: null,
+  });
+  const snapshot = structuredClone(state);
+  const result = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_3_FIRE", "N_4_FIRE"],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [
+      { skillId: "SK_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
+      { skillId: "SK_P1", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
+    ],
+  });
+  assert.equal(result.ok === false && result.reason, "INVALID_JOKER_DECLARATION");
+  assert.deepEqual(state, snapshot);
+});
+
+test("resolvePlay rejects JOKER_TRANSFORM whose declaration skillId is not the held skill", () => {
+  const state = round({
+    players: [
+      skilled("P1", [c(3, "FIRE"), c(4, "FIRE")], "SKILL_JOKER_HERO"),
+      createPlayerState("P2", [c(7)]),
+    ],
+    activePlayerId: "P1",
+    activeField: null,
+  });
+  const snapshot = structuredClone(state);
+  const result = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_3_FIRE", "N_4_FIRE"],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [{ skillId: "SOMETHING_ELSE", rankCode: "RANK_5", suitCode: "SUIT_FIRE" }],
+  });
+  assert.equal(result.ok === false && result.reason, "INVALID_JOKER_DECLARATION");
+  assert.deepEqual(state, snapshot);
+});
+
+test("resolvePlay rejects a non-transform skill play that carries jokerDeclarations", () => {
+  const state = round({
+    players: [
+      skilled("P1", [c(6, "WATER"), c(3)], "SKILL_EXTENSION_SEAL"),
+      createPlayerState("P2", [c(7)]),
+    ],
+    activePlayerId: "P1",
+    activeField: null,
+  });
+  const snapshot = structuredClone(state);
+  const result = resolvePlay(state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: ["N_6_WATER"],
+    useSkill: "EXTENSION_SEAL",
+    jokerDeclarations: [{ skillId: "SK_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" }],
+  });
+  assert.equal(result.ok === false && result.reason, "INVALID_JOKER_DECLARATION");
+  assert.deepEqual(state, snapshot);
 });

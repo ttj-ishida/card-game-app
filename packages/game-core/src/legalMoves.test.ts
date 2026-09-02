@@ -503,3 +503,20 @@ test("the sequence candidate cap (1024) does not skip a legal 5-card window on a
     ),
   );
 });
+
+test("includeSkills: every enumerated JOKER_TRANSFORM play has exactly one declaration matching the held skill", () => {
+  const state = skillRound({
+    activeSeatSkill: { skillId: "SK1", effectCode: "SKILL_JOKER_HERO" },
+    activeSeatHand: [n(3, "FIRE"), n(4, "FIRE"), n(5, "FIRE")],
+  });
+  const transforms = enumerateLegalPlays(state, { includeSkills: true }).filter(
+    (p) => p.input.kind === "PLAY" && p.input.useSkill === "JOKER_TRANSFORM",
+  );
+  assert.ok(transforms.length > 0);
+  for (const p of transforms) {
+    assert.ok(p.input.kind === "PLAY");
+    assert.equal(p.input.jokerDeclarations?.length, 1);
+    assert.equal(p.input.jokerDeclarations?.[0].skillId, "SK1");
+    assert.equal(resolvePlay(state, p.input).ok, true);
+  }
+});

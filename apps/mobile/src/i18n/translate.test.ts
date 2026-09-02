@@ -27,6 +27,7 @@ const REASON_CODES = {
   MUST_LEAD: true,
   NO_FIELD_TO_CLEAR: true,
   TRANSFORM_JOKER_GO_OUT: true,
+  INVALID_JOKER_DECLARATION: true,
 } satisfies Record<PlayRejectionReason, true>;
 
 test('translate returns Japanese text for an existing key', () => {

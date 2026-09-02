@@ -312,25 +312,62 @@ test("T-RULE-016: winning with the last number card + revolution card after the 
   assert.equal(result.state.dayNight, "NIGHT");
 });
 
-test("T-RULE-017: two Jokers declaring distinct identities complete a legal sequence", () => {
-  const result = play(
-    makeRound({
-      p1: [c(3, "FIRE"), c(4, "FIRE"), c(9, "WATER")],
-      p1Skill: "SKILL_JOKER_HERO",
-    }),
-    {
-      kind: "PLAY",
-      playerId: "P1",
-      cardIds: ["N_3_FIRE", "N_4_FIRE"],
-      useSkill: "JOKER_TRANSFORM",
-      jokerDeclarations: [
-        { skillId: "SK_P1", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
-        { skillId: "SK_P1_B", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
-      ],
-    },
-  );
+test("T-RULE-017: two Jokers declaring distinct identities form a legal sequence", () => {
+  // 要件 §31.2 / JTR-007・008: 別の数字＋属性を宣言した2枚のJokerで組み合わせが
+  // 成立すれば合法。JOKER-003 により2枚の変化Jokerが同時に盤上へ乗る唯一の
+  // ゲーム到達経路は2手番にまたがる場（1回の resolvePlay は宣言ちょうど1つ）。
+  const state = createRoundState({
+    rulesetCode: "INITIAL",
+    rulesetVersion: INITIAL_RULESET_VERSION,
+    dayNight: "DAY",
+    players: [
+      createPlayerState("P1", [c(8, "WATER"), c(9, "WATER")], {
+        skillId: "SK_P1",
+        effectCode: "SKILL_JOKER_HERO",
+        used: false,
+      }),
+      createPlayerState("P2", [c(3, "FIRE"), c(4, "FIRE"), c(9, "EARTH")], {
+        skillId: "SK_P2",
+        effectCode: "SKILL_JOKER_SAINT",
+        used: false,
+      }),
+    ],
+    activePlayerId: "P2",
+    activeField: null,
+  });
+
+  // P2 leads a 3-4-(Joker as 5F) sequence.
+  const lead = play(state, {
+    kind: "PLAY",
+    playerId: "P2",
+    cardIds: ["N_3_FIRE", "N_4_FIRE"],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [
+      { skillId: "SK_P2", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
+    ],
+  });
+  assert.ok(lead.ok);
+
+  // P1 extends with its own Joker declared as a distinct identity (6F).
+  const result = play(lead.state, {
+    kind: "PLAY",
+    playerId: "P1",
+    cardIds: [],
+    useSkill: "JOKER_TRANSFORM",
+    jokerDeclarations: [
+      { skillId: "SK_P1", rankCode: "RANK_6", suitCode: "SUIT_FIRE" },
+    ],
+  });
   assert.ok(result.ok);
   assert.equal(result.state.activeField?.combination.kind, "SEQUENCE");
+  const transformed = result.state.activeField?.combination.cards.filter(
+    (card) => card.transformedFromSkillId !== undefined,
+  );
+  assert.equal(transformed?.length, 2);
+  assert.notEqual(
+    transformed?.[0]?.transformedFromSkillId,
+    transformed?.[1]?.transformedFromSkillId,
+  );
 });
 
 test("T-RULE-018: a Joker that duplicates a real card identity is illegal", () => {
