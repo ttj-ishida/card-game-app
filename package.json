@@ -29,7 +29,9 @@
     "assets:generate:m2": "node scripts/generate-m2-battle-assets.mjs",
     "assets:check:m2": "node scripts/check-m2-assets.mjs",
     "assets:generate:m3": "node scripts/generate-m3-graphics-assets.mjs",
-    "assets:check:m3": "node scripts/check-m3-assets.mjs"
+    "assets:check:m3": "node scripts/check-m3-assets.mjs",
+    "mobile:build:android:preview": "npm --prefix apps/mobile run build:android:preview",
+    "mobile:build:android:production": "npm --prefix apps/mobile run build:android:production"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
