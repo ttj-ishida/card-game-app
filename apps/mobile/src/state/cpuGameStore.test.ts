@@ -477,3 +477,108 @@ describe('selection and rejection behaviour', () => {
     assert.equal(cpuGameStore.getState().pendingCpuReveal, null);
   });
 });
+
+describe('skill actions', () => {
+  beforeEach(() => {
+    __resetCpuGameStoreForTest();
+    __resetAnonPlayerIdMemoForTest();
+  });
+
+  it('openJokerTransform / setJokerDeclaration / closeJokerTransform manage the draft', () => {
+    configureCpuGameStore(makeFakeDeps());
+    cpuGameStore.getState().startMatch(2, 42);
+    cpuGameStore.getState().openJokerTransform();
+    assert.deepEqual(cpuGameStore.getState().jokerTransform, {
+      active: true,
+      rankCode: null,
+      suitCode: null,
+    });
+    cpuGameStore.getState().setJokerDeclaration('RANK_5', 'SUIT_FIRE');
+    assert.deepEqual(cpuGameStore.getState().jokerTransform, {
+      active: true,
+      rankCode: 'RANK_5',
+      suitCode: 'SUIT_FIRE',
+    });
+    cpuGameStore.getState().closeJokerTransform();
+    assert.deepEqual(cpuGameStore.getState().jokerTransform, {
+      active: false,
+      rankCode: null,
+      suitCode: null,
+    });
+  });
+
+  it('startMatch resets the jokerTransform draft', () => {
+    configureCpuGameStore(makeFakeDeps());
+    cpuGameStore.getState().startMatch(2, 42);
+    cpuGameStore.getState().openJokerTransform();
+    cpuGameStore.getState().startMatch(2, 43);
+    assert.equal(cpuGameStore.getState().jokerTransform.active, false);
+  });
+
+  it('submitSkillPlay applies a legal skill play and keeps card conservation', () => {
+    configureCpuGameStore(makeFakeDeps());
+    // seat-0 が革命 or 封印を持ち、素の選択 + スキル併用が合法な局面を探す
+    let seed = -1;
+    for (let s = 0; s < 400 && seed < 0; s += 1) {
+      cpuGameStore.getState().startMatch(2, s);
+      const st = cpuGameStore.getState();
+      if (!st.driver || st.driver.phase !== 'HUMAN_TURN') continue;
+      const human = st.driver.round.players.find((p) => p.playerId === 'seat-0');
+      if (!human?.skill || human.skill.used) continue;
+      if (human.skill.effectCode !== 'SKILL_EXTENSION_SEAL' && human.skill.effectCode !== 'SKILL_REVOLUTION') continue;
+      const opt = st.legalPlays.find(
+        (p) => p.input.kind === 'PLAY' && (p.input.useSkill === 'EXTENSION_SEAL' || p.input.useSkill === 'REVOLUTION'),
+      );
+      if (!opt || opt.input.kind !== 'PLAY') continue;
+      cpuGameStore.setState({ selection: [...opt.input.cardIds] });
+      const res = cpuGameStore.getState().submitSkillPlay(opt.input.useSkill as never);
+      assert.equal(res.ok, true);
+      seed = s;
+    }
+    assert.ok(seed >= 0, 'expected a seed with a legal human skill play');
+  });
+
+  it('submitJokerTransform requires a complete declaration', () => {
+    configureCpuGameStore(makeFakeDeps());
+    cpuGameStore.getState().startMatch(2, 42);
+    cpuGameStore.getState().openJokerTransform();
+    const res = cpuGameStore.getState().submitJokerTransform();
+    assert.equal(res.ok, false);
+    assert.equal(cpuGameStore.getState().jokerTransform.active, true);
+  });
+
+  it('submitSkillPlay / submitJokerTransform drive a full happy-path skill play', () => {
+    configureCpuGameStore(makeFakeDeps());
+    // seat-0 が JOKER_HERO/SAINT を未使用で持ち、JOKER_TRANSFORM の合法手がある局面を探す
+    let seed = -1;
+    for (let n = 2; n <= 6 && seed < 0; n += 1) {
+      for (let s = 0; s < 400 && seed < 0; s += 1) {
+        cpuGameStore.getState().startMatch(n, s);
+        const st = cpuGameStore.getState();
+        if (!st.driver || st.driver.phase !== 'HUMAN_TURN') continue;
+        const human = st.driver.round.players.find((p) => p.playerId === 'seat-0');
+        if (!human?.skill || human.skill.used) continue;
+        if (
+          human.skill.effectCode !== 'SKILL_JOKER_HERO' &&
+          human.skill.effectCode !== 'SKILL_JOKER_SAINT'
+        ) {
+          continue;
+        }
+        const opt = st.legalPlays.find(
+          (p) => p.input.kind === 'PLAY' && p.input.useSkill === 'JOKER_TRANSFORM',
+        );
+        if (!opt || opt.input.kind !== 'PLAY' || !opt.input.jokerDeclarations?.[0]) continue;
+        const decl = opt.input.jokerDeclarations[0];
+        cpuGameStore.setState({ selection: [...opt.input.cardIds] });
+        cpuGameStore.getState().openJokerTransform();
+        cpuGameStore.getState().setJokerDeclaration(decl.rankCode, decl.suitCode);
+        const res = cpuGameStore.getState().submitJokerTransform();
+        assert.equal(res.ok, true);
+        assert.equal(cpuGameStore.getState().jokerTransform.active, false);
+        assert.equal(cpuGameStore.getState().selection.length, 0);
+        seed = s;
+      }
+    }
+    assert.ok(seed >= 0, 'no seed with a legal human JOKER_TRANSFORM play');
+  });
+});

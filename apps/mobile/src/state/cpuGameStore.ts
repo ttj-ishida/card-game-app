@@ -1,6 +1,13 @@
 import { createStore } from 'zustand/vanilla';
 
-import type { LegalPlay, PlayRejectionReason, RoundState } from '@card-game-app/game-core';
+import type {
+  LegalPlay,
+  PlayInput,
+  PlayRejectionReason,
+  RankCode,
+  RoundState,
+  SuitCode,
+} from '@card-game-app/game-core';
 
 import { getAnonPlayerId, type StoragePort } from '../features/cpu-game/anonPlayerId';
 import { buildMatchConfig, isValidTotalPlayers } from '../features/cpu-game/matchConfig';
@@ -44,12 +51,18 @@ export type CpuGameState = {
   saveStatus: CpuGameSaveStatus;
   /** Derived convenience mirror of `pendingCpuReveal != null`. */
   cpuThinking: boolean;
+  jokerTransform: { active: boolean; rankCode: RankCode | null; suitCode: SuitCode | null };
 
   startMatch: (totalPlayers: number, seed?: number) => void;
   selectCard: (cardId: string) => void;
   clearSelection: () => void;
   submitPlay: () => CpuGamePlayResult;
   pass: () => CpuGamePlayResult;
+  openJokerTransform: () => void;
+  closeJokerTransform: () => void;
+  setJokerDeclaration: (rankCode: RankCode | null, suitCode: SuitCode | null) => void;
+  submitSkillPlay: (useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION') => CpuGamePlayResult;
+  submitJokerTransform: () => CpuGamePlayResult;
   advanceCpu: () => { thinkMillis: number };
   commitCpuReveal: () => void;
   finishRound: () => Promise<void>;
@@ -116,6 +129,11 @@ const INITIAL: Omit<
   | 'clearSelection'
   | 'submitPlay'
   | 'pass'
+  | 'openJokerTransform'
+  | 'closeJokerTransform'
+  | 'setJokerDeclaration'
+  | 'submitSkillPlay'
+  | 'submitJokerTransform'
   | 'advanceCpu'
   | 'commitCpuReveal'
   | 'finishRound'
@@ -132,12 +150,11 @@ const INITIAL: Omit<
   result: null,
   saveStatus: 'idle',
   cpuThinking: false,
+  jokerTransform: { active: false, rankCode: null, suitCode: null },
 };
 
 export const cpuGameStore = createStore<CpuGameState>((set, get) => {
-  const applyHumanInput = (
-    input: ReturnType<typeof toPlayInput> | { kind: 'PASS'; playerId: string },
-  ): CpuGamePlayResult => {
+  const applyHumanInput = (input: PlayInput): CpuGamePlayResult => {
     const { driver } = get();
     if (!driver) return { ok: false };
     const res = humanPlay(driver, input);
@@ -147,6 +164,7 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
       driver: res.next,
       selection: [],
       legalPlays: legalPlaysForHuman(res.next),
+      jokerTransform: { active: false, rankCode: null, suitCode: null },
     });
     return { ok: true };
   };
@@ -185,6 +203,50 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
       const { driver } = get();
       if (!driver) return { ok: false };
       return applyHumanInput({ kind: 'PASS', playerId: activeSeatId(driver) });
+    },
+
+    openJokerTransform: () =>
+      set({ jokerTransform: { active: true, rankCode: null, suitCode: null } }),
+
+    closeJokerTransform: () =>
+      set({ jokerTransform: { active: false, rankCode: null, suitCode: null } }),
+
+    setJokerDeclaration: (rankCode, suitCode) =>
+      set((s) => ({ jokerTransform: { ...s.jokerTransform, rankCode, suitCode } })),
+
+    submitSkillPlay: (useSkill) => {
+      const { driver, selection } = get();
+      if (!driver) return { ok: false };
+      return applyHumanInput({
+        kind: 'PLAY',
+        playerId: activeSeatId(driver),
+        cardIds: [...selection],
+        useSkill,
+      });
+    },
+
+    submitJokerTransform: () => {
+      const { driver, selection, jokerTransform } = get();
+      if (!driver) return { ok: false };
+      if (jokerTransform.rankCode == null || jokerTransform.suitCode == null) {
+        return { ok: false };
+      }
+      const seatId = activeSeatId(driver);
+      const human = driver.round.players.find((p) => p.playerId === seatId);
+      if (!human?.skill) return { ok: false };
+      return applyHumanInput({
+        kind: 'PLAY',
+        playerId: seatId,
+        cardIds: [...selection],
+        useSkill: 'JOKER_TRANSFORM',
+        jokerDeclarations: [
+          {
+            skillId: human.skill.skillId,
+            rankCode: jokerTransform.rankCode,
+            suitCode: jokerTransform.suitCode,
+          },
+        ],
+      });
     },
 
     advanceCpu: () => {
