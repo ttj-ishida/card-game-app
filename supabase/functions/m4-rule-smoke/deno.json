@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@card-game-app/game-core/server": "../../../packages/game-core/src/server.ts"
+  }
+}

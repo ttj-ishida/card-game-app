@@ -33,7 +33,8 @@
     "mobile:build:android:preview": "npm --prefix apps/mobile run build:android:preview",
     "mobile:build:android:production": "npm --prefix apps/mobile run build:android:production",
     "assets:generate:m4": "node scripts/generate-m4-room-ui-assets.mjs",
-    "assets:check:m4": "node scripts/check-m4-assets.mjs"
+    "assets:check:m4": "node scripts/check-m4-assets.mjs",
+    "m4:edge-smoke:check": "node scripts/check-m4-edge-function-config.mjs"
   },
   "devDependencies": {
     "supabase": "^2.116.0"
