@@ -4,27 +4,27 @@ select plan(17);
 
 select is(
   (select count(*)::int from pg_policies
-   where schemaname = 'public' and tablename = 'rooms'),
-  0,
-  'rooms has no client policies yet'
+   where schemaname = 'public' and tablename = 'rooms' and cmd = 'SELECT'),
+  1,
+  'rooms has one participant SELECT policy'
 );
 select is(
   (select count(*)::int from pg_policies
-   where schemaname = 'public' and tablename = 'room_players'),
-  0,
-  'room_players has no client policies yet'
+   where schemaname = 'public' and tablename = 'room_players' and cmd = 'SELECT'),
+  1,
+  'room_players has one participant SELECT policy'
 );
 select is(
   (select count(*)::int from pg_policies
-   where schemaname = 'public' and tablename = 'rounds'),
-  0,
-  'rounds has no client policies yet'
+   where schemaname = 'public' and tablename = 'rounds' and cmd = 'SELECT'),
+  1,
+  'rounds has one participant SELECT policy'
 );
 select is(
   (select count(*)::int from pg_policies
-   where schemaname = 'public' and tablename = 'round_players'),
-  0,
-  'round_players has no client policies yet'
+   where schemaname = 'public' and tablename = 'round_players' and cmd = 'SELECT'),
+  1,
+  'round_players has one participant SELECT policy'
 );
 
 select ok(not has_table_privilege('anon', 'public.rooms', 'SELECT'), 'anon has no SELECT on rooms');
@@ -56,4 +56,3 @@ reset role;
 select * from finish();
 
 rollback;
-
