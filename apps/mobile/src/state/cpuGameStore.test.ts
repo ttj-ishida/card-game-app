@@ -407,6 +407,21 @@ describe('rematch and exit', () => {
 });
 
 describe('finishRound failure handling', () => {
+  it('missing Supabase config still produces a result and queues without posting', async () => {
+    const deps = makeFakeDeps({ supabaseUrl: '', anonKey: '' });
+    configureCpuGameStore(deps);
+    playToRoundOver(3);
+
+    await cpuGameStore.getState().finishRound();
+    await tick();
+
+    assert.equal(cpuGameStore.getState().saveStatus, 'queued');
+    assert.ok(cpuGameStore.getState().result);
+    assert.equal(deps.http.calls.length, 0);
+    const queued = JSON.parse((deps.storage as { data: Map<string, string> }).data.get(QUEUE_KEY)!);
+    assert.equal(queued.length, 1);
+    assert.equal(queued[0].ruleset_id, null);
+  });
   it('http 500 leaves saveStatus queued and enqueues one entry', async () => {
     const deps = makeFakeDeps({ http: createFakeHttp([{ status: 500, body: 'boom' }]) });
     configureCpuGameStore(deps);

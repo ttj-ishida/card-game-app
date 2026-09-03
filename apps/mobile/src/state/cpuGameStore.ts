@@ -412,11 +412,14 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         set({ result: view, clientResultId });
 
         const anonPlayerId = await getAnonPlayerId({ storage: d.storage, makeId: d.makeId });
-        const rulesetId = await fetchActiveRulesetId({
-          http: d.http,
-          supabaseUrl: d.supabaseUrl,
-          anonKey: d.anonKey,
-        });
+        const canSync = d.supabaseUrl.length > 0 && d.anonKey.length > 0;
+        const rulesetId = canSync
+          ? await fetchActiveRulesetId({
+              http: d.http,
+              supabaseUrl: d.supabaseUrl,
+              anonKey: d.anonKey,
+            })
+          : null;
         const payload = buildPracticeResultPayload({
           view,
           state: driver,
@@ -424,6 +427,11 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
           clientResultId,
           rulesetId,
         });
+        if (!canSync) {
+          await enqueuePracticeResult(d.storage, payload);
+          set({ saveStatus: 'queued' });
+          return;
+        }
         const { outcome, roundResultId } = await savePracticeResultReturningId(payload, {
           http: d.http,
           supabaseUrl: d.supabaseUrl,

@@ -58,3 +58,14 @@ export function getAppConfig(env: PublicEnv = process.env as PublicEnv): AppConf
     supabaseAnonKey,
   };
 }
+export function getOptionalAppConfig(env: PublicEnv = process.env as PublicEnv): AppConfig | null {
+  try {
+    return getAppConfig(env);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.startsWith('Missing ') || message.startsWith('Unsupported EXPO_PUBLIC_APP_ENV')) {
+      return null;
+    }
+    throw error;
+  }
+}

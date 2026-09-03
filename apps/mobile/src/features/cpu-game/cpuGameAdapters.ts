@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 
-import { getAppConfig } from '../../config/appEnv';
+import { getOptionalAppConfig } from '../../config/appEnv';
 import type { StoragePort } from './anonPlayerId';
 import type { CpuGameDeps } from '../../state/cpuGameStore';
 import type { CpuGameHistoryDeps } from '../../state/cpuGameHistoryStore';
@@ -35,27 +35,41 @@ export const makeId = (): string => Crypto.randomUUID();
 export const makeSeed = (): number => Math.floor(Math.random() * 2 ** 31);
 export const now = (): number => Date.now();
 
-function sharedCpuGameDeps() {
-  const cfg = getAppConfig();
+function sharedLocalDeps() {
   return {
     storage: storagePort,
     http: httpPort,
     makeId,
     makeSeed,
     now,
+  };
+}
+
+export function cpuGameDeps(): CpuGameDeps {
+  const cfg = getOptionalAppConfig();
+  return {
+    ...sharedLocalDeps(),
+    supabaseUrl: cfg?.supabaseUrl ?? '',
+    anonKey: cfg?.supabaseAnonKey ?? '',
+  };
+}
+
+export function cpuGameHistoryDeps(): CpuGameHistoryDeps | undefined {
+  const cfg = getOptionalAppConfig();
+  if (!cfg) return undefined;
+  return {
+    ...sharedLocalDeps(),
     supabaseUrl: cfg.supabaseUrl,
     anonKey: cfg.supabaseAnonKey,
   };
 }
 
-export function cpuGameDeps(): CpuGameDeps {
-  return sharedCpuGameDeps();
-}
-
-export function cpuGameHistoryDeps(): CpuGameHistoryDeps {
-  return sharedCpuGameDeps();
-}
-
-export function cpuGameStatsDeps(): CpuGameStatsDeps {
-  return sharedCpuGameDeps();
+export function cpuGameStatsDeps(): CpuGameStatsDeps | undefined {
+  const cfg = getOptionalAppConfig();
+  if (!cfg) return undefined;
+  return {
+    ...sharedLocalDeps(),
+    supabaseUrl: cfg.supabaseUrl,
+    anonKey: cfg.supabaseAnonKey,
+  };
 }

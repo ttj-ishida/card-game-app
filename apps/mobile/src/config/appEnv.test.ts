@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getAppConfig, parseAppEnv } from './appEnv';
+import { getAppConfig, getOptionalAppConfig, parseAppEnv } from './appEnv';
 
 test('parseAppEnv accepts only known app environments', () => {
   assert.equal(parseAppEnv('local'), 'local');
@@ -39,6 +39,22 @@ test('getAppConfig rejects private-looking keys in public config', () => {
         EXPO_PUBLIC_APP_ENV: 'local',
         EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
         EXPO_PUBLIC_SUPABASE_ANON_KEY: 'service_role_secret',
+      }),
+    /must not look like a service role or secret key/,
+  );
+});
+test('getOptionalAppConfig returns null when public settings are missing', () => {
+  assert.equal(getOptionalAppConfig({}), null);
+  assert.equal(getOptionalAppConfig({ EXPO_PUBLIC_APP_ENV: 'development' }), null);
+});
+
+test('getOptionalAppConfig still rejects private-looking keys', () => {
+  assert.throws(
+    () =>
+      getOptionalAppConfig({
+        EXPO_PUBLIC_APP_ENV: 'local',
+        EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: 'sb_secret_not_public',
       }),
     /must not look like a service role or secret key/,
   );
