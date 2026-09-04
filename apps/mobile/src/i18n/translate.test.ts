@@ -249,3 +249,21 @@ test('jaDictionary includes every initial tutorial key required by M3-EX-06', ()
     assert.equal(translate(key), jaDictionary[key]);
   }
 });
+
+test('jaDictionary includes every sync-diagnostics screen key', () => {
+  const requiredKeys: TranslationKey[] = [
+    'home.diagnostics',
+    'diagnostics.title',
+    'diagnostics.subtitle',
+    'diagnostics.notConfigured',
+    'diagnostics.flushNow',
+    'diagnostics.testConnection',
+    'diagnostics.working',
+  ];
+
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+});

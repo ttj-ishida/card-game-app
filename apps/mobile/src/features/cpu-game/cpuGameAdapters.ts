@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 
 import { getOptionalAppConfig } from '../../config/appEnv';
+import { bodySnippet, httpPath, syncDiagnosticsStore } from '../diagnostics/syncDiagnosticsStore';
 import type { StoragePort } from './anonPlayerId';
 import type { CpuGameDeps } from '../../state/cpuGameStore';
 import type { CpuGameHistoryDeps } from '../../state/cpuGameHistoryStore';
@@ -18,18 +19,45 @@ export const storagePort: StoragePort = {
   setItem: (k, v) => AsyncStorage.setItem(k, v),
 };
 
+async function trackedFetch(
+  method: 'GET' | 'POST',
+  url: string,
+  headers: Record<string, string>,
+  body?: string,
+): Promise<{ status: number; body: string }> {
+  const path = httpPath(url);
+  let response: Response;
+  try {
+    response = await fetch(url, { method, headers, body });
+  } catch (error) {
+    syncDiagnosticsStore.getState().recordError({
+      path,
+      status: null,
+      at: Date.now(),
+      bodySnippet: bodySnippet(
+        error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      ),
+    });
+    throw error;
+  }
+  const text = await response.text();
+  const at = Date.now();
+  syncDiagnosticsStore
+    .getState()
+    .recordRequest({ path, status: response.status, at, bodySnippet: bodySnippet(text) });
+  if (response.status >= 400) {
+    syncDiagnosticsStore
+      .getState()
+      .recordError({ path, status: response.status, at, bodySnippet: bodySnippet(text) });
+  }
+  return { status: response.status, body: text };
+}
+
 export const httpPort: HttpPort & {
   get(url: string, headers: Record<string, string>): Promise<{ status: number; body: string }>;
 } = {
-  async get(url, headers) {
-    const r = await fetch(url, { method: 'GET', headers });
-    return { status: r.status, body: await r.text() };
-  },
-
-  async post(url, headers, body) {
-    const r = await fetch(url, { method: 'POST', headers, body });
-    return { status: r.status, body: await r.text() };
-  },
+  get: (url, headers) => trackedFetch('GET', url, headers),
+  post: (url, headers, body) => trackedFetch('POST', url, headers, body),
 };
 
 export const makeId = (): string => Crypto.randomUUID();

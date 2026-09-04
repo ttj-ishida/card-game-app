@@ -269,6 +269,14 @@ export const jaDictionary = {
   'cpuGame.tutorial.page.skills.title.imageLabel': '4つの初期スキルを説明する図',
   'cpuGame.tutorial.page.skills.body':
     'Joker系は場流しや変化Jokerに使えます。追加封印は以後の追加を止め、革命は昼夜を反転してから提出判定します。スキルは1手番に1枚だけ使えます。',
+  'home.diagnostics': '同期診断（開発用）',
+  'diagnostics.title': '同期診断',
+  'diagnostics.subtitle': '開発・テスター用。対局結果の保存が失敗する原因を確認します。',
+  'diagnostics.notConfigured':
+    'Supabase の環境変数が未設定です。この状態では結果は常に端末内キューへ退避されます。',
+  'diagnostics.flushNow': 'キューを今すぐ再送',
+  'diagnostics.testConnection': '接続テスト',
+  'diagnostics.working': '確認中…',
 } as const satisfies Record<string, string>;
 
 export function translate(key: string): string {

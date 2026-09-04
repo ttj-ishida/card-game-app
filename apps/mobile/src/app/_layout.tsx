@@ -56,6 +56,7 @@ export default function RootLayout() {
       <Stack.Screen name="index" options={{ title: translate('app.title') }} />
       <Stack.Screen name="catalog/index" options={{ title: translate('catalog.title') }} />
       <Stack.Screen name="sandbox/index" options={{ title: translate('sandbox.title') }} />
+      <Stack.Screen name="diagnostics/index" options={{ title: translate('diagnostics.title') }} />
       <Stack.Screen name="cpu-game/setup" options={{ title: translate('cpuGame.setup.title') }} />
       <Stack.Screen name="online-room/index" options={{ title: translate('onlineRoom.title') }} />
       <Stack.Screen

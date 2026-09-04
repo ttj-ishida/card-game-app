@@ -33,6 +33,11 @@ async function writeQueue(storage: StoragePort, queue: PracticeResultPayload[]):
   await storage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
+/** 再送待ちキューの件数（診断用）。読み取り失敗・不正 JSON は 0。 */
+export async function readQueueCount(storage: StoragePort): Promise<number> {
+  return (await readQueue(storage)).length;
+}
+
 /**
  * 保存に失敗した結果をキューへ退避する。
  * 既存キューを JSON 配列として読み、`client_result_id` で重複排除してから追記し、書き戻す。

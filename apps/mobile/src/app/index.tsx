@@ -1,9 +1,14 @@
 import { Link } from 'expo-router';
 
+import { getOptionalAppConfig } from '../config/appEnv';
 import { translate } from '../i18n/translate';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
+  // Show the sync-diagnostics link in every build except a real production release
+  // (also when the public env is missing — that is itself what it diagnoses).
+  const showDiagnostics = getOptionalAppConfig()?.appEnv !== 'production';
+
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>{translate('app.title')}</Text>
@@ -30,6 +35,13 @@ export default function HomeScreen() {
           </Text>
         </Pressable>
       </Link>
+      {showDiagnostics ? (
+        <Link href="/diagnostics" asChild>
+          <Pressable accessibilityRole="button" style={styles.button}>
+            <Text style={styles.buttonText}>{translate('home.diagnostics')}</Text>
+          </Pressable>
+        </Link>
+      ) : null}
     </View>
   );
 }

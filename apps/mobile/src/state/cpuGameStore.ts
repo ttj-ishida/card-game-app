@@ -25,6 +25,7 @@ import {
   flushPracticeResultQueue,
 } from '../features/cpu-game/practiceResultQueue';
 import { buildRoundEventsPayload } from '../features/cpu-game/roundEventsPayload';
+import { syncDiagnosticsStore } from '../features/diagnostics/syncDiagnosticsStore';
 import {
   buildPracticeResultPayload,
   describeRoundResult,
@@ -429,6 +430,9 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         });
         if (!canSync) {
           await enqueuePracticeResult(d.storage, payload);
+          syncDiagnosticsStore
+            .getState()
+            .recordSave('queued', 'Supabase env not configured', endedAtMs);
           set({ saveStatus: 'queued' });
           return;
         }
@@ -447,19 +451,36 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
             anonKey: d.anonKey,
           });
         }
-        set({
-          saveStatus:
-            outcome === 'saved'
-              ? 'saved'
-              : outcome === 'duplicate'
-                ? 'duplicate'
-                : outcome === 'rejected'
-                  ? 'failed'
-                  : 'queued',
-        });
+        const saveStatus =
+          outcome === 'saved'
+            ? ('saved' as const)
+            : outcome === 'duplicate'
+              ? ('duplicate' as const)
+              : outcome === 'rejected'
+                ? ('failed' as const)
+                : ('queued' as const);
+        const note =
+          outcome === 'saved'
+            ? 'ok'
+            : outcome === 'duplicate'
+              ? 'already recorded (idempotent)'
+              : outcome === 'rejected'
+                ? 'server rejected the payload (4xx)'
+                : 'network/server error — queued for retry';
+        syncDiagnosticsStore.getState().recordSave(saveStatus, note, endedAtMs);
+        set({ saveStatus });
       } catch {
         // A thrown storage/network error (or a describeRoundResult/makeId failure)
         // must not crash the round-over screen. `result` may still have been set.
+        let at = 0;
+        try {
+          at = d.now();
+        } catch {
+          /* keep 0 */
+        }
+        syncDiagnosticsStore
+          .getState()
+          .recordSave('queued', 'unexpected error — queued for retry', at);
         set({ saveStatus: 'queued' });
       }
 
@@ -477,12 +498,15 @@ export const cpuGameStore = createStore<CpuGameState>((set, get) => {
         return;
       }
       try {
-        await flushPracticeResultQueue({
+        const result = await flushPracticeResultQueue({
           storage: d.storage,
           http: d.http,
           supabaseUrl: d.supabaseUrl,
           anonKey: d.anonKey,
         });
+        syncDiagnosticsStore
+          .getState()
+          .recordFlush({ flushed: result.flushed, remaining: result.remaining, at: d.now() });
       } catch {
         // A flush failure must never surface. `saveStatus` is per-round; untouched here.
       }
