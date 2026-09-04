@@ -13,6 +13,11 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>{translate('home.cpuGame')}</Text>
         </Pressable>
       </Link>
+      <Link href="/online-room" asChild>
+        <Pressable accessibilityRole="button" style={styles.button}>
+          <Text style={styles.buttonText}>{translate('home.onlineRoom')}</Text>
+        </Pressable>
+      </Link>
       <Link href="/catalog" asChild>
         <Pressable accessibilityRole="button" style={styles.button}>
           <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>

@@ -6,6 +6,7 @@ import type { StoragePort } from './anonPlayerId';
 import type { CpuGameDeps } from '../../state/cpuGameStore';
 import type { CpuGameHistoryDeps } from '../../state/cpuGameHistoryStore';
 import type { CpuGameStatsDeps } from '../../state/cpuGameStatsStore';
+import type { OnlineRoomDeps } from '../online-room/onlineRoomClient';
 import type { HttpPort } from './practiceResultSync';
 
 /**
@@ -71,5 +72,17 @@ export function cpuGameStatsDeps(): CpuGameStatsDeps | undefined {
     ...sharedLocalDeps(),
     supabaseUrl: cfg.supabaseUrl,
     anonKey: cfg.supabaseAnonKey,
+  };
+}
+
+export function onlineRoomDeps(): OnlineRoomDeps | undefined {
+  const cfg = getOptionalAppConfig();
+  if (!cfg) return undefined;
+  return {
+    storage: storagePort,
+    http: httpPort,
+    supabaseUrl: cfg.supabaseUrl,
+    anonKey: cfg.supabaseAnonKey,
+    now,
   };
 }
