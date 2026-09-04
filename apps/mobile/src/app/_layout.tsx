@@ -8,6 +8,7 @@ import {
   cpuGameHistoryDeps,
   cpuGameStatsDeps,
   onlineRoomDeps,
+  onlineRoundDeps,
 } from '../features/cpu-game/cpuGameAdapters';
 import { configureCpuGameStore, cpuGameStore } from '../state/cpuGameStore';
 import { configureCpuGameSettingsStore, cpuGameSettingsStore } from '../state/cpuGameSettingsStore';
@@ -15,6 +16,7 @@ import { configureCpuGameHistoryStore } from '../state/cpuGameHistoryStore';
 import { configureCpuGameStatsStore } from '../state/cpuGameStatsStore';
 import { configureCpuGameTutorialStore, cpuGameTutorialStore } from '../state/cpuGameTutorialStore';
 import { configureOnlineRoomStore } from '../state/onlineRoomStore';
+import { configureOnlineRoundStore } from '../state/onlineRoundStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
@@ -27,6 +29,7 @@ try {
   configureCpuGameStatsStore(cpuGameStatsDeps());
   configureCpuGameTutorialStore({ storage: deps.storage, now: deps.now });
   configureOnlineRoomStore(onlineRoomDeps());
+  configureOnlineRoundStore(onlineRoundDeps());
 } catch (error) {
   console.warn('configureCpuGameStore skipped:', error);
 }
@@ -62,6 +65,10 @@ export default function RootLayout() {
       <Stack.Screen
         name="online-room/lobby"
         options={{ title: translate('onlineRoom.lobby.title') }}
+      />
+      <Stack.Screen
+        name="online-room/play"
+        options={{ title: translate('app.title'), headerBackVisible: false }}
       />
       <Stack.Screen
         name="cpu-game/play"

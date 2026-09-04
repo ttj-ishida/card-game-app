@@ -8,6 +8,7 @@ import { colors, radius, spacing, typography } from '@card-game-app/ui';
 import { translate, type TranslationKey } from '../../i18n/translate';
 import type { OnlineRoomSeat } from '../../features/online-room/onlineRoomClient';
 import { onlineRoomStore } from '../../state/onlineRoomStore';
+import { onlineRoundStore } from '../../state/onlineRoundStore';
 
 function roleKey(role: OnlineRoomSeat['role']): TranslationKey {
   return ('onlineRoom.role.' + role) as TranslationKey;
@@ -26,6 +27,21 @@ export default function OnlineRoomLobbyScreen() {
   useEffect(() => {
     if (!room) router.replace('/online-room');
   }, [room, router]);
+
+  // 対局が成立したら onlineRoundStore を起動して対局画面へ遷移する。
+  useEffect(() => {
+    if (state.status !== 'started' || !state.roundId) return;
+    let cancelled = false;
+    onlineRoundStore
+      .getState()
+      .start(state.roundId)
+      .finally(() => {
+        if (!cancelled) router.replace('/online-room/play');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [state.status, state.roundId, router]);
 
   if (!room) {
     return (

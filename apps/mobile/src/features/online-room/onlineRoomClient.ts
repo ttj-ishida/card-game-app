@@ -286,6 +286,37 @@ export async function fetchOnlineRoundSnapshot(
   return parseJson<OnlineRoundSnapshotResponse>(response.body);
 }
 
+export type OnlineLeaveRoundResult = {
+  ok: true;
+  round_id: string;
+  player_id: string;
+  status: 'CPU_TAKEOVER' | 'OUT';
+  cpu_takeover: boolean;
+  state_version: number;
+  event_seq: number;
+  winner_player_id: string | null;
+};
+
+export async function leaveOnlineRound(
+  roundId: string,
+  cpuTakeoverRequested: boolean,
+  deps: OnlineRoomDeps,
+): Promise<OnlineLeaveRoundResult> {
+  const session = await ensureOnlineAuthSession(deps);
+  const response = await deps.http.post(
+    rpcUrl(deps, 'leave_friend_round'),
+    baseHeaders(deps, session),
+    JSON.stringify({
+      target_round_id: roundId,
+      requested_cpu_takeover: cpuTakeoverRequested,
+    }),
+  );
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Leave online round failed: ${response.status}`);
+  }
+  return parseJson<OnlineLeaveRoundResult>(response.body);
+}
+
 export async function submitOnlinePlayRequest(
   roundId: string,
   expectedStateVersion: number,

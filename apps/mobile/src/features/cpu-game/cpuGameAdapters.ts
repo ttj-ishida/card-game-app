@@ -9,6 +9,7 @@ import type { CpuGameHistoryDeps } from '../../state/cpuGameHistoryStore';
 import type { CpuGameStatsDeps } from '../../state/cpuGameStatsStore';
 import type { OnlineRoomDeps } from '../online-room/onlineRoomClient';
 import type { HttpPort } from './practiceResultSync';
+import type { OnlineRoundDeps } from '../../state/onlineRoundStore';
 
 /**
  * ネイティブ端の配線。純モジュール（`features/cpu-game/*.ts`）は AsyncStorage / fetch /
@@ -113,4 +114,10 @@ export function onlineRoomDeps(): OnlineRoomDeps | undefined {
     anonKey: cfg.supabaseAnonKey,
     now,
   };
+}
+
+export function onlineRoundDeps(): OnlineRoundDeps | undefined {
+  const room = onlineRoomDeps();
+  if (!room) return undefined;
+  return { ...room, makeId };
 }

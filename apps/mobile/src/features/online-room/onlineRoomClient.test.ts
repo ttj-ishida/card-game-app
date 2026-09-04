@@ -8,6 +8,7 @@ import {
   fetchOnlineRoundSnapshot,
   fetchOnlineWaitingRoom,
   joinOnlineRoom,
+  leaveOnlineRound,
   startOnlineRound,
   submitOnlinePlayRequest,
   type OnlineHttpPort,
@@ -293,6 +294,39 @@ describe('online room RPC client', () => {
       request_id: 'request-1',
       expected_state_version: 2,
       play: { kind: 'PASS', playerId: 'player-1' },
+    });
+  });
+  it('leaveOnlineRound posts a leave request to the leave_friend_round RPC', async () => {
+    const fakeStorage = storage({
+      'onlineRoom.authSession.v1': JSON.stringify({
+        accessToken: 'stored-access',
+        refreshToken: null,
+        expiresAtMs: 120_000,
+      }),
+    });
+    const fakeHttp = http([
+      {
+        status: 200,
+        body: JSON.stringify({
+          ok: true,
+          round_id: 'round-1',
+          player_id: 'player-1',
+          status: 'CPU_TAKEOVER',
+          cpu_takeover: true,
+          state_version: 5,
+          event_seq: 8,
+          winner_player_id: null,
+        }),
+      },
+    ]);
+
+    const result = await leaveOnlineRound('round-1', true, deps(fakeHttp, fakeStorage));
+
+    assert.equal(result.status, 'CPU_TAKEOVER');
+    assert.equal(fakeHttp.calls[0].url, `${SUPABASE_URL}/rest/v1/rpc/leave_friend_round`);
+    assert.deepEqual(JSON.parse(fakeHttp.calls[0].body ?? ''), {
+      target_round_id: 'round-1',
+      requested_cpu_takeover: true,
     });
   });
 });

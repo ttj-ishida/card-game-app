@@ -147,7 +147,7 @@ function cardFace(
   };
 }
 
-function normalizeLock(lock: Partial<FieldLock> | null | undefined): FieldLock {
+export function normalizeLock(lock: Partial<FieldLock> | null | undefined): FieldLock {
   return {
     countLocked: lock?.countLocked ?? UNLOCKED_FIELD.countLocked,
     suitFixed: lock?.suitFixed ? [...lock.suitFixed] : null,

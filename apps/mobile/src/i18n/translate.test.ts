@@ -251,6 +251,33 @@ test('jaDictionary includes every initial tutorial key required by M3-EX-06', ()
   }
 });
 
+test('jaDictionary includes every online-room play screen key required by M4-EX-05', () => {
+  const requiredKeys: TranslationKey[] = [
+    'onlineRoom.play.you',
+    'onlineRoom.play.opponentPrefix',
+    'onlineRoom.play.myTurn',
+    'onlineRoom.play.waitingTurn',
+    'onlineRoom.play.reconnecting',
+    'onlineRoom.play.leave',
+    'onlineRoom.play.leaveConfirmTitle',
+    'onlineRoom.play.leaveConfirmMessage',
+    'onlineRoom.play.leaveConfirmCancel',
+    'onlineRoom.play.leaveConfirmOk',
+    'onlineRoom.play.backToLobby',
+    'onlineRoom.play.backHome',
+    'onlineRoom.reason.STALE_STATE_VERSION',
+    'onlineRoom.reason.NETWORK_ERROR',
+    'onlineRoom.reason.ROUND_NOT_FOUND',
+    'onlineRoom.reason.UNKNOWN',
+  ];
+
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+});
+
 test('jaDictionary includes every sync-diagnostics screen key', () => {
   const requiredKeys: TranslationKey[] = [
     'home.diagnostics',
