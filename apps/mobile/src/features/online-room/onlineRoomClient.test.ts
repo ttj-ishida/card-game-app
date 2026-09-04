@@ -9,6 +9,7 @@ import {
   fetchOnlineWaitingRoom,
   joinOnlineRoom,
   startOnlineRound,
+  submitOnlinePlayRequest,
   type OnlineHttpPort,
 } from './onlineRoomClient';
 
@@ -252,6 +253,46 @@ describe('online room RPC client', () => {
     assert.deepEqual(JSON.parse(fakeHttp.calls[0].body ?? ''), {
       target_round_id: 'round-1',
       after_state_version: 3,
+    });
+  });
+  it('submitOnlinePlayRequest posts a guarded play request to the Edge Function', async () => {
+    const fakeStorage = storage({
+      'onlineRoom.authSession.v1': JSON.stringify({
+        accessToken: 'stored-access',
+        refreshToken: null,
+        expiresAtMs: 120_000,
+      }),
+    });
+    const fakeHttp = http([
+      {
+        status: 409,
+        body: JSON.stringify({
+          ok: false,
+          reason: 'STALE_STATE_VERSION',
+          current_state_version: 3,
+        }),
+      },
+    ]);
+
+    const result = await submitOnlinePlayRequest(
+      'round-1',
+      2,
+      'request-1',
+      { kind: 'PASS', playerId: 'player-1' },
+      deps(fakeHttp, fakeStorage),
+    );
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: 'STALE_STATE_VERSION',
+      current_state_version: 3,
+    });
+    assert.equal(fakeHttp.calls[0].url, `${SUPABASE_URL}/functions/v1/submit-play`);
+    assert.deepEqual(JSON.parse(fakeHttp.calls[0].body ?? ''), {
+      round_id: 'round-1',
+      request_id: 'request-1',
+      expected_state_version: 2,
+      play: { kind: 'PASS', playerId: 'player-1' },
     });
   });
 });

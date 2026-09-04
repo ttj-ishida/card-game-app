@@ -1,3 +1,5 @@
+import type { PlayInput } from '@card-game-app/game-core';
+
 import type { OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import type { StoragePort } from '../cpu-game/anonPlayerId';
 
@@ -32,6 +34,26 @@ export type OnlineRoomRpcResult = {
   status: string;
 };
 
+export type OnlinePlayRequestResult =
+  | {
+      ok: true;
+      dry_run: false;
+      request_id: string;
+      round_id: string;
+      state_version: number;
+      event_seq: number;
+      outcome: {
+        action_kind: 'LEAD' | 'EXTEND' | 'REPLACE' | 'PASS';
+        field_cleared: boolean;
+        day_night_after: 'DAY' | 'NIGHT';
+        winner_id: string | null;
+      };
+    }
+  | {
+      ok: false;
+      reason: string;
+      current_state_version?: number;
+    };
 export type OnlineRoomSettings = {
   maxPlayers: number;
   turnSeconds: number;
@@ -262,4 +284,29 @@ export async function fetchOnlineRoundSnapshot(
     throw new Error(`Fetch online round snapshot failed: ${response.status}`);
   }
   return parseJson<OnlineRoundSnapshotResponse>(response.body);
+}
+
+export async function submitOnlinePlayRequest(
+  roundId: string,
+  expectedStateVersion: number,
+  requestId: string,
+  play: PlayInput,
+  deps: OnlineRoomDeps,
+): Promise<OnlinePlayRequestResult> {
+  const session = await ensureOnlineAuthSession(deps);
+  const response = await deps.http.post(
+    `${deps.supabaseUrl}/functions/v1/submit-play`,
+    baseHeaders(deps, session),
+    JSON.stringify({
+      round_id: roundId,
+      request_id: requestId,
+      expected_state_version: expectedStateVersion,
+      play,
+    }),
+  );
+  const result = parseJson<OnlinePlayRequestResult>(response.body);
+  if (response.status < 200 || response.status >= 300) {
+    return result.ok ? { ok: false, reason: `HTTP_${response.status}` } : result;
+  }
+  return result;
 }
