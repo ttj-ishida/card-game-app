@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
@@ -19,7 +19,7 @@ export default function CpuGameResultScreen() {
 
   if (!result) {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.screen, styles.content]}>
         <Text style={styles.muted}>{translate('cpuGame.result.title')}</Text>
       </View>
     );
@@ -36,7 +36,7 @@ export default function CpuGameResultScreen() {
           : null;
 
   return (
-    <View style={styles.screen}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>
         {result.localWon ? translate('cpuGame.result.youWin') : translate('cpuGame.result.youLose')}
       </Text>
@@ -75,18 +75,18 @@ export default function CpuGameResultScreen() {
           <Text style={styles.ghostText}>{translate('cpuGame.result.home')}</Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
+  screen: { flex: 1, backgroundColor: colors.surface.table.day },
+  content: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.xl,
-    backgroundColor: colors.surface.table.day,
   },
   heading: {
     fontSize: typography.size.title,

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
@@ -29,14 +29,14 @@ export default function OnlineRoomLobbyScreen() {
 
   if (!room) {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.screen, styles.content]}>
         <Text style={styles.muted}>{translate('onlineRoom.lobby.empty')}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.screen}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{translate('onlineRoom.lobby.title')}</Text>
 
       <View style={styles.section}>
@@ -96,17 +96,13 @@ export default function OnlineRoomLobbyScreen() {
       {state.errorMessageKey ? (
         <Text style={styles.error}>{translate(state.errorMessageKey)}</Text>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    gap: spacing.md,
-    padding: spacing.xl,
-    backgroundColor: '#f8fafc',
-  },
+  screen: { flex: 1, backgroundColor: '#f8fafc' },
+  content: { flexGrow: 1, gap: spacing.md, padding: spacing.xl },
   title: {
     color: colors.ink.primary,
     fontSize: typography.size.title,

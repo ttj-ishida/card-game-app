@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
@@ -32,7 +32,11 @@ export default function OnlineRoomScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>{translate('onlineRoom.title')}</Text>
       <Text style={styles.muted}>{translate('onlineRoom.subtitle')}</Text>
 
@@ -125,17 +129,17 @@ export default function OnlineRoomScreen() {
       {state.errorMessageKey ? (
         <Text style={styles.error}>{translate(state.errorMessageKey)}</Text>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
+  screen: { flex: 1, backgroundColor: '#f8fafc' },
+  content: {
+    flexGrow: 1,
     gap: spacing.md,
     justifyContent: 'center',
     padding: spacing.xl,
-    backgroundColor: '#f8fafc',
   },
   title: {
     color: colors.ink.primary,

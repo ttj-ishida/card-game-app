@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from 'zustand/react';
 import { Link, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '@card-game-app/ui';
 
@@ -32,7 +32,7 @@ export default function CpuGameSetupScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{translate('cpuGame.setup.title')}</Text>
 
       <Text style={styles.label}>{translate('cpuGame.setup.players')}</Text>
@@ -98,18 +98,18 @@ export default function CpuGameSetupScreen() {
           </Pressable>
         </Link>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
+  screen: { flex: 1, backgroundColor: colors.surface.table.day },
+  content: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.lg,
     padding: spacing.xl,
-    backgroundColor: colors.surface.table.day,
   },
   title: {
     fontSize: typography.size.title,
