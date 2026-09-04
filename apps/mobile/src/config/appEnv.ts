@@ -27,6 +27,19 @@ export function parseAppEnv(value: string | undefined): AppEnv {
   throw new Error(`Unsupported EXPO_PUBLIC_APP_ENV: ${value ?? '<missing>'}`);
 }
 
+/**
+ * `babel-preset-expo` はソース中の**リテラルな** `process.env.EXPO_PUBLIC_*` 参照だけを
+ * ビルド時の値へインライン展開する。`process.env` を丸ごと別名（`env`）に束ねてから
+ * メンバアクセスすると展開されず、本番ビルドの Hermes ランタイムでは `process.env` が
+ * 空になるため全て `undefined` になる（＝カタログ・オンライン・戦績保存が丸ごと失敗）。
+ * ここで各キーをリテラル参照して、その罠を回避する。
+ */
+const bundledPublicEnv: PublicEnv = {
+  EXPO_PUBLIC_APP_ENV: process.env.EXPO_PUBLIC_APP_ENV,
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+};
+
 function requirePublicValue(env: PublicEnv, key: keyof PublicEnv): string {
   const value = env[key];
   if (!value) {
@@ -45,7 +58,7 @@ function assertPublicAnonKey(value: string): void {
   }
 }
 
-export function getAppConfig(env: PublicEnv = process.env as PublicEnv): AppConfig {
+export function getAppConfig(env: PublicEnv = bundledPublicEnv): AppConfig {
   const appEnv = parseAppEnv(env.EXPO_PUBLIC_APP_ENV);
   const supabaseUrl = requirePublicValue(env, 'EXPO_PUBLIC_SUPABASE_URL');
   const supabaseAnonKey = requirePublicValue(env, 'EXPO_PUBLIC_SUPABASE_ANON_KEY');
@@ -58,7 +71,7 @@ export function getAppConfig(env: PublicEnv = process.env as PublicEnv): AppConf
     supabaseAnonKey,
   };
 }
-export function getOptionalAppConfig(env: PublicEnv = process.env as PublicEnv): AppConfig | null {
+export function getOptionalAppConfig(env: PublicEnv = bundledPublicEnv): AppConfig | null {
   try {
     return getAppConfig(env);
   } catch (error) {
