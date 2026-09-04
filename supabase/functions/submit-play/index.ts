@@ -31,6 +31,7 @@ type PostgrestPublicState = {
   day_night: DayNight;
   active_player_id: string;
   active_field: Json;
+  consecutive_passes: number;
 };
 
 type PostgrestRoundPlayer = {
@@ -109,7 +110,7 @@ Deno.serve(async (request) => {
       `rounds?select=id,state_version,status&id=eq.${roundId}`,
     ),
     client.one<PostgrestPublicState>(
-      `online_round_public_state?select=state_version,day_night,active_player_id,active_field&round_id=eq.${roundId}`,
+      `online_round_public_state?select=state_version,day_night,active_player_id,active_field,consecutive_passes&round_id=eq.${roundId}`,
     ),
     client.many<PostgrestRoundPlayer>(
       `round_players?select=player_id,auth_user_id,status&round_id=eq.${roundId}`,
@@ -141,6 +142,7 @@ Deno.serve(async (request) => {
     dayNight: publicState.day_night,
     activePlayerId: publicState.active_player_id,
     activeField: parseActiveField(publicState.active_field),
+    consecutivePasses: publicState.consecutive_passes,
     players: players.map((player): ServerPlayerSnapshot => {
       const skill = skills.find(
         (value) => value.player_id === player.player_id && value.skill_cards,
@@ -355,6 +357,7 @@ function buildNextPublicState(state: RoundState): Json {
     hand_counts: Object.fromEntries(
       state.players.map((player) => [player.playerId, player.hand.length]),
     ),
+    consecutive_passes: state.consecutivePasses,
   };
 }
 

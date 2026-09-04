@@ -47,6 +47,13 @@ export type ServerRoundSnapshot = {
   activeField: ActiveField | null;
   extensionSealed?: boolean;
   discardPile?: ServerNumberCardSnapshot[];
+  /**
+   * 直近のリード以降、連続でパスした人数。省略時は0（≒前回リクエスト分の
+   * 連続パス記録が引き継がれていない状態）として扱う。呼び出し側は永続化した
+   * 値を渡すこと — 省略し続けると2人対局以外で全員パスによる場流しが
+   * 成立しなくなる（`evaluatePass`のclearsField判定を参照）。
+   */
+  consecutivePasses?: number;
   players: ServerPlayerSnapshot[];
 };
 
@@ -91,6 +98,7 @@ export function buildServerRoundState(
     activeField: snapshot.activeField,
     extensionSealed: snapshot.extensionSealed ?? false,
     discardPile: (snapshot.discardPile ?? []).map(toNumberCard),
+    consecutivePasses: snapshot.consecutivePasses ?? 0,
     players: snapshot.players.map((player) => {
       const state = createPlayerState(
         player.playerId,

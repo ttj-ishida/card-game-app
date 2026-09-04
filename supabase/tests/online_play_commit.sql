@@ -1,6 +1,6 @@
 begin;
 
-select plan(16);
+select plan(19);
 
 select has_function(
   'public',
@@ -79,6 +79,32 @@ select is(
 select is((select count(*)::int from public.online_round_events where round_id = (select round_id from commit_fixture)), 2, 'accepted play appends one event after ROUND_STARTED');
 select is((select event_kind from public.online_round_events where round_id = (select round_id from commit_fixture) and state_version = 1), 'PLAY_ACCEPTED', 'event kind is stored');
 select is((select actor_player_id from public.online_round_events where round_id = (select round_id from commit_fixture) and state_version = 1), (select actor_player_id from commit_fixture), 'event actor is stored');
+select is((select consecutive_passes from public.online_round_public_state where round_id = (select round_id from commit_fixture)), 0, 'consecutive_passes stays at its default when next_public_state omits it');
+
+select lives_ok(
+  $$
+    create temp table pass_commit_result as
+    select public.commit_friend_play(
+      (select round_id from commit_fixture),
+      1,
+      (select actor_player_id from commit_fixture),
+      ARRAY[]::text[],
+      null::text,
+      jsonb_build_object(
+        'day_night', 'DAY',
+        'active_player_id', (select actor_player_id::text from commit_fixture),
+        'active_field', '{}'::jsonb,
+        'hand_counts', '{}'::jsonb,
+        'consecutive_passes', 3
+      ),
+      jsonb_build_object('event_kind', 'PLAY_ACCEPTED', 'card_count', 0),
+      false,
+      null::uuid
+    ) as result
+  $$,
+  'pass commit with an explicit consecutive_passes count'
+);
+select is((select consecutive_passes from public.online_round_public_state where round_id = (select round_id from commit_fixture)), 3, 'consecutive_passes is persisted from next_public_state (M4-EX-05 follow-up)');
 
 create temp table stale_fixture as
 select h.card_id
@@ -114,9 +140,9 @@ select lives_ok(
 
 select is((select result->>'ok' from stale_result), 'false', 'stale result is not ok');
 select is((select result->>'reason' from stale_result), 'STALE_STATE_VERSION', 'stale result reports state version conflict');
-select is((select state_version from public.online_round_public_state where round_id = (select round_id from commit_fixture)), 1, 'stale request leaves public state version unchanged');
+select is((select state_version from public.online_round_public_state where round_id = (select round_id from commit_fixture)), 2, 'stale request leaves public state version unchanged');
 select is((select card_state from public.round_hands where round_id = (select round_id from commit_fixture) and card_id = (select card_id from stale_fixture)), 'IN_HAND', 'stale request does not consume another card');
-select is((select count(*)::int from public.online_round_events where round_id = (select round_id from commit_fixture)), 2, 'stale request appends no event');
+select is((select count(*)::int from public.online_round_events where round_id = (select round_id from commit_fixture)), 3, 'stale request appends no event');
 
 select * from finish();
 

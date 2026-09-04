@@ -1,6 +1,6 @@
 begin;
 
-select plan(27);
+select plan(30);
 
 select has_table('public', 'online_round_public_state', 'online_round_public_state table exists');
 select has_column('public', 'online_round_public_state', 'round_id', 'public_state has round_id');
@@ -13,6 +13,8 @@ select has_column('public', 'online_round_public_state', 'active_field', 'public
 select col_default_is('public', 'online_round_public_state', 'active_field', '{}', 'active_field defaults to object');
 select has_column('public', 'online_round_public_state', 'hand_counts', 'public_state has hand_counts');
 select col_default_is('public', 'online_round_public_state', 'hand_counts', '{}', 'hand_counts defaults to object');
+select has_column('public', 'online_round_public_state', 'consecutive_passes', 'public_state has consecutive_passes');
+select col_default_is('public', 'online_round_public_state', 'consecutive_passes', '0', 'consecutive_passes defaults to 0');
 select is(
   (select relrowsecurity from pg_class where oid = 'public.online_round_public_state'::regclass),
   true,
@@ -97,6 +99,14 @@ select throws_ok(
   '23514',
   NULL,
   'public_state rejects non-object active_field'
+);
+
+select throws_ok(
+  $$insert into public.online_round_public_state (round_id, active_field, consecutive_passes)
+    select id, '{}'::jsonb, -1 from public.rounds limit 1$$,
+  '23514',
+  NULL,
+  'public_state rejects a negative consecutive_passes'
 );
 
 select throws_ok(
