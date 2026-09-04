@@ -28,7 +28,7 @@ import {
   type PendingHumanSkill,
 } from './skillPlayOptions';
 import type { MatchConfig } from './matchConfig';
-import type { DriverState, GamePhase, TurnActionKind } from './turnDriver';
+import type { DriverState, GamePhase, PublicRoundEvent, TurnActionKind } from './turnDriver';
 
 /** パック非依存のカード描画データ。`CardFace`（Task 10）が受け取る唯一の入力。 */
 export type CardFaceData = { rank: number; suitCode: SuitCode; isJoker: boolean };
@@ -44,10 +44,21 @@ export type OpponentView = {
 
 export type FieldCardView = { rank: number; suitCode: SuitCode; isJoker: boolean };
 
+/** 現在の場を作った一連のプレイ（リード〜現在）1手ぶん。全員に公開済みの情報のみ。 */
+export type FieldTrailEntry = {
+  index: number;
+  seatNameKey: string;
+  actionKind: TurnActionKind;
+  cards: FieldCardView[];
+  skillEffectKey: string | null;
+};
+
 export type FieldView = {
   cards: FieldCardView[];
   kind: 'SINGLE' | 'RANK_SET' | 'SEQUENCE';
   lastPlayerNameKey: string;
+  /** リードから現在までに場へ出た各プレイ（古い順）。捨てられた更新前のカードも辿れる。 */
+  trail: FieldTrailEntry[];
 };
 
 export type HandCardView = {
@@ -62,7 +73,8 @@ export type HandCardView = {
 
 /**
  * 履歴パネル1行ぶんの表示データ。席名は `seatNameKey` を画面側で `translate()`。
- * カード内容は含めない（`TurnLogEntry` と同じく枚数のみ）。
+ * `cards` / `skillEffectKey` は `publicEvents`（行動時点で全員に公開された情報のみ、
+ * VIS-202）由来。非公開手札・未使用スキル・cardId は含まない。
  */
 export type TurnLogLineView = {
   index: number;
@@ -70,6 +82,8 @@ export type TurnLogLineView = {
   kind: 'PLAY' | 'PASS';
   cardCount: number;
   actionKind: TurnActionKind;
+  cards: FieldCardView[];
+  skillEffectKey: string | null;
 };
 
 export type BoardViewModel = {
@@ -133,6 +147,46 @@ function cardFace(card: NumberCard): CardFaceData {
     suitCode: card.suitCode,
     isJoker: isTransformedJokerCard(card),
   };
+}
+
+function eventCardViews(event: PublicRoundEvent | undefined): FieldCardView[] {
+  return (event?.cards ?? []).map((c) => ({
+    rank: rankNumber(c.rankCode),
+    suitCode: c.suitCode,
+    isJoker: false,
+  }));
+}
+
+function skillEffectKey(effect: PublicRoundEvent['skillEffect']): string | null {
+  return effect ? `sandbox.play.useSkill.${effect}` : null;
+}
+
+/**
+ * 現在の場を作った一連のプレイ（直近のリード／場流しから現在まで、古い順）。
+ * `publicEvents` を末尾から辿り、LEAD を含めたら停止。間の PASS は無視し、
+ * 場流し（`fieldCleared`）の PASS 境界で停止する。
+ */
+function currentFieldTrail(
+  publicEvents: readonly PublicRoundEvent[],
+  config: MatchConfig,
+): FieldTrailEntry[] {
+  const trail: FieldTrailEntry[] = [];
+  for (let i = publicEvents.length - 1; i >= 0; i -= 1) {
+    const event = publicEvents[i];
+    if (event.kind === 'PLAY') {
+      trail.unshift({
+        index: event.index,
+        seatNameKey: seatNameKey(config, event.seatId) ?? '',
+        actionKind: event.actionKind,
+        cards: eventCardViews(event),
+        skillEffectKey: skillEffectKey(event.skillEffect),
+      });
+      if (event.actionKind === 'LEAD') break;
+    } else if (event.fieldCleared) {
+      break;
+    }
+  }
+  return trail;
 }
 
 function sameJokerDeclaration(
@@ -206,6 +260,7 @@ export function buildBoardViewModel(
           cards: round.activeField.combination.cards.map(cardFace),
           kind: round.activeField.combination.kind,
           lastPlayerNameKey: seatNameKey(config, round.activeField.lastPlayerId) ?? '',
+          trail: currentFieldTrail(state.publicEvents, config),
         };
 
   const selectionLegalPlays = legalPlaysForPendingSkill(legalPlays, pendingSkill);
@@ -237,13 +292,18 @@ export function buildBoardViewModel(
     });
   }
 
-  const turnLog: TurnLogLineView[] = state.turnLog.map((entry) => ({
-    index: entry.index,
-    seatNameKey: seatNameKey(config, entry.seatId) ?? '',
-    kind: entry.kind,
-    cardCount: entry.cardCount,
-    actionKind: entry.actionKind,
-  }));
+  const turnLog: TurnLogLineView[] = state.turnLog.map((entry, i) => {
+    const event = state.publicEvents[i];
+    return {
+      index: entry.index,
+      seatNameKey: seatNameKey(config, entry.seatId) ?? '',
+      kind: entry.kind,
+      cardCount: entry.cardCount,
+      actionKind: entry.actionKind,
+      cards: eventCardViews(event),
+      skillEffectKey: skillEffectKey(event?.skillEffect ?? null),
+    };
+  });
 
   const isHumanTurn = state.phase === 'HUMAN_TURN';
   const heldEffect = heldSkillEffect(state);

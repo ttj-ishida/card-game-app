@@ -158,6 +158,7 @@ export const jaDictionary = {
   'cpuGame.action.clear': '選択解除',
   'cpuGame.field.empty': '場なし',
   'cpuGame.field.lastPlayer': '最終出し手',
+  'cpuGame.field.trail': 'この場の経過（リード〜現在）',
   'cpuGame.lock.count': '枚数ロック',
   'cpuGame.lock.suitFixed': '属性固定ロック',
   'cpuGame.lock.suitUniform': '属性統一ロック',

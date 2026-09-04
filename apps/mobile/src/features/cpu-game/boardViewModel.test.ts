@@ -223,7 +223,7 @@ test('cpuThinking defaults to false and echoes the opt', () => {
   assert.equal(buildBoardViewModel(s, [], [], { cpuThinking: true }).cpuThinking, true);
 });
 
-test('turnLog mirrors state.turnLog with per-seat name keys and no card contents', () => {
+test('turnLog mirrors state.turnLog + publicEvents with per-seat name keys, no cardId', () => {
   const s = advance(start(4, 404), 6);
   const vm = buildBoardViewModel(s, [], []);
   assert.equal(vm.turnLog.length, s.turnLog.length);
@@ -231,17 +231,58 @@ test('turnLog mirrors state.turnLog with per-seat name keys and no card contents
   for (let i = 0; i < vm.turnLog.length; i += 1) {
     const line = vm.turnLog[i];
     const entry = s.turnLog[i];
+    const event = s.publicEvents[i];
     assert.equal(line.index, entry.index);
     assert.equal(line.kind, entry.kind);
     assert.equal(line.cardCount, entry.cardCount);
     assert.equal(line.actionKind, entry.actionKind);
     const seat = s.config.seats.find((x) => x.seatId === entry.seatId)!;
     assert.equal(line.seatNameKey, seat.nameKey);
-    // Distinct CPU seats carry distinct name keys.
     assert.match(line.seatNameKey, /^cpuGame\.seat\.(you|cpu[1-5])$/);
+    // Cards come from publicEvents (public info only) — one per played card.
+    assert.equal(line.cards.length, event.cards.length);
+    if (line.kind === 'PLAY' && event.cards.length > 0) {
+      assert.equal(line.cards[0].suitCode, event.cards[0].suitCode);
+    }
   }
-  // No cardId / rankCode / suitCode anywhere in the serialized log lines.
-  assert.doesNotMatch(JSON.stringify(vm.turnLog), /cardId|rankCode|suitCode/);
+  // publicEvents carry no cardId, so neither does the log.
+  assert.doesNotMatch(JSON.stringify(vm.turnLog), /cardId/);
+});
+
+test('field.trail: first entry after a fresh lead is that LEAD with its public cards', () => {
+  const s = advance(start(2, 2001), 1); // seat-0 leads
+  const vm = buildBoardViewModel(s, [], []);
+  assert.ok(vm.field, 'expected a populated field after the lead');
+  const trail = vm.field!.trail;
+  assert.equal(trail.length, 1);
+  assert.equal(trail[0].actionKind, 'LEAD');
+  assert.match(trail[0].seatNameKey, /^cpuGame\.seat\.(you|cpu[1-5])$/);
+  assert.equal(trail[0].cards.length, s.publicEvents[0].cards.length);
+  assert.ok(trail[0].cards.length >= 1);
+  assert.equal(trail[0].skillEffectKey, null);
+});
+
+test('field.trail grows as follow-up plays land on the same field, oldest first', () => {
+  // Walk the whole game; whenever the field has >1 trail entry, the first is a
+  // LEAD, entries are chronological, and none precede the current lead.
+  let s = start(4, 404);
+  let guard = 0;
+  let sawMultiStepField = false;
+  while (s.phase !== 'ROUND_OVER' && guard < 400) {
+    const vm = buildBoardViewModel(s, [], []);
+    if (vm.field) {
+      const trail = vm.field.trail;
+      assert.equal(trail[0].actionKind, 'LEAD');
+      for (let i = 1; i < trail.length; i += 1) {
+        assert.ok(trail[i].index > trail[i - 1].index, 'trail is chronological');
+        assert.notEqual(trail[i].actionKind, 'LEAD', 'only the first entry is a LEAD');
+      }
+      if (trail.length > 1) sawMultiStepField = true;
+    }
+    s = advance(s, 1);
+    guard += 1;
+  }
+  assert.ok(sawMultiStepField, 'expected at least one field built by >1 play');
 });
 
 test('phase / winner fields pass through from the driver state', () => {
