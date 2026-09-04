@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 
 import { getOptionalAppConfig } from '../config/appEnv';
 import { translate } from '../i18n/translate';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   // Show the sync-diagnostics link in every build except a real production release
@@ -10,71 +10,84 @@ export default function HomeScreen() {
   const showDiagnostics = getOptionalAppConfig()?.appEnv !== 'production';
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>{translate('app.title')}</Text>
       <Text style={styles.subtitle}>{translate('home.subtitle')}</Text>
-      <Link href="/cpu-game/setup" asChild>
-        <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>{translate('home.cpuGame')}</Text>
-        </Pressable>
-      </Link>
-      <Link href="/online-room" asChild>
-        <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>{translate('home.onlineRoom')}</Text>
-        </Pressable>
-      </Link>
-      <Link href="/catalog" asChild>
-        <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
-        </Pressable>
-      </Link>
-      <Link href="/sandbox" asChild>
-        <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>
-            {translate('sandbox.title')} ({translate('sandbox.devLabel')})
-          </Text>
-        </Pressable>
-      </Link>
-      {showDiagnostics ? (
-        <Link href="/diagnostics" asChild>
+      <View style={styles.buttons}>
+        <Link href="/cpu-game/setup" asChild>
           <Pressable accessibilityRole="button" style={styles.button}>
-            <Text style={styles.buttonText}>{translate('home.diagnostics')}</Text>
+            <Text style={styles.buttonText}>{translate('home.cpuGame')}</Text>
           </Pressable>
         </Link>
-      ) : null}
-    </View>
+        <Link href="/online-room" asChild>
+          <Pressable accessibilityRole="button" style={styles.button}>
+            <Text style={styles.buttonText}>{translate('home.onlineRoom')}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/catalog" asChild>
+          <Pressable accessibilityRole="button" style={styles.button}>
+            <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
+          </Pressable>
+        </Link>
+        <Link href="/sandbox" asChild>
+          <Pressable accessibilityRole="button" style={styles.button}>
+            <Text style={styles.buttonText}>
+              {translate('sandbox.title')} ({translate('sandbox.devLabel')})
+            </Text>
+          </Pressable>
+        </Link>
+        {showDiagnostics ? (
+          <Link href="/diagnostics" asChild>
+            <Pressable accessibilityRole="button" style={styles.button}>
+              <Text style={styles.buttonText}>{translate('home.diagnostics')}</Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
+  screen: { flex: 1, backgroundColor: '#f8fafc' },
+  content: {
+    flexGrow: 1,
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
     justifyContent: 'center',
-    padding: 32,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   title: {
     color: '#111827',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
   },
   subtitle: {
     color: '#475569',
-    fontSize: 16,
-    marginTop: 8,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  buttons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
   },
   button: {
     backgroundColor: '#166534',
     borderRadius: 8,
-    marginTop: 24,
-    minWidth: 180,
+    minWidth: 160,
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
