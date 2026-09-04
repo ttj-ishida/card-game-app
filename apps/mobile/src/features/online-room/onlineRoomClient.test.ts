@@ -5,6 +5,7 @@ import type { StoragePort } from '../cpu-game/anonPlayerId';
 import {
   createOnlineRoom,
   ensureOnlineAuthSession,
+  fetchOnlineRoundSnapshot,
   fetchOnlineWaitingRoom,
   joinOnlineRoom,
   startOnlineRound,
@@ -216,5 +217,41 @@ describe('online room RPC client', () => {
     assert.equal(view.seats[0].role, 'HOST');
     assert.match(fakeHttp.calls[0].url, /rooms\?select=/);
     assert.match(fakeHttp.calls[1].url, /room_players\?select=/);
+  });
+  it('fetchOnlineRoundSnapshot calls the snapshot RPC with after_state_version', async () => {
+    const fakeStorage = storage({
+      'onlineRoom.authSession.v1': JSON.stringify({
+        accessToken: 'stored-access',
+        refreshToken: null,
+        expiresAtMs: 120_000,
+      }),
+    });
+    const body = {
+      ok: true,
+      round_id: 'round-1',
+      player_id: 'player-1',
+      state_version: 4,
+      latest_event_seq: 9,
+      public_state: {
+        state_version: 4,
+        day_night: 'DAY',
+        active_player_id: 'player-1',
+        active_field: {},
+        hand_counts: { 'player-1': 6 },
+      },
+      hand: [],
+      skills: [],
+      events: [],
+    };
+    const fakeHttp = http([{ status: 200, body: JSON.stringify(body) }]);
+
+    const snapshot = await fetchOnlineRoundSnapshot('round-1', 3, deps(fakeHttp, fakeStorage));
+
+    assert.equal(snapshot.state_version, 4);
+    assert.equal(fakeHttp.calls[0].url, `${SUPABASE_URL}/rest/v1/rpc/get_friend_round_snapshot`);
+    assert.deepEqual(JSON.parse(fakeHttp.calls[0].body ?? ''), {
+      target_round_id: 'round-1',
+      after_state_version: 3,
+    });
   });
 });

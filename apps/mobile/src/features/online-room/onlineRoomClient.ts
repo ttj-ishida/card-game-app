@@ -1,3 +1,4 @@
+import type { OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import type { StoragePort } from '../cpu-game/anonPlayerId';
 
 export type OnlineHttpPort = {
@@ -244,4 +245,21 @@ export async function fetchOnlineWaitingRoom(
     cpuTakeoverEnabled: room.cpu_takeover_enabled,
     seats,
   };
+}
+
+export async function fetchOnlineRoundSnapshot(
+  roundId: string,
+  afterStateVersion: number | null,
+  deps: OnlineRoomDeps,
+): Promise<OnlineRoundSnapshotResponse> {
+  const session = await ensureOnlineAuthSession(deps);
+  const response = await deps.http.post(
+    rpcUrl(deps, 'get_friend_round_snapshot'),
+    baseHeaders(deps, session),
+    JSON.stringify({ target_round_id: roundId, after_state_version: afterStateVersion }),
+  );
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Fetch online round snapshot failed: ${response.status}`);
+  }
+  return parseJson<OnlineRoundSnapshotResponse>(response.body);
 }
