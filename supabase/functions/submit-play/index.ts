@@ -215,6 +215,7 @@ Deno.serve(async (request) => {
     },
     round_completed: result.outcome.winnerId !== null,
     winner_player_id: result.outcome.winnerId,
+    p_request_id: result.requestId,
   });
 
   if (!commit.ok) {
