@@ -5,6 +5,7 @@ import {
   type NumberCombination,
   type PlayInput,
   type PlayerStatus,
+  type RoundState,
   type ServerPlayerSnapshot,
   type ServerRoundSnapshot,
   resolveServerPlayRequest,
@@ -51,6 +52,14 @@ type PostgrestSkill = {
   skill_cards: { effect_code: string } | null;
 };
 
+type CommitResult = {
+  ok: boolean;
+  reason?: string;
+  current_state_version?: number;
+  state_version?: number;
+  event_seq?: number;
+};
+
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-headers":
@@ -94,21 +103,22 @@ Deno.serve(async (request) => {
   }
 
   const client = createPostgrestClient(supabaseUrl, serviceRoleKey);
+  const roundId = encodeURIComponent(playBody.round_id);
   const [round, publicState, players, hands, skills] = await Promise.all([
     client.one<PostgrestRound>(
-      `rounds?select=id,state_version,status&id=eq.${encodeURIComponent(playBody.round_id)}`,
+      `rounds?select=id,state_version,status&id=eq.${roundId}`,
     ),
     client.one<PostgrestPublicState>(
-      `online_round_public_state?select=state_version,day_night,active_player_id,active_field&round_id=eq.${encodeURIComponent(playBody.round_id)}`,
+      `online_round_public_state?select=state_version,day_night,active_player_id,active_field&round_id=eq.${roundId}`,
     ),
     client.many<PostgrestRoundPlayer>(
-      `round_players?select=player_id,auth_user_id,status&round_id=eq.${encodeURIComponent(playBody.round_id)}`,
+      `round_players?select=player_id,auth_user_id,status&round_id=eq.${roundId}`,
     ),
     client.many<PostgrestHand>(
-      `round_hands?select=player_id,card_id,number_cards(rank_code,suit_code)&round_id=eq.${encodeURIComponent(playBody.round_id)}&card_state=eq.IN_HAND`,
+      `round_hands?select=player_id,card_id,number_cards(rank_code,suit_code)&round_id=eq.${roundId}&card_state=eq.IN_HAND`,
     ),
     client.many<PostgrestSkill>(
-      `round_skills?select=player_id,skill_id,used,skill_cards(effect_code)&round_id=eq.${encodeURIComponent(playBody.round_id)}`,
+      `round_skills?select=player_id,skill_id,used,skill_cards(effect_code)&round_id=eq.${roundId}`,
     ),
   ]);
 
@@ -131,40 +141,37 @@ Deno.serve(async (request) => {
     dayNight: publicState.day_night,
     activePlayerId: publicState.active_player_id,
     activeField: parseActiveField(publicState.active_field),
-    players: players.map((player): ServerPlayerSnapshot => ({
-      playerId: player.player_id,
-      status: toPlayerStatus(player.status),
-      consecutivePasses: 0,
-      hand: hands
-        .filter(
-          (hand) => hand.player_id === player.player_id && hand.number_cards,
-        )
-        .map((hand) => ({
-          cardId: hand.card_id,
-          rankCode: hand.number_cards!
-            .rank_code as ServerPlayerSnapshot["hand"][number]["rankCode"],
-          suitCode: hand.number_cards!
-            .suit_code as ServerPlayerSnapshot["hand"][number]["suitCode"],
-        })),
-      skill:
-        (skills.find(
-          (skill) => skill.player_id === player.player_id && skill.skill_cards,
-        ) ?? null)
-          ? (() => {
-              const skill = skills.find(
-                (value) =>
-                  value.player_id === player.player_id && value.skill_cards,
-              )!;
-              return {
-                skillId: skill.skill_id,
-                effectCode: skill.skill_cards!.effect_code as NonNullable<
-                  ServerPlayerSnapshot["skill"]
-                >["effectCode"],
-                used: skill.used,
-              };
-            })()
+    players: players.map((player): ServerPlayerSnapshot => {
+      const skill = skills.find(
+        (value) => value.player_id === player.player_id && value.skill_cards,
+      );
+
+      return {
+        playerId: player.player_id,
+        status: toPlayerStatus(player.status),
+        consecutivePasses: 0,
+        hand: hands
+          .filter(
+            (hand) => hand.player_id === player.player_id && hand.number_cards,
+          )
+          .map((hand) => ({
+            cardId: hand.card_id,
+            rankCode: hand.number_cards!
+              .rank_code as ServerPlayerSnapshot["hand"][number]["rankCode"],
+            suitCode: hand.number_cards!
+              .suit_code as ServerPlayerSnapshot["hand"][number]["suitCode"],
+          })),
+        skill: skill
+          ? {
+              skillId: skill.skill_id,
+              effectCode: skill.skill_cards!.effect_code as NonNullable<
+                ServerPlayerSnapshot["skill"]
+              >["effectCode"],
+              used: skill.used,
+            }
           : null,
-    })),
+      };
+    }),
   };
 
   const result = resolveServerPlayRequest(snapshot, {
@@ -185,27 +192,54 @@ Deno.serve(async (request) => {
     );
   }
 
+  const usedSkillId = findUsedSkillId(actor.player_id, playBody.play, skills);
+  const commit = await client.rpc<CommitResult>("commit_friend_play", {
+    target_round_id: result.roundId,
+    expected_state_version: playBody.expected_state_version,
+    actor_player_id: actor.player_id,
+    played_card_ids: playBody.play.kind === "PLAY" ? playBody.play.cardIds : [],
+    used_skill_id: usedSkillId,
+    next_public_state: buildNextPublicState(result.state),
+    event_payload: {
+      event_kind: "PLAY_ACCEPTED",
+      request_id: result.requestId,
+      action_kind: result.outcome.actionKind,
+      card_count:
+        playBody.play.kind === "PLAY" ? playBody.play.cardIds.length : 0,
+      skill_effect:
+        playBody.play.kind === "PLAY" ? (playBody.play.useSkill ?? null) : null,
+      field_cleared: result.outcome.fieldCleared,
+      natural_revolution: result.outcome.naturalRevolution,
+      day_night_after: result.outcome.dayNightAfter,
+      winner_id: result.outcome.winnerId,
+    },
+    round_completed: result.outcome.winnerId !== null,
+    winner_player_id: result.outcome.winnerId,
+  });
+
+  if (!commit.ok) {
+    return json(
+      {
+        ok: false,
+        reason: commit.reason ?? "COMMIT_REJECTED",
+        current_state_version: commit.current_state_version,
+      },
+      statusForRejection(commit.reason ?? "COMMIT_REJECTED"),
+    );
+  }
+
   return json({
     ok: true,
-    dry_run: true,
+    dry_run: false,
     request_id: result.requestId,
     round_id: result.roundId,
-    ruleset_version: result.rulesetVersion,
+    state_version: commit.state_version,
+    event_seq: commit.event_seq,
     outcome: {
       action_kind: result.outcome.actionKind,
       field_cleared: result.outcome.fieldCleared,
       day_night_after: result.outcome.dayNightAfter,
       winner_id: result.outcome.winnerId,
-    },
-    next_public_state: {
-      active_player_id: result.state.activePlayerId,
-      day_night: result.state.dayNight,
-      hand_counts: Object.fromEntries(
-        result.state.players.map((player) => [
-          player.playerId,
-          player.hand.length,
-        ]),
-      ),
     },
   });
 });
@@ -245,6 +279,7 @@ function createPostgrestClient(supabaseUrl: string, serviceRoleKey: string) {
   const headers = {
     apikey: serviceRoleKey,
     authorization: `Bearer ${serviceRoleKey}`,
+    "content-type": "application/json",
   };
 
   return {
@@ -259,11 +294,22 @@ function createPostgrestClient(supabaseUrl: string, serviceRoleKey: string) {
       }
       return (await response.json()) as T[];
     },
+    async rpc<T>(name: string, payload: Json): Promise<T> {
+      const response = await fetch(`${baseUrl}rpc/${name}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        throw new Error(`PostgREST RPC failed: ${response.status}`);
+      }
+      return (await response.json()) as T;
+    },
   };
 }
 
 function toPlayerStatus(status: string): PlayerStatus {
-  return status === "OUT" ? "OUT" : status === "LEFT" ? "OUT" : "ACTIVE";
+  return status === "OUT" || status === "LEFT" ? "OUT" : "ACTIVE";
 }
 
 function parseActiveField(value: Json): ActiveField | null {
@@ -279,6 +325,36 @@ function parseActiveField(value: Json): ActiveField | null {
   }
 
   return { combination, lastPlayerId, lock };
+}
+
+function findUsedSkillId(
+  playerId: string,
+  play: PlayInput,
+  skills: PostgrestSkill[],
+): string | null {
+  if (play.kind !== "PLAY" || !play.useSkill) {
+    return null;
+  }
+
+  return (
+    skills.find(
+      (skill) =>
+        skill.player_id === playerId &&
+        !skill.used &&
+        skill.skill_cards?.effect_code === play.useSkill,
+    )?.skill_id ?? null
+  );
+}
+
+function buildNextPublicState(state: RoundState): Json {
+  return {
+    day_night: state.dayNight,
+    active_player_id: state.activePlayerId,
+    active_field: state.activeField ?? {},
+    hand_counts: Object.fromEntries(
+      state.players.map((player) => [player.playerId, player.hand.length]),
+    ),
+  };
 }
 
 function statusForRejection(reason: string): number {
