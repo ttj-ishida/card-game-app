@@ -317,6 +317,31 @@ export async function leaveOnlineRound(
   return parseJson<OnlineLeaveRoundResult>(response.body);
 }
 
+export type OnlineAdvanceCpuResult =
+  | { ok: true; acted: boolean; reason?: string; state_version?: number; event_seq?: number }
+  | { ok: false; reason: string };
+
+/**
+ * CPU 引き継ぎ席の手番を1手進めるようサーバーへ要求する。アクティブ席が CPU で
+ * なければ `{ ok: true, acted: false }`。冪等（複数クライアントが叩いても1手のみ）。
+ */
+export async function advanceOnlineCpuTurn(
+  roundId: string,
+  deps: OnlineRoomDeps,
+): Promise<OnlineAdvanceCpuResult> {
+  const session = await ensureOnlineAuthSession(deps);
+  const response = await deps.http.post(
+    `${deps.supabaseUrl}/functions/v1/advance-cpu-turn`,
+    baseHeaders(deps, session),
+    JSON.stringify({ round_id: roundId }),
+  );
+  const parsed = parseJson<OnlineAdvanceCpuResult>(response.body);
+  if (response.status < 200 || response.status >= 300) {
+    return parsed.ok ? { ok: false, reason: `HTTP_${response.status}` } : parsed;
+  }
+  return parsed;
+}
+
 export async function submitOnlinePlayRequest(
   roundId: string,
   expectedStateVersion: number,

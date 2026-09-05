@@ -75,11 +75,11 @@ export default function OnlineRoomPlayScreen() {
           text: translate('onlineRoom.play.leaveConfirmOk'),
           style: 'destructive',
           onPress: () => {
-            // 棄権退出。CPU引き継ぎ（true）はサーバー側に手番を打つ処理がまだ無く
-            // 対局が停止するため、driver 実装までは false 固定（docs/progress/M4-QA-05.md）。
+            // CPU引き継ぎを要求（ルーム設定で無効なら自動的に棄権になる）。
+            // 引き継ぎ後の手番は残った誰かのポーリングが advance-cpu-turn で進める。
             onlineRoundStore
               .getState()
-              .leaveRound(false)
+              .leaveRound(true)
               .finally(() => router.replace('/online-room'));
           },
         },

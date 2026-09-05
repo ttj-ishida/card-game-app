@@ -23,6 +23,7 @@
  *
  *   -- M4-QA-05 退出 --
  *   FORFEIT_AT         この手番で FORFEIT_CLIENT が棄権退出する (default: なし)
+ *   CPU_TAKEOVER_AT    この手番で FORFEIT_CLIENT が CPU 引き継ぎ退出する (default: なし)
  *   FORFEIT_CLIENT     退出するクライアント番号 1-indexed (default 2)
  */
 import { randomUUID } from 'node:crypto';
@@ -31,6 +32,7 @@ import { enumerateLegalPlays, type LegalPlay } from '@card-game-app/game-core';
 
 import type { StoragePort } from '../src/features/cpu-game/anonPlayerId';
 import {
+  advanceOnlineCpuTurn,
   createOnlineRoom,
   fetchOnlineRoundSnapshot,
   joinOnlineRoom,
@@ -56,6 +58,11 @@ const FAULT_DELAY_MS = clampInt(process.env.FAULT_DELAY_MS, 0, 0, 10_000);
 const FAULT_DROP_RATE = clampRate(process.env.FAULT_DROP_RATE);
 const FAULT_DUP_RATE = clampRate(process.env.FAULT_DUP_RATE);
 const FORFEIT_AT = process.env.FORFEIT_AT ? clampInt(process.env.FORFEIT_AT, 0, 0, 5000) : null;
+const CPU_TAKEOVER_AT = process.env.CPU_TAKEOVER_AT
+  ? clampInt(process.env.CPU_TAKEOVER_AT, 0, 0, 5000)
+  : null;
+const LEAVE_AT = FORFEIT_AT ?? CPU_TAKEOVER_AT;
+const LEAVE_CPU = CPU_TAKEOVER_AT != null;
 const FORFEIT_CLIENT = clampInt(process.env.FORFEIT_CLIENT, 2, 1, 6);
 
 function clampInt(raw: string | undefined, fallback: number, min: number, max: number): number {
@@ -174,10 +181,9 @@ async function runOneRound(roundIndex: number): Promise<void> {
 
   const roundId = await startOnlineRound(created.room_id, clients[0].deps);
   const byPlayerId = new Map(clients.map((c) => [c.playerId, c]));
-  // 棄権するクライアントを観測役に選ばないようにする。
-  const observer =
-    FORFEIT_AT != null && FORFEIT_CLIENT - 1 === 0 ? clients[PLAYERS - 1] : clients[0];
-  const forfeiter = FORFEIT_AT != null ? clients[Math.min(FORFEIT_CLIENT - 1, PLAYERS - 1)] : null;
+  // 退出するクライアントを観測役に選ばないようにする。
+  const observer = LEAVE_AT != null && FORFEIT_CLIENT - 1 === 0 ? clients[PLAYERS - 1] : clients[0];
+  const leaver = LEAVE_AT != null ? clients[Math.min(FORFEIT_CLIENT - 1, PLAYERS - 1)] : null;
 
   const opening = await snapshotFor(observer, roundId);
   if (extractWinner(opening.events)) {
@@ -190,14 +196,16 @@ async function runOneRound(roundIndex: number): Promise<void> {
 
   let turns = 0;
   let winnerId: string | null = null;
-  let forfeited = false;
+  let left = false;
   faultsArmed = true;
 
   while (turns < MAX_TURNS && !winnerId) {
-    if (FORFEIT_AT != null && !forfeited && turns >= FORFEIT_AT && forfeiter) {
-      const res = await withRetry(() => leaveOnlineRound(roundId, false, forfeiter.deps));
-      forfeited = true;
-      if (VERBOSE) console.log(`  turn ${turns} ${forfeiter.label} forfeits`);
+    if (LEAVE_AT != null && !left && turns >= LEAVE_AT && leaver) {
+      const res = await withRetry(() => leaveOnlineRound(roundId, LEAVE_CPU, leaver.deps));
+      left = true;
+      if (VERBOSE) {
+        console.log(`  turn ${turns} ${leaver.label} leaves (${LEAVE_CPU ? 'cpu' : 'forfeit'})`);
+      }
       if (res.winner_player_id) winnerId = res.winner_player_id;
       if (winnerId) break;
     }
@@ -208,8 +216,11 @@ async function runOneRound(roundIndex: number): Promise<void> {
 
     const activeId: string = snap.public_state.active_player_id;
     const active = byPlayerId.get(activeId);
-    if (!active || active === forfeiter) {
-      // CPU 引き継ぎ席 / 棄権済みの席など、代打不能。少し待って再確認する。
+    if (!active || active === leaver) {
+      // 棄権済みの席、または CPU 引き継ぎ席。後者はサーバーに1手進めさせる。
+      if (left && LEAVE_CPU) {
+        await withRetry(() => advanceOnlineCpuTurn(roundId, observer.deps));
+      }
       await sleep(POLL_MS);
       turns += 1;
       continue;
@@ -241,14 +252,15 @@ async function runOneRound(roundIndex: number): Promise<void> {
   if (!winnerId) {
     throw new Error(`round ${roundIndex} did not finish within ${MAX_TURNS} turns`);
   }
-  if (forfeiter && winnerId === forfeiter.playerId) {
+  if (leaver && !LEAVE_CPU && winnerId === leaver.playerId) {
     throw new Error(
-      `round ${roundIndex} declared the forfeiting player ${forfeiter.label} the winner`,
+      `round ${roundIndex} declared the forfeiting player ${leaver.label} the winner`,
     );
   }
   const winner = byPlayerId.get(winnerId);
+  const leaveNote = left ? (LEAVE_CPU ? ', 1 cpu-takeover' : ', 1 forfeit') : '';
   console.log(
-    `round ${roundIndex}: winner ${winner?.label ?? winnerId.slice(0, 8)} in ${turns} turns (${PLAYERS}p${forfeited ? ', 1 forfeit' : ''})`,
+    `round ${roundIndex}: winner ${winner?.label ?? winnerId.slice(0, 8)} in ${turns} turns (${PLAYERS}p${leaveNote})`,
   );
   // 検証データはローカルスタックの `supabase db reset` で消える。リモートに向けて
   // 回した場合は別途クリーンアップすること。

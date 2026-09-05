@@ -5,6 +5,7 @@ import type { LegalPlay, PlayInput, PlaySkillUse } from '@card-game-app/game-cor
 import { toggleCard } from '../features/cpu-game/handSelection';
 import { buildLegalPlaysForOnlineRound } from '../features/online-room/onlineLegalMoves';
 import {
+  advanceOnlineCpuTurn,
   fetchOnlineRoundSnapshot,
   leaveOnlineRound,
   submitOnlinePlayRequest,
@@ -12,6 +13,7 @@ import {
 } from '../features/online-room/onlineRoomClient';
 import {
   buildOnlineRoundViewModel,
+  deriveSeatTakeovers,
   type OnlineRoundEventView,
   type OnlineRoundSnapshotResponse,
   type OnlineRoundViewModel,
@@ -175,6 +177,7 @@ export const onlineRoundStore = createStore<OnlineRoundState>((set, get) => ({
       const afterVersion = needsFullResync ? null : view.stateVersion;
       const response = await fetchOnlineRoundSnapshot(roundId, afterVersion, d);
       applySnapshot(set, get, response, afterVersion === null);
+      await nudgeCpuTurnIfStalled(get, d, roundId);
     } catch {
       set((state) => connectionAfterFailure(state.reconnectSinceMs, requireDeps().now()));
     }
@@ -244,6 +247,26 @@ export const onlineRoundStore = createStore<OnlineRoundState>((set, get) => ({
     set({ ...initialState });
   },
 }));
+
+/**
+ * アクティブ席が CPU 引き継ぎ席なら、サーバーに1手進めるよう促す（M4-EX-09）。
+ * 冪等なので複数クライアントが同時に叩いても問題ない。失敗は握りつぶす
+ * （次のポーリングで再挑戦する）。
+ */
+async function nudgeCpuTurnIfStalled(
+  get: () => OnlineRoundState,
+  deps: OnlineRoundDeps,
+  roundId: string,
+): Promise<void> {
+  const { view, eventLog, winnerPlayerId } = get();
+  if (!view || winnerPlayerId || view.isMyTurn) return;
+  if (deriveSeatTakeovers(eventLog)[view.activePlayerId] !== 'CPU') return;
+  try {
+    await advanceOnlineCpuTurn(roundId, deps);
+  } catch {
+    /* 次のポーリングで再挑戦 */
+  }
+}
 
 function applySnapshot(
   set: (partial: Partial<OnlineRoundState>) => void,

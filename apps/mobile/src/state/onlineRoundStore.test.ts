@@ -362,6 +362,65 @@ describe('onlineRoundStore', () => {
     );
   });
 
+  it('nudges the server to advance a stalled CPU-takeover turn', async () => {
+    const cpuActiveSnapshot = () =>
+      snapshotBody({
+        state_version: 5,
+        latest_event_seq: 2,
+        public_state: {
+          state_version: 5,
+          day_night: 'DAY',
+          active_player_id: 'player-2',
+          active_field: {},
+          hand_counts: { 'player-1': 2, 'player-2': 2 },
+        },
+        events: [
+          {
+            event_seq: 1,
+            state_version: 4,
+            event_kind: 'ROUND_STARTED',
+            actor_player_id: null,
+            public_payload: {},
+            created_at: '2026-09-05T00:00:00Z',
+          },
+          {
+            event_seq: 2,
+            state_version: 5,
+            event_kind: 'PLAYER_LEFT_CPU_TAKEOVER',
+            actor_player_id: 'player-2',
+            public_payload: { player_id: 'player-2', cpu_takeover: true },
+            created_at: '2026-09-05T00:00:02Z',
+          },
+        ],
+      });
+    const httpMock = http([
+      { status: 200, body: cpuActiveSnapshot() },
+      { status: 200, body: cpuActiveSnapshot() },
+      { status: 200, body: JSON.stringify({ ok: true, acted: true, state_version: 6 }) },
+    ]);
+    configure(httpMock);
+    await onlineRoundStore.getState().start('round-1');
+
+    await onlineRoundStore.getState().poll();
+
+    assert.ok(
+      httpMock.calls.some((c) => c.url.includes('/functions/v1/advance-cpu-turn')),
+      'expected an advance-cpu-turn request',
+    );
+  });
+
+  it('does not nudge a CPU turn when it is the local player’s turn', async () => {
+    const httpMock = http([
+      { status: 200, body: snapshotBody() }, // active_player_id === player-1 (me)
+      { status: 200, body: snapshotBody() },
+    ]);
+    configure(httpMock);
+    await onlineRoundStore.getState().start('round-1');
+    await onlineRoundStore.getState().poll();
+
+    assert.ok(!httpMock.calls.some((c) => c.url.includes('/advance-cpu-turn')));
+  });
+
   it('records the winner once a play event reports one', async () => {
     configure(
       http([
