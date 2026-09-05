@@ -14,7 +14,12 @@ type Response = { status: number; body: string };
 function storage(): StoragePort {
   return {
     getItem: async () =>
-      JSON.stringify({ accessToken: 'access-1', refreshToken: null, expiresAtMs: 120_000 }),
+      JSON.stringify({
+        accessToken: 'access-1',
+        refreshToken: null,
+        // Far future so the stored session never lapses while a test advances its clock.
+        expiresAtMs: 9_999_999_999_999,
+      }),
     setItem: async () => undefined,
   };
 }
@@ -36,14 +41,17 @@ function http(responses: Response[]): OnlineHttpPort & { calls: { url: string; b
   };
 }
 
-function configure(fakeHttp: OnlineHttpPort, makeId: () => string = () => 'request-1') {
+function configure(
+  fakeHttp: OnlineHttpPort,
+  opts: { makeId?: () => string; now?: () => number } = {},
+) {
   configureOnlineRoundStore({
     http: fakeHttp,
     storage: storage(),
     supabaseUrl: 'https://example.supabase.co',
     anonKey: 'anon-key',
-    now: () => 1_000,
-    makeId,
+    now: opts.now ?? (() => 1_000),
+    makeId: opts.makeId ?? (() => 'request-1'),
   });
 }
 
@@ -231,6 +239,127 @@ describe('onlineRoundStore', () => {
     assert.equal(state.connection, 'reconnecting');
     assert.ok(state.reconnectSinceMs != null);
     assert.equal(state.view?.roundId, 'round-1');
+  });
+
+  it('gives up to offline once the 60s reconnect window elapses, then stops polling', async () => {
+    let clock = 1_000;
+    const httpMock = http([
+      { status: 200, body: snapshotBody() },
+      { status: 500, body: 'boom' },
+    ]);
+    configure(httpMock, { now: () => clock });
+    await onlineRoundStore.getState().start('round-1');
+
+    await onlineRoundStore.getState().poll(); // first failure: reconnectSince = 1000
+    assert.equal(onlineRoundStore.getState().connection, 'reconnecting');
+
+    clock = 1_000 + 61_000;
+    await onlineRoundStore.getState().poll(); // now past the window
+    assert.equal(onlineRoundStore.getState().connection, 'offline');
+
+    const callsBefore = httpMock.calls.length;
+    await onlineRoundStore.getState().poll(); // offline => no-op
+    assert.equal(httpMock.calls.length, callsBefore);
+  });
+
+  it('reconnect() does a full resync and returns to online', async () => {
+    let clock = 1_000;
+    const httpMock = http([
+      { status: 200, body: snapshotBody() },
+      { status: 500, body: 'boom' },
+      { status: 500, body: 'boom' },
+      { status: 200, body: snapshotBody({ state_version: 9 }) },
+    ]);
+    configure(httpMock, { now: () => clock });
+    await onlineRoundStore.getState().start('round-1');
+
+    await onlineRoundStore.getState().poll();
+    clock = 1_000 + 61_000;
+    await onlineRoundStore.getState().poll();
+    assert.equal(onlineRoundStore.getState().connection, 'offline');
+
+    await onlineRoundStore.getState().reconnect();
+
+    const state = onlineRoundStore.getState();
+    assert.equal(state.connection, 'online');
+    assert.equal(state.needsFullResync, false);
+    assert.equal(state.view?.stateVersion, 9);
+    // The reconnect poll asked for the full snapshot (after_state_version null).
+    const lastBody = JSON.parse(httpMock.calls[httpMock.calls.length - 1].body ?? '{}');
+    assert.equal(lastBody.after_state_version, null);
+  });
+
+  it('detects a non-contiguous event log and forces a full resync on the next poll', async () => {
+    const httpMock = http([
+      { status: 200, body: snapshotBody() }, // start: event_seq 1
+      {
+        status: 200,
+        body: snapshotBody({
+          state_version: 5,
+          latest_event_seq: 3,
+          events: [
+            {
+              event_seq: 3,
+              state_version: 5,
+              event_kind: 'PLAY_ACCEPTED',
+              actor_player_id: 'player-1',
+              public_payload: { action_kind: 'LEAD' },
+              created_at: '2026-09-05T00:00:03Z',
+            },
+          ],
+        }),
+      },
+      {
+        status: 200,
+        body: snapshotBody({
+          state_version: 5,
+          latest_event_seq: 3,
+          events: [
+            {
+              event_seq: 1,
+              state_version: 4,
+              event_kind: 'ROUND_STARTED',
+              actor_player_id: null,
+              public_payload: {},
+              created_at: '2026-09-05T00:00:00Z',
+            },
+            {
+              event_seq: 2,
+              state_version: 4,
+              event_kind: 'PLAY_ACCEPTED',
+              actor_player_id: 'player-2',
+              public_payload: { action_kind: 'LEAD' },
+              created_at: '2026-09-05T00:00:02Z',
+            },
+            {
+              event_seq: 3,
+              state_version: 5,
+              event_kind: 'PLAY_ACCEPTED',
+              actor_player_id: 'player-1',
+              public_payload: { action_kind: 'LEAD' },
+              created_at: '2026-09-05T00:00:03Z',
+            },
+          ],
+        }),
+      },
+    ]);
+    configure(httpMock);
+    await onlineRoundStore.getState().start('round-1');
+
+    await onlineRoundStore.getState().poll(); // merges event 3 onto event 1 => gap
+    assert.equal(onlineRoundStore.getState().needsFullResync, true);
+
+    await onlineRoundStore.getState().poll(); // full resync rebuilds contiguous log
+    const state = onlineRoundStore.getState();
+    assert.equal(state.needsFullResync, false);
+    assert.deepEqual(
+      state.eventLog.map((e) => e.eventSeq),
+      [1, 2, 3],
+    );
+    assert.equal(
+      JSON.parse(httpMock.calls[httpMock.calls.length - 1].body ?? '{}').after_state_version,
+      null,
+    );
   });
 
   it('records the winner once a play event reports one', async () => {

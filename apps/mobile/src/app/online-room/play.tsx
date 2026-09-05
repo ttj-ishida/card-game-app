@@ -55,12 +55,12 @@ export default function OnlineRoomPlayScreen() {
   }, [state.roundId, router]);
 
   useEffect(() => {
-    if (!state.roundId || state.winnerPlayerId) return;
+    if (!state.roundId || state.winnerPlayerId || state.connection === 'offline') return;
     const timer = setInterval(() => {
       void onlineRoundStore.getState().poll();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [state.roundId, state.winnerPlayerId]);
+  }, [state.roundId, state.winnerPlayerId, state.connection]);
 
   const confirmLeave = useCallback(() => {
     Alert.alert(
@@ -198,6 +198,17 @@ export default function OnlineRoomPlayScreen() {
           </Text>
           {state.connection === 'reconnecting' ? (
             <Text style={styles.reconnecting}>{translate('onlineRoom.play.reconnecting')}</Text>
+          ) : null}
+          {state.connection === 'offline' ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void onlineRoundStore.getState().reconnect()}
+              style={styles.offlineBtn}
+            >
+              <Text style={styles.offlineText}>
+                {translate('onlineRoom.play.offline')} · {translate('onlineRoom.play.retry')}
+              </Text>
+            </Pressable>
           ) : null}
           <Pressable
             accessibilityRole="button"
@@ -421,6 +432,19 @@ const styles = StyleSheet.create({
   reconnecting: {
     fontSize: typography.size.caption,
     color: colors.state.warning,
+    fontWeight: typography.weight.bold,
+  },
+  offlineBtn: {
+    borderWidth: 1,
+    borderColor: colors.suit.fire,
+    borderRadius: radius.control,
+    backgroundColor: colors.surface.card.face,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  offlineText: {
+    fontSize: typography.size.caption,
+    color: colors.suit.fire,
     fontWeight: typography.weight.bold,
   },
   historyToggle: {

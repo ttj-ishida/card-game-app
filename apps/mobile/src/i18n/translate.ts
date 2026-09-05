@@ -37,6 +37,8 @@ export const jaDictionary = {
   'onlineRoom.play.myTurn': 'あなたの番です',
   'onlineRoom.play.waitingTurn': '相手の番です',
   'onlineRoom.play.reconnecting': '再接続中です…',
+  'onlineRoom.play.offline': '接続できません',
+  'onlineRoom.play.retry': '再接続',
   'onlineRoom.play.leave': '退出',
   'onlineRoom.play.leaveConfirmTitle': '対局から退出しますか？',
   'onlineRoom.play.leaveConfirmMessage':

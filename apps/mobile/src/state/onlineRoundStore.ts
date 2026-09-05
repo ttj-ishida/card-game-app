@@ -19,9 +19,16 @@ import {
 } from '../features/online-room/onlineRoundViewModel';
 
 export type OnlineRoundStatus = 'idle' | 'loading' | 'ready' | 'submitting' | 'error';
-export type OnlineConnectionStatus = 'online' | 'reconnecting';
+export type OnlineConnectionStatus = 'online' | 'reconnecting' | 'offline';
 export type OnlinePendingSkill = { useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION' };
 export type OnlineSubmitResult = { ok: boolean; reason?: string };
+
+/**
+ * 自動再接続の許容時間（M4-EX-07 の「60秒以内」）。ポーリングは2秒間隔で
+ * 走り続け、この時間を超えて復帰できなければ `connection: 'offline'` へ落として
+ * 手動の再接続待ちにする。
+ */
+export const RECONNECT_WINDOW_MS = 60_000;
 
 export type OnlineRoundDeps = OnlineRoomDeps & { makeId: () => string };
 
@@ -35,11 +42,13 @@ export type OnlineRoundState = {
   status: OnlineRoundStatus;
   connection: OnlineConnectionStatus;
   reconnectSinceMs: number | null;
+  needsFullResync: boolean;
   lastReason: string | null;
   winnerPlayerId: string | null;
 
   start(roundId: string): Promise<void>;
   poll(): Promise<void>;
+  reconnect(): Promise<void>;
   selectCard(cardId: string): void;
   clearSelection(): void;
   declareSkill(useSkill: OnlinePendingSkill['useSkill']): void;
@@ -62,6 +71,7 @@ const initialState = {
   status: 'idle' as OnlineRoundStatus,
   connection: 'online' as OnlineConnectionStatus,
   reconnectSinceMs: null as number | null,
+  needsFullResync: false,
   lastReason: null as string | null,
   winnerPlayerId: null as string | null,
 };
@@ -113,6 +123,35 @@ function mergeEventLog(
     .map((event, index) => ({ ...event, index }));
 }
 
+/**
+ * イベント列に欠番があるか（M4-EX-06）。`get_friend_round_snapshot` は
+ * `after_state_version` より後を全件返すので通常は連番になるが、想定外の
+ * 取りこぼしを検知したら全件再取得へ切り替える。`latestEventSeq` は
+ * サーバーが知る最大 event_seq で、手元の最大がそれ未満なら末尾が欠けている。
+ */
+function hasEventGap(eventLog: OnlineRoundEventView[], latestEventSeq: number): boolean {
+  if (eventLog.length === 0) return false;
+  const seqs = eventLog.map((e) => e.eventSeq);
+  const max = seqs[seqs.length - 1];
+  if (latestEventSeq > max) return true;
+  for (let i = 1; i < seqs.length; i += 1) {
+    if (seqs[i] !== seqs[i - 1] + 1) return true;
+  }
+  return false;
+}
+
+/** ポーリング/送信の通信失敗を、60秒の再接続ウィンドウに照らして分類する。 */
+function connectionAfterFailure(
+  reconnectSinceMs: number | null,
+  now: number,
+): { connection: OnlineConnectionStatus; reconnectSinceMs: number } {
+  const since = reconnectSinceMs ?? now;
+  return {
+    connection: now - since >= RECONNECT_WINDOW_MS ? 'offline' : 'reconnecting',
+    reconnectSinceMs: since,
+  };
+}
+
 export const onlineRoundStore = createStore<OnlineRoundState>((set, get) => ({
   ...initialState,
 
@@ -121,25 +160,35 @@ export const onlineRoundStore = createStore<OnlineRoundState>((set, get) => ({
     try {
       const d = requireDeps();
       const response = await fetchOnlineRoundSnapshot(roundId, null, d);
-      applySnapshot(set, get, response);
+      applySnapshot(set, get, response, true);
     } catch {
       set({ status: 'error', connection: 'reconnecting', reconnectSinceMs: requireDeps().now() });
     }
   },
 
   async poll() {
-    const { roundId, view } = get();
+    const { roundId, view, connection, needsFullResync } = get();
     if (!roundId || !view) return;
+    if (connection === 'offline') return; // 手動の reconnect() 待ち
     try {
       const d = requireDeps();
-      const response = await fetchOnlineRoundSnapshot(roundId, view.stateVersion, d);
-      applySnapshot(set, get, response);
+      const afterVersion = needsFullResync ? null : view.stateVersion;
+      const response = await fetchOnlineRoundSnapshot(roundId, afterVersion, d);
+      applySnapshot(set, get, response, afterVersion === null);
     } catch {
-      set((state) => ({
-        connection: 'reconnecting',
-        reconnectSinceMs: state.reconnectSinceMs ?? requireDeps().now(),
-      }));
+      set((state) => connectionAfterFailure(state.reconnectSinceMs, requireDeps().now()));
     }
+  },
+
+  async reconnect() {
+    const { roundId } = get();
+    if (!roundId) return;
+    set({
+      connection: 'reconnecting',
+      reconnectSinceMs: requireDeps().now(),
+      needsFullResync: true,
+    });
+    await get().poll();
   },
 
   selectCard(cardId) {
@@ -200,18 +249,23 @@ function applySnapshot(
   set: (partial: Partial<OnlineRoundState>) => void,
   get: () => OnlineRoundState,
   response: OnlineRoundSnapshotResponse,
+  fullResync: boolean,
 ): void {
   const view = buildOnlineRoundViewModel(response);
   const legalPlays = buildLegalPlaysForOnlineRound(response);
   const winnerFromBatch = extractWinnerId(response.events);
+  const eventLog = mergeEventLog(fullResync ? [] : get().eventLog, view.events);
   set({
     view,
     legalPlays,
-    eventLog: mergeEventLog(get().eventLog, view.events),
+    eventLog,
     winnerPlayerId: get().winnerPlayerId ?? winnerFromBatch,
     status: 'ready',
     connection: 'online',
     reconnectSinceMs: null,
+    // 欠番を検知したら次のポーリングで全件取り直す。全件取得直後の検知は
+    // ループを避けるため無視する。
+    needsFullResync: !fullResync && hasEventGap(eventLog, response.latest_event_seq),
   });
 }
 
@@ -249,8 +303,7 @@ async function submit(
   } catch {
     set((state) => ({
       status: 'ready',
-      connection: 'reconnecting',
-      reconnectSinceMs: state.reconnectSinceMs ?? d.now(),
+      ...connectionAfterFailure(state.reconnectSinceMs, d.now()),
       lastReason: 'NETWORK_ERROR',
     }));
     return { ok: false, reason: 'NETWORK_ERROR' };

@@ -258,6 +258,8 @@ test('jaDictionary includes every online-room play screen key required by M4-EX-
     'onlineRoom.play.myTurn',
     'onlineRoom.play.waitingTurn',
     'onlineRoom.play.reconnecting',
+    'onlineRoom.play.offline',
+    'onlineRoom.play.retry',
     'onlineRoom.play.leave',
     'onlineRoom.play.leaveConfirmTitle',
     'onlineRoom.play.leaveConfirmMessage',
