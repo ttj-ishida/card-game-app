@@ -46,7 +46,7 @@ export const jaDictionary = {
   'onlineRoom.play.leave': '退出',
   'onlineRoom.play.leaveConfirmTitle': '対局から退出しますか？',
   'onlineRoom.play.leaveConfirmMessage':
-    'CPUが引き継いで対局を続行します（設定により棄権になる場合があります）。',
+    'この対局を棄権して退出します。残りのプレイヤーで対局は続行されます。',
   'onlineRoom.play.leaveConfirmCancel': 'キャンセル',
   'onlineRoom.play.leaveConfirmOk': '退出する',
   'onlineRoom.play.backToLobby': 'ロビーへ戻る',
