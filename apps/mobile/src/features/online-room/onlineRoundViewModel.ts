@@ -92,7 +92,28 @@ export type OnlineRoundEventView = Pick<
   eventSeq: number;
   stateVersion: number;
   createdAt: string;
+  /** サーバーの生の event_kind（PLAY_ACCEPTED / PLAYER_LEFT_CPU_TAKEOVER など）。 */
+  eventKind: string;
 };
+
+export type SeatTakeoverStatus = 'CPU' | 'LEFT';
+
+/**
+ * イベントログから席ごとの離脱状態を導出する（M4-EX-09）。
+ * `PLAYER_LEFT_CPU_TAKEOVER` → CPU 引き継ぎ、`PLAYER_FORFEITED` → 退出（棄権）。
+ * 離脱イベントの `actor_player_id`（= `seatId`）が離脱した本人。
+ */
+export function deriveSeatTakeovers(
+  events: OnlineRoundEventView[],
+): Record<string, SeatTakeoverStatus> {
+  const out: Record<string, SeatTakeoverStatus> = {};
+  for (const event of events) {
+    if (!event.seatId) continue;
+    if (event.eventKind === 'PLAYER_LEFT_CPU_TAKEOVER') out[event.seatId] = 'CPU';
+    else if (event.eventKind === 'PLAYER_FORFEITED') out[event.seatId] = 'LEFT';
+  }
+  return out;
+}
 
 export type OnlineRoundViewModel = {
   roundId: string;
@@ -269,6 +290,7 @@ function buildEvents(rows: OnlineSnapshotEventRow[]): OnlineRoundEventView[] {
       fieldCleared: payload?.field_cleared === true,
       dayNightAfter: dayNightAfter === 'NIGHT' ? 'NIGHT' : 'DAY',
       createdAt: row.created_at,
+      eventKind: row.event_kind,
     };
   });
 }

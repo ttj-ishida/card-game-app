@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import type { OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
+import type { OnlineRoundEventView, OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import {
   buildOnlineRoundViewModel,
+  deriveSeatTakeovers,
   parseNumberCardId,
   parseSkillEffectFromId,
 } from './onlineRoundViewModel';
@@ -121,6 +122,33 @@ test('buildOnlineRoundViewModel converts snapshot state into display-safe online
   assert.equal(vm.events[0].actionKind, 'REPLACE');
   assert.equal(vm.events[0].skillEffect, 'REVOLUTION');
   assert.deepEqual(vm.events[0].cards, [{ rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' }]);
+});
+
+test('deriveSeatTakeovers maps leave events to CPU / LEFT by the leaving player', () => {
+  const event = (overrides: Partial<OnlineRoundEventView>): OnlineRoundEventView => ({
+    index: 0,
+    eventSeq: 1,
+    stateVersion: 1,
+    seatId: '',
+    kind: 'PLAY',
+    actionKind: 'PASS',
+    cards: [],
+    skillEffect: null,
+    fieldCleared: false,
+    dayNightAfter: 'DAY',
+    createdAt: '2026-09-06T00:00:00Z',
+    eventKind: 'PLAY_ACCEPTED',
+    ...overrides,
+  });
+
+  const takeovers = deriveSeatTakeovers([
+    event({ seatId: 'p1', eventKind: 'PLAY_ACCEPTED' }),
+    event({ seatId: 'p2', eventKind: 'PLAYER_LEFT_CPU_TAKEOVER' }),
+    event({ seatId: 'p3', eventKind: 'PLAYER_FORFEITED' }),
+    event({ seatId: '', eventKind: 'PLAYER_FORFEITED' }),
+  ]);
+
+  assert.deepEqual(takeovers, { p2: 'CPU', p3: 'LEFT' });
 });
 
 test('buildOnlineRoundViewModel treats empty active_field as no field and unlocked state', () => {

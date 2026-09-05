@@ -39,6 +39,10 @@ export const jaDictionary = {
   'onlineRoom.play.reconnecting': '再接続中です…',
   'onlineRoom.play.offline': '接続できません',
   'onlineRoom.play.retry': '再接続',
+  'onlineRoom.play.opponentCpu': 'CPU操作中',
+  'onlineRoom.play.opponentLeft': '退出',
+  'onlineRoom.play.eventTakeover': '退出（CPUが引き継ぎ）',
+  'onlineRoom.play.eventForfeit': '退出（棄権）',
   'onlineRoom.play.leave': '退出',
   'onlineRoom.play.leaveConfirmTitle': '対局から退出しますか？',
   'onlineRoom.play.leaveConfirmMessage':

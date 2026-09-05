@@ -14,7 +14,10 @@ import {
   canSubmitPlain,
 } from '../../features/cpu-game/handSelection';
 import { submitOptionsForSelection } from '../../features/cpu-game/skillPlayOptions';
-import type { OnlineRoundEventView } from '../../features/online-room/onlineRoundViewModel';
+import {
+  deriveSeatTakeovers,
+  type OnlineRoundEventView,
+} from '../../features/online-room/onlineRoundViewModel';
 import { onlineRoundStore, type OnlinePendingSkill } from '../../state/onlineRoundStore';
 import { translate } from '../../i18n/translate';
 
@@ -111,6 +114,8 @@ export default function OnlineRoomPlayScreen() {
     },
     [view, opponentIndexById],
   );
+
+  const takeovers = useMemo(() => deriveSeatTakeovers(state.eventLog), [state.eventLog]);
 
   const skillLegalPlays = useMemo(
     () =>
@@ -236,8 +241,19 @@ export default function OnlineRoomPlayScreen() {
                 <View key={line.eventSeq} style={styles.historyLine}>
                   <Text style={styles.muted}>
                     {line.index + 1}. {actorLabel(line.seatId)}
-                    {line.kind === 'PASS' ? ` · ${translate('cpuGame.turnLog.PASS')}` : ''}
-                    {line.kind === 'PLAY'
+                    {line.eventKind === 'PLAYER_LEFT_CPU_TAKEOVER'
+                      ? ` · ${translate('onlineRoom.play.eventTakeover')}`
+                      : line.eventKind === 'PLAYER_FORFEITED'
+                        ? ` · ${translate('onlineRoom.play.eventForfeit')}`
+                        : ''}
+                    {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
+                    line.eventKind !== 'PLAYER_FORFEITED' &&
+                    line.kind === 'PASS'
+                      ? ` · ${translate('cpuGame.turnLog.PASS')}`
+                      : ''}
+                    {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
+                    line.eventKind !== 'PLAYER_FORFEITED' &&
+                    line.kind === 'PLAY'
                       ? ` · ${translate(`cpuGame.turnLog.${line.actionKind}`)}`
                       : ''}
                     {skillEffectLabelKey(line.skillEffect)
@@ -281,6 +297,12 @@ export default function OnlineRoomPlayScreen() {
                 {opp.numberCardCount}
                 {translate('cpuGame.opponent.cardsSuffix')}
               </Text>
+              {takeovers[opp.playerId] === 'CPU' ? (
+                <Text style={styles.oppTakeover}>{translate('onlineRoom.play.opponentCpu')}</Text>
+              ) : null}
+              {takeovers[opp.playerId] === 'LEFT' ? (
+                <Text style={styles.oppTakeover}>{translate('onlineRoom.play.opponentLeft')}</Text>
+              ) : null}
             </View>
           ))}
         </ScrollView>
@@ -490,6 +512,11 @@ const styles = StyleSheet.create({
     color: colors.ink.primary,
   },
   oppLine: { fontSize: typography.size.caption, color: colors.ink.secondary },
+  oppTakeover: {
+    fontSize: typography.size.caption,
+    color: colors.state.warning,
+    fontWeight: typography.weight.bold,
+  },
   field: {
     alignItems: 'center',
     justifyContent: 'center',
