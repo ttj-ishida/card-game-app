@@ -179,3 +179,54 @@ test("resolveServerPlayRequest rejects malformed request envelopes", () => {
   assert.equal(result.ok, false);
   assert.equal(result.ok ? null : result.reason, "INVALID_REQUEST");
 });
+
+test("resolveServerPlayRequest accepts a well-formed JOKER_TRANSFORM envelope without throwing", () => {
+  // JokerDeclaration is { skillId, rankCode, suitCode } — no asCardId. The
+  // request-envelope validator must not touch fields the type does not have.
+  const jokerSnapshot: ServerRoundSnapshot = {
+    roundId: "round-jt",
+    stateVersion: 0,
+    dayNight: "DAY",
+    activePlayerId: "P1",
+    activeField: null,
+    players: [
+      {
+        playerId: "P1",
+        status: "ACTIVE",
+        consecutivePasses: 0,
+        hand: [
+          { cardId: "N_5_FIRE", rankCode: "RANK_5", suitCode: "SUIT_FIRE" },
+          { cardId: "N_6_WATER", rankCode: "RANK_6", suitCode: "SUIT_WATER" },
+        ],
+        skill: { skillId: "SKILL_CARD_JOKER_HERO", effectCode: "SKILL_JOKER_HERO", used: false },
+      },
+      {
+        playerId: "P2",
+        status: "ACTIVE",
+        consecutivePasses: 0,
+        hand: [{ cardId: "N_4_WIND", rankCode: "RANK_4", suitCode: "SUIT_WIND" }],
+        skill: null,
+      },
+    ],
+  };
+
+  const result = resolveServerPlayRequest(jokerSnapshot, {
+    requestId: "request-jt",
+    expectedStateVersion: 0,
+    playerId: "P1",
+    play: {
+      kind: "PLAY",
+      playerId: "P1",
+      cardIds: [],
+      useSkill: "JOKER_TRANSFORM",
+      jokerDeclarations: [
+        { skillId: "SKILL_CARD_JOKER_HERO", rankCode: "RANK_9", suitCode: "SUIT_EARTH" },
+      ],
+    },
+  });
+
+  // The envelope is well-formed, so it must reach the rules engine and come
+  // back with a concrete verdict (accepted, or a real PlayRejectionReason) —
+  // never "INVALID_REQUEST" and never an exception.
+  assert.notEqual(result.ok ? null : result.reason, "INVALID_REQUEST");
+});

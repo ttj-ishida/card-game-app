@@ -38,6 +38,7 @@
     "export:android": "expo export --platform android",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts",
+    "qa:m4:selfplay": "tsx scripts/online-self-play.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -224,9 +224,11 @@ function isValidJokerDeclarations(
     declarations === undefined ||
     declarations.every(
       (declaration) =>
+        typeof declaration.skillId === "string" &&
         declaration.skillId.length > 0 &&
-        declaration.asCardId.length > 0 &&
+        typeof declaration.rankCode === "string" &&
         declaration.rankCode.startsWith("RANK_") &&
+        typeof declaration.suitCode === "string" &&
         declaration.suitCode.startsWith("SUIT_"),
     )
   );
