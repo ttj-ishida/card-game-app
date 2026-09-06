@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
 import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { translate, type TranslationKey } from '../../i18n/translate';
+import { buildInviteWebLink } from '../../features/online-room/inviteLink';
 import type { OnlineRoomSeat } from '../../features/online-room/onlineRoomClient';
 import { onlineRoomStore } from '../../state/onlineRoomStore';
 import { onlineRoundStore } from '../../state/onlineRoundStore';
@@ -58,6 +59,18 @@ export default function OnlineRoomLobbyScreen() {
       <View style={styles.section}>
         <Text style={styles.label}>{translate('onlineRoom.lobby.invite')}</Text>
         <Text style={styles.inviteCode}>{room.inviteCode}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            const link = buildInviteWebLink(room.inviteCode);
+            void Share.share({
+              message: `${translate('onlineRoom.invite.shareLead')}\n${link}`,
+            });
+          }}
+          style={styles.shareButton}
+        >
+          <Text style={styles.shareText}>{translate('onlineRoom.lobby.share')}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -180,4 +193,17 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   error: { color: colors.suit.fire, fontSize: typography.size.caption },
+  shareButton: {
+    alignSelf: 'flex-start',
+    borderColor: '#166534',
+    borderRadius: radius.control,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  shareText: {
+    color: '#166534',
+    fontSize: typography.size.body,
+    fontWeight: typography.weight.bold,
+  },
 });

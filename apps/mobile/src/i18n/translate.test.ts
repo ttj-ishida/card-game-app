@@ -251,6 +251,23 @@ test('jaDictionary includes every initial tutorial key required by M3-EX-06', ()
   }
 });
 
+test('jaDictionary includes every invite-link key required by M4-EX-02', () => {
+  const requiredKeys: TranslationKey[] = [
+    'onlineRoom.lobby.share',
+    'onlineRoom.invite.shareLead',
+    'onlineRoom.join.title',
+    'onlineRoom.join.codeLabel',
+    'onlineRoom.join.openApp',
+    'onlineRoom.join.getApp',
+    'onlineRoom.join.hint',
+  ];
+  for (const key of requiredKeys) {
+    assert.equal(typeof jaDictionary[key], 'string');
+    assert.notEqual(jaDictionary[key].length, 0);
+    assert.equal(translate(key), jaDictionary[key]);
+  }
+});
+
 test('jaDictionary includes every online-room play screen key required by M4-EX-05', () => {
   const requiredKeys: TranslationKey[] = [
     'onlineRoom.play.you',

@@ -57,6 +57,7 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: translate('app.title') }} />
+      <Stack.Screen name="join/[code]" options={{ title: translate('onlineRoom.join.title') }} />
       <Stack.Screen name="catalog/index" options={{ title: translate('catalog.title') }} />
       <Stack.Screen name="sandbox/index" options={{ title: translate('sandbox.title') }} />
       <Stack.Screen name="diagnostics/index" options={{ title: translate('diagnostics.title') }} />

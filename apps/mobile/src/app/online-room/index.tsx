@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
 import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { translate } from '../../i18n/translate';
+import { parseInviteFromLink } from '../../features/online-room/inviteLink';
 import { onlineRoomStore } from '../../state/onlineRoomStore';
 
 const PLAYER_COUNTS = [2, 3, 4, 5, 6];
@@ -14,10 +15,22 @@ const TURN_SECONDS = [30, 60, 90];
 export default function OnlineRoomScreen() {
   const router = useRouter();
   const state = useStore(onlineRoomStore, (s) => s);
+  const params = useLocalSearchParams<{ invite?: string }>();
   const [maxPlayers, setMaxPlayers] = useState(2);
   const [turnSeconds, setTurnSeconds] = useState(60);
   const [cpuTakeoverEnabled, setCpuTakeoverEnabled] = useState(true);
   const busy = ['creating', 'joining', 'loading'].includes(state.status);
+
+  // 招待リンク（+native-intent 経由）で来たら招待コード欄を埋める。
+  const appliedInvite = useRef<string | null>(null);
+  useEffect(() => {
+    const raw = Array.isArray(params.invite) ? params.invite[0] : params.invite;
+    const code = raw ? parseInviteFromLink(`/join/${raw}`) : null;
+    if (code && appliedInvite.current !== code) {
+      appliedInvite.current = code;
+      onlineRoomStore.getState().setInviteCode(code);
+    }
+  }, [params.invite]);
 
   const goLobby = () => router.push('/online-room/lobby');
 
