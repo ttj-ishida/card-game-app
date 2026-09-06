@@ -11,7 +11,7 @@ import {
   type RoundState,
   type SkillEffectCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import { makeSandboxCard, type PlayDraft } from './sandboxModel';
 

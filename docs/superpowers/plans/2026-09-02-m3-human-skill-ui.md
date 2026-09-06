@@ -429,7 +429,7 @@ git commit -m "feat(mobile): [M3-EX-02] add canSubmitPlain helper"
 - Create: `apps/mobile/src/features/cpu-game/skillPlayOptions.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` の `resolvePlay` / `rankStrength` / 型 `DayNight` / `LegalPlay` / `PlayInput` / `RankCode` / `SuitCode` / `SkillEffectCode`。`./turnDriver` の `DriverState`。`./handSelection` の `HandSelection`。
+- Consumes: `@ragnarok-millennium/game-core` の `resolvePlay` / `rankStrength` / 型 `DayNight` / `LegalPlay` / `PlayInput` / `RankCode` / `SuitCode` / `SkillEffectCode`。`./turnDriver` の `DriverState`。`./handSelection` の `HandSelection`。
 - Produces:
   - `heldSkillEffect(state: DriverState): SkillEffectCode | null`
   - `submitOptionsForSelection(legalPlays: LegalPlay[], selection: HandSelection): SkillSubmitOption[]`（`SkillSubmitOption = { useSkill: 'JOKER_CLEAR' | 'EXTENSION_SEAL' | 'REVOLUTION'; input: PlayInput }`）
@@ -455,7 +455,7 @@ import {
   legalMoveCount,
   selectionRejectionReasonKey,
 } from './skillPlayOptions';
-import { enumerateLegalPlays, type LegalPlay } from '@card-game-app/game-core';
+import { enumerateLegalPlays, type LegalPlay } from '@ragnarok-millennium/game-core';
 
 /** seat-0 (human) が指定 effectCode を未使用で持ち、かつ人間手番の局面を線形探索する。
  *  requireField: true なら場あり、false なら場なしの人間手番のみ採用。 */
@@ -624,7 +624,7 @@ import {
   type RankCode,
   type SkillEffectCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import type { HandSelection } from './handSelection';
 import type { DriverState } from './turnDriver';
 
@@ -896,7 +896,7 @@ import {
 } from './skillPlayOptions';
 ```
 
-既存の `@card-game-app/game-core` からの import（`isTransformedJokerCard`, `rankNumber`, `SUIT_CODES`, `type DayNight`, `type LegalPlay`, `type NumberCard`, `type SuitCode`）に `type RankCode` を追加する。
+既存の `@ragnarok-millennium/game-core` からの import（`isTransformedJokerCard`, `rankNumber`, `SUIT_CODES`, `type DayNight`, `type LegalPlay`, `type NumberCard`, `type SuitCode`）に `type RankCode` を追加する。
 
 `BoardViewModel` 型に追加（`winnerNameKey` の前あたり）：
 
@@ -1116,7 +1116,7 @@ Expected: FAIL（新アクション未定義）
 import に型を追加：
 
 ```ts
-import type { LegalPlay, PlayRejectionReason, RankCode, RoundState, SuitCode } from '@card-game-app/game-core';
+import type { LegalPlay, PlayRejectionReason, RankCode, RoundState, SuitCode } from '@ragnarok-millennium/game-core';
 ```
 
 `CpuGameState` 型に state とアクションを追加：
@@ -1307,7 +1307,7 @@ git commit -m "feat(mobile): [M3-EX-01][M3-EX-02][M3-EX-07] i18n keys for skill 
 - Modify: `apps/mobile/src/app/cpu-game/play.tsx`
 
 **Interfaces:**
-- Consumes: `vm.skillPanel` / `vm.submitOptions` / `vm.jokerTransform` / `vm.selectionHint`（Task 5）。ストアの `jokerTransform` state と `openJokerTransform` / `closeJokerTransform` / `setJokerDeclaration` / `submitSkillPlay` / `submitJokerTransform`（Task 6）。i18n キー（Task 7）。`RANK_CODES` / `SUIT_CODES` from `@card-game-app/game-core`。
+- Consumes: `vm.skillPanel` / `vm.submitOptions` / `vm.jokerTransform` / `vm.selectionHint`（Task 5）。ストアの `jokerTransform` state と `openJokerTransform` / `closeJokerTransform` / `setJokerDeclaration` / `submitSkillPlay` / `submitJokerTransform`（Task 6）。i18n キー（Task 7）。`RANK_CODES` / `SUIT_CODES` from `@ragnarok-millennium/game-core`。
 - Produces: 画面のみ。テストなし。`typecheck` / `lint` / `expo export` が通ること。
 
 - [ ] **Step 1: ストアから jokerTransform を購読し、`buildBoardViewModel` に渡す**
@@ -1333,7 +1333,7 @@ git commit -m "feat(mobile): [M3-EX-01][M3-EX-02][M3-EX-07] i18n keys for skill 
 import に追加：
 
 ```tsx
-import { RANK_CODES, SUIT_CODES } from '@card-game-app/game-core';
+import { RANK_CODES, SUIT_CODES } from '@ragnarok-millennium/game-core';
 ```
 
 - [ ] **Step 2: 素の「出す」を `submitOptions.plain` 判定に変更する**

@@ -19,7 +19,7 @@ import {
   enumerateLegalPlays,
   INITIAL_RULESET_VERSION,
   parseNumberCombination,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 const start = (n: number, seed = n * 1000 + 1): DriverState =>
   initGame({ config: buildMatchConfig(n), seed });

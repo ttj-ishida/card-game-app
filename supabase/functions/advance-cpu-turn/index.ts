@@ -15,7 +15,7 @@ import {
   enumerateLegalPlays,
   resolveCpuPolicy,
   resolveServerPlayRequest,
-} from "@card-game-app/game-core/server";
+} from "@ragnarok-millennium/game-core/server";
 
 import {
   commitResolvedPlay,

@@ -3,7 +3,7 @@ import { useStore } from 'zustand/react';
 import { Link, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { isValidTotalPlayers, MAX_PLAYERS, MIN_PLAYERS } from '../../features/cpu-game/matchConfig';
 import { cpuGameStore } from '../../state/cpuGameStore';

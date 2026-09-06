@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
-import { RANK_CODES, SUIT_CODES, rankNumber } from '@card-game-app/game-core';
+import { RANK_CODES, SUIT_CODES, rankNumber } from '@ragnarok-millennium/game-core';
 
-import type { PlayRejectionReason } from '@card-game-app/game-core';
+import type { PlayRejectionReason } from '@ragnarok-millennium/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
 import { buildBoardViewModel } from '../../features/cpu-game/boardViewModel';

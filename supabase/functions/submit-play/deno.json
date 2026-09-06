@@ -1,5 +1,5 @@
 {
   "imports": {
-    "@card-game-app/game-core/server": "../../../packages/game-core/src/server.ts"
+    "@ragnarok-millennium/game-core/server": "../../../packages/game-core/src/server.ts"
   }
 }

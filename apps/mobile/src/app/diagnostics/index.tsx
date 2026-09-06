@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { getOptionalAppConfig } from '../../config/appEnv';
 import { httpPort, makeId, storagePort } from '../../features/cpu-game/cpuGameAdapters';

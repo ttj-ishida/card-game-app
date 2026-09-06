@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildMatchConfig } from './matchConfig';
 import { initGame, cpuStep, isHumanTurn, legalPlaysForHuman, type DriverState } from './turnDriver';
-import type { LegalPlay } from '@card-game-app/game-core';
+import type { LegalPlay } from '@ragnarok-millennium/game-core';
 import {
   canSelectCard,
   toggleCard,

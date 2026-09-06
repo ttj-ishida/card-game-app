@@ -109,10 +109,10 @@ mobile バンドルは現状 `packages/*` を参照していない。最小差�
 - `apps/mobile/metro.config.js`（新規）:
   - `getDefaultConfig(projectRoot)` を基に
   - `config.watchFolders = [<repo>/packages]`
-  - `config.resolver.extraNodeModules = { '@card-game-app/game-core': <repo>/packages/game-core, '@card-game-app/ui': <repo>/packages/ui }`
-- `apps/mobile/tsconfig.json` に `baseUrl: "."` と `paths` を追加し、`@card-game-app/game-core` → `../../packages/game-core/src/index.ts`、`@card-game-app/ui` → `../../packages/ui/src/index.ts`。
+  - `config.resolver.extraNodeModules = { '@ragnarok-millennium/game-core': <repo>/packages/game-core, '@ragnarok-millennium/ui': <repo>/packages/ui }`
+- `apps/mobile/tsconfig.json` に `baseUrl: "."` と `paths` を追加し、`@ragnarok-millennium/game-core` → `../../packages/game-core/src/index.ts`、`@ragnarok-millennium/ui` → `../../packages/ui/src/index.ts`。
 
-`packages/game-core` は依存ゼロ・単一ファイル・相対 import なしなので副作用は出ない。`package.json` / `package-lock.json` は変更しない。Metro が `.ts` の `main` を解決できない場合のフォールバックは `"@card-game-app/game-core": "file:../../packages/game-core"` を dependencies に追加する方式（lockfile 再生成が必要）。
+`packages/game-core` は依存ゼロ・単一ファイル・相対 import なしなので副作用は出ない。`package.json` / `package-lock.json` は変更しない。Metro が `.ts` の `main` を解決できない場合のフォールバックは `"@ragnarok-millennium/game-core": "file:../../packages/game-core"` を dependencies に追加する方式（lockfile 再生成が必要）。
 
 ## 6. 状態モデル（`sandboxModel.ts`）
 

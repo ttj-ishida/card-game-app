@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { SKILL_EFFECT_CODES, type PlayRejectionReason } from '@card-game-app/game-core';
+import { SKILL_EFFECT_CODES, type PlayRejectionReason } from '@ragnarok-millennium/game-core';
 
 import { jaDictionary, translate, type TranslationKey } from './translate';
 

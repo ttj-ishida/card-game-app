@@ -28,7 +28,7 @@
  */
 import { randomUUID } from 'node:crypto';
 
-import { enumerateLegalPlays, type LegalPlay } from '@card-game-app/game-core';
+import { enumerateLegalPlays, type LegalPlay } from '@ragnarok-millennium/game-core';
 
 import type { StoragePort } from '../src/features/cpu-game/anonPlayerId';
 import {

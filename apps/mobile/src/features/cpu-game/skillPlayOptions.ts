@@ -8,7 +8,7 @@ import {
   type RankCode,
   type SkillEffectCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import type { HandSelection } from './handSelection';
 import type { DriverState } from './turnDriver';
 

@@ -29,14 +29,14 @@ for (const fn of functions) {
   const deno = JSON.parse(await readFile(denoPath, "utf8"));
   const index = await readFile(indexPath, "utf8");
 
-  const gameCoreImport = deno.imports?.["@card-game-app/game-core/server"];
+  const gameCoreImport = deno.imports?.["@ragnarok-millennium/game-core/server"];
   if (gameCoreImport !== "../../../packages/game-core/src/server.ts") {
     throw new Error(
       `${fn.name}: unexpected game-core server import mapping: ${String(gameCoreImport)}`,
     );
   }
 
-  if (!index.includes('from "@card-game-app/game-core/server"')) {
+  if (!index.includes('from "@ragnarok-millennium/game-core/server"')) {
     throw new Error(`${fn.name}: must import the game-core server entrypoint`);
   }
 

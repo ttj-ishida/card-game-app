@@ -12,7 +12,7 @@ import {
   type RankCode,
   type SkillEffectCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import type { FieldCardView, HandCardView } from '../cpu-game/boardViewModel';
 import type { PublicRoundEvent, TurnActionKind } from '../cpu-game/turnDriver';

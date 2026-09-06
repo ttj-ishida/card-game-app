@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { cpuGameStore } from '../../state/cpuGameStore';
 import { translate } from '../../i18n/translate';

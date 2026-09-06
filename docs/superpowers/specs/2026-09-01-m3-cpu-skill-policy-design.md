@@ -31,7 +31,7 @@
 | 不正理由の詳細支援表示 | M3-EX-07 |
 | CPU の複数タイプ・難易度設定 | 将来版（v1.0 は標準1種類）。レジストリの継ぎ目は M2 で用意済み |
 | スキルヒューリスティックの高度化（最適プレイ） | QA-01 の結果を見て後続で調整。M3 は「全スキルを合法に発動できる」が完了条件 |
-| `@card-game-app/ui` の `.js` バレル問題 | 別件（`packages/ui/src/index.ts`）。metro の ui シムは残置 |
+| `@ragnarok-millennium/ui` の `.js` バレル問題 | 別件（`packages/ui/src/index.ts`）。metro の ui シムは残置 |
 
 ## 2. Global Constraints
 
@@ -66,7 +66,7 @@
    - `from "./rng.js"` → `from "./rng.ts"`、`from "./legalMoves.js"` → `.ts` など、兄弟モジュール参照も `.ts` へ。
    - これで `index.ts`（バレル）→ `core.ts` + M2ファイル、M2ファイル → `core.ts` + 兄弟、の一方向 DAG になり **循環 import なし**。TDZ 制約は消滅。
 6. `deal.ts` の `numberDeck()` / `skillDeck()` は関数のまま（`const` へ戻す必要はない。害もない）。
-7. `apps/mobile/metro.config.js` から game-core `.js`-strip シム（`gameCoreSrc` を使う分岐）を削除。`@card-game-app/ui` の `uiTokensEntry` 分岐は残す。
+7. `apps/mobile/metro.config.js` から game-core `.js`-strip シム（`gameCoreSrc` を使う分岐）を削除。`@ragnarok-millennium/ui` の `uiTokensEntry` 分岐は残す。
 8. テストファイル（`packages/game-core/src/*.test.ts`）は `from "./index.ts"` のまま（バレルが全再エクスポート）。変更不要。
 
 ### 3.2 確認

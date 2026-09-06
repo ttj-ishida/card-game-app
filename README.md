@@ -10,7 +10,7 @@ v1.0の対象は、Android 10以上のスマートフォン・タブレット、
 
 - Android package: `com.ttjishida.ragnarokmillennium`
 - EAS slug: `ragnarok-millennium`
-- 内部npmスコープ: `@ragnarok-millennium/*`（2026-09-06 に `@card-game-app/*` から改称）
+- 内部npmスコープ: `@ragnarok-millennium/*`（2026-09-06 に旧 `@card-game-app/*` から改称）
 
 ## 現在地
 

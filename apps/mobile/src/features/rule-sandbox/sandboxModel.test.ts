@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { resolvePlay } from '@card-game-app/game-core';
+import { resolvePlay } from '@ragnarok-millennium/game-core';
 import { translate } from '../../i18n/translate';
 
 import {

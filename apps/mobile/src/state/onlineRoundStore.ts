@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 
-import type { LegalPlay, PlayInput, PlaySkillUse } from '@card-game-app/game-core';
+import type { LegalPlay, PlayInput, PlaySkillUse } from '@ragnarok-millennium/game-core';
 
 import { toggleCard } from '../features/cpu-game/handSelection';
 import { buildLegalPlaysForOnlineRound } from '../features/online-room/onlineLegalMoves';

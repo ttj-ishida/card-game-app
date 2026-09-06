@@ -171,7 +171,7 @@ Run: `npm run game-core:typecheck` を緑になるまで繰り返す。
 
 - [ ] **Step 4: mobile 側の `ActiveField` 構築を `createActiveField` へ**
 
-- `apps/mobile/src/features/rule-sandbox/sandboxModel.ts` の `setFieldCards`（`{ combination, lastPlayerId }` を作っている箇所）→ `createActiveField(combination, lastPlayerId)`。`@card-game-app/game-core` の import に `createActiveField` を追加。
+- `apps/mobile/src/features/rule-sandbox/sandboxModel.ts` の `setFieldCards`（`{ combination, lastPlayerId }` を作っている箇所）→ `createActiveField(combination, lastPlayerId)`。`@ragnarok-millennium/game-core` の import に `createActiveField` を追加。
 - `apps/mobile/src/features/rule-sandbox/sandboxPresets.ts` の `field()` ヘルパー → `createActiveField(combination, lastPlayerId)`。
 - `apps/mobile/src/state/rule-sandbox-store.ts` の `commitFieldDraft` が `setFieldCards` 経由なら追加変更不要。直接 `{ combination, lastPlayerId }` を作っていれば `createActiveField` へ。
 
@@ -646,7 +646,7 @@ Run: `npm run game-core:typecheck` → PASS
 
 - [ ] **Step 6: mobile 追随（旧 suit-lock UI の削除）**
 
-- `apps/mobile/src/features/rule-sandbox/sandboxModel.ts`: `setLockedSuit` 関数と、`RoundState` の `lockedSuitCode` を参照/設定する箇所をすべて削除（`@card-game-app/game-core` の `RoundState` から消えたためコンパイルエラーになる箇所）。`sandboxModel.test.ts` の `setLockedSuit` テストを削除。
+- `apps/mobile/src/features/rule-sandbox/sandboxModel.ts`: `setLockedSuit` 関数と、`RoundState` の `lockedSuitCode` を参照/設定する箇所をすべて削除（`@ragnarok-millennium/game-core` の `RoundState` から消えたためコンパイルエラーになる箇所）。`sandboxModel.test.ts` の `setLockedSuit` テストを削除。
 - `apps/mobile/src/app/sandbox/index.tsx`: 「属性ロック」行（`sandbox.lock.label` / `setLockedSuit` / `SUIT_CODES` を使ったチップ行）を削除。`import` の不要になったものを整理。
 - `apps/mobile/src/i18n/translate.ts`: `sandbox.lock.label` / `sandbox.lock.none` および `sandbox.reason.SUIT_LOCKED` を削除。`sandbox.reason.COUNT_LOCKED` / `sandbox.reason.SUIT_FIXED_MISMATCH` / `sandbox.reason.SUIT_UNIFORM_REQUIRED` を追加（値は §2 の日本語。例「更新後は追加・拡張できません」「属性の組が一致しません」「属性統一が崩れます」）。
 - `apps/mobile/src/i18n/translate.test.ts`: `REASON_CODES` マップ（`satisfies Record<PlayRejectionReason, true>`）から `SUIT_LOCKED` を削除し3新コードを追加。`sandbox.reason.SUIT_LOCKED` を参照している箇所を除去。
@@ -812,7 +812,7 @@ git push origin main
 - Modify: `apps/mobile/src/features/rule-sandbox/sandboxModel.ts` + `.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` の `createActiveField`, `type FieldLock`, `type SuitCode`, `type RoundState`, `parseNumberCombination`。既存 `sandboxModel` の `cloneRound` / `mapPlayer` 等。
+- Consumes: `@ragnarok-millennium/game-core` の `createActiveField`, `type FieldLock`, `type SuitCode`, `type RoundState`, `parseNumberCombination`。既存 `sandboxModel` の `cloneRound` / `mapPlayer` 等。
 - Produces:
   - `setFieldCountLocked(round: RoundState, locked: boolean): RoundState` — `activeField` が null なら round。`activeField.lock.countLocked` を設定。
   - `setFieldSuitUniform(round: RoundState, uniform: boolean): RoundState` — 同上。
@@ -854,7 +854,7 @@ Run: `npm run mobile:test` → FAIL（未 export）
 - [ ] **Step 3: 実装（`sandboxModel.ts` 末尾に追記）**
 
 ```ts
-import { type FieldLock, type SuitCode } from "@card-game-app/game-core";
+import { type FieldLock, type SuitCode } from "@ragnarok-millennium/game-core";
 
 function mapFieldLock(
   round: RoundState,
@@ -964,7 +964,7 @@ git push origin main
 - Create: `docs/progress/M1-EX-04-fieldlock-revision.md`
 
 **Interfaces:**
-- Consumes: Task 6/7 のエディタ・ストア。`@card-game-app/game-core` の `SUIT_CODES`。
+- Consumes: Task 6/7 のエディタ・ストア。`@ragnarok-millennium/game-core` の `SUIT_CODES`。
 
 - [ ] **Step 1: 画面に3ロックコントロールを追加**
 

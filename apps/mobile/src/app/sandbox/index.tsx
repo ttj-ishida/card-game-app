@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useStore } from 'zustand';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import {
   RANK_CODES,
   SUIT_CODES,
   isTransformedJokerCard,
   type NumberCard,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import {
   addCardToHand,

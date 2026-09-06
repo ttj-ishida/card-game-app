@@ -60,4 +60,4 @@
 - `apps/mobile/src/features/rule-sandbox/sandboxPresets.test.ts` — 全プリセットが各 id の意図どおり `resolvePlay` する。
 - `apps/mobile/src/state/rule-sandbox-store.test.ts` — `applyPlay` / `undo` / `reset` / `loadPreset` / `fieldDraft` / `fieldDraft.lock` の状態遷移。
 - `apps/mobile/src/i18n/translate.test.ts` — `sandbox.*` 必須キー、`REASON_CODES satisfies Record<PlayRejectionReason, true>` による網羅の型保証。
-- `npx expo export --platform android` — `@card-game-app/game-core` / `@card-game-app/ui` の Metro 解決を含むバンドル成立。
+- `npx expo export --platform android` — `@ragnarok-millennium/game-core` / `@ragnarok-millennium/ui` の Metro 解決を含むバンドル成立。

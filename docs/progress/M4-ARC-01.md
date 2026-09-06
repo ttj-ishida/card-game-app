@@ -46,4 +46,4 @@
 
 ## 次の作業
 
-`M4-ARC-02`で、既存`@card-game-app/game-core`をEdge Functionからも参照しやすい境界へ整理する。
+`M4-ARC-02`で、既存`@ragnarok-millennium/game-core`をEdge Functionからも参照しやすい境界へ整理する。

@@ -1,4 +1,4 @@
-import type { LegalPlay, PlayInput } from '@card-game-app/game-core';
+import type { LegalPlay, PlayInput } from '@ragnarok-millennium/game-core';
 
 export type HandSelection = string[];
 

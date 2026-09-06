@@ -4,7 +4,7 @@ import {
   createPlayerState,
   createRoundState,
   resolvePlay,
-} from "@card-game-app/game-core/server";
+} from "@ragnarok-millennium/game-core/server";
 
 Deno.serve(() => {
   const state = createRoundState({

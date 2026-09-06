@@ -11,7 +11,7 @@
 
 ## 1. 目的とスコープ
 
-ホーム →「CPU戦」→ 人数選択 → 配布 → 人間1人とCPUが交互に手番 → 勝者決定 → 結果 → 再戦 or ホーム、を1本のアプリ内フローとして完走できるようにする。判定は `@card-game-app/game-core`（サブプロジェクト1で完成）へ全委譲。
+ホーム →「CPU戦」→ 人数選択 → 配布 → 人間1人とCPUが交互に手番 → 勝者決定 → 結果 → 再戦 or ホーム、を1本のアプリ内フローとして完走できるようにする。判定は `@ragnarok-millennium/game-core`（サブプロジェクト1で完成）へ全委譲。
 
 ### 到達状態（M2 §6）
 
@@ -43,7 +43,7 @@
 
 - `apps/mobile` の既存パターンに従う：画面は `src/app/`（expo-router）、純ロジックは `src/features/<name>/*.ts` + `src/features/<name>/*.test.ts`（`node:test` + `tsx`、`npm run mobile:test`）、ストアは `src/state/*.ts`（`zustand/vanilla` の `createStore`）、文言は `src/i18n/translate.ts` の `jaDictionary` にキー追加して `translate()` 経由。
 - 描画は `View` / `Text` / `Pressable` / `ScrollView` のみ。`react-native-svg`・アニメーションライブラリ・`react-test-renderer` は使わない（リポジトリに無い）。**画面のレンダーテストは書かない**。ロジックはすべて純モジュールへ出してテストする。
-- デザイントークンは `@card-game-app/ui`（`colors` の `surface.table.day/night`・`suit.*`・`ink.*`・`state.*`、`spacing`、`radius`、`typography`、`card.aspectRatio`）。ハードコードした色を新規に増やさない（既存画面が持つ分は据え置き）。
+- デザイントークンは `@ragnarok-millennium/ui`（`colors` の `surface.table.day/night`・`suit.*`・`ink.*`・`state.*`、`spacing`、`radius`、`typography`、`card.aspectRatio`）。ハードコードした色を新規に増やさない（既存画面が持つ分は据え置き）。
 - `game-core` の公開 API のみ使う。`game-core` は変更しない。使うのは `dealRound` / `numberDeck` / `enumerateLegalPlays` / `resolveCpuPolicy` / `rollThinkDelayMillis` / `resolvePlay` / `createRng` / `createRoundState` / `INITIAL_RULESET_VERSION` と型（`RoundState` / `PlayInput` / `LegalPlay` / `NumberCard` / `CpuPolicyId` / `PlayRejectionReason` / `DayNight` など）。
 - **決定性**：1局は `seed` から完全再現できる。RNG は `createRng(seed)` を1本作り、配布に `fork()` 1回、手番ごとに `fork()` 1回（手番 index で消費、`roundLoop.ts` と同じ規律）。CPU の同点タイブレークも seed 再現。
 - **横画面固定**（PLT-003 / UI-LAYOUT-001）。`app.json` は既に `"orientation": "landscape"`（アプリ全体）。3画面とも横向き前提でレイアウトを組む（縦積みの `ScrollView` に逃げず、上帯・相手列・場・手札・操作の横基準構成）。追加の orientation 設定は不要。
@@ -76,7 +76,7 @@ expo-router、`src/app/cpu-game/` 配下。ホーム（`src/app/index.tsx`）に
 ### 4.1 `matchConfig.ts`
 
 ```ts
-import type { CpuPolicyId } from '@card-game-app/game-core';
+import type { CpuPolicyId } from '@ragnarok-millennium/game-core';
 
 export type SeatKind = 'HUMAN' | 'CPU';
 
@@ -114,8 +114,8 @@ export function isHumanSeat(config: MatchConfig, seatId: string): boolean;
 対局の状態機械。純関数。画面は結果を描画し、CPU思考の実 `sleep` だけ持つ。
 
 ```ts
-import type { DayNight, LegalPlay, PlayInput, PlayRejectionReason, RoundState } from '@card-game-app/game-core';
-import type { CpuPolicyId } from '@card-game-app/game-core';
+import type { DayNight, LegalPlay, PlayInput, PlayRejectionReason, RoundState } from '@ragnarok-millennium/game-core';
+import type { CpuPolicyId } from '@ragnarok-millennium/game-core';
 import type { MatchConfig } from './matchConfig';
 
 export type GamePhase = 'HUMAN_TURN' | 'CPU_PENDING' | 'ROUND_OVER';
@@ -182,7 +182,7 @@ export function isHumanTurn(state: DriverState): boolean;
 人間の手札選択の状態。
 
 ```ts
-import type { LegalPlay, PlayInput } from '@card-game-app/game-core';
+import type { LegalPlay, PlayInput } from '@ragnarok-millennium/game-core';
 
 export type HandSelection = string[];   // 選択中の cardId（手札内の出現順）
 
@@ -209,7 +209,7 @@ export function canPass(legalPlays: LegalPlay[]): boolean;
 `DriverState`（+ 選択状態）から対局画面の表示データを導出。純関数。
 
 ```ts
-import type { DayNight, NumberCard, SuitCode } from '@card-game-app/game-core';
+import type { DayNight, NumberCard, SuitCode } from '@ragnarok-millennium/game-core';
 import type { DriverState, GamePhase } from './turnDriver';
 import type { HandSelection } from './handSelection';
 

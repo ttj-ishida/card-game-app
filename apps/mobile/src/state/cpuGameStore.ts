@@ -10,7 +10,7 @@ import type {
   RankCode,
   RoundState,
   SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import { getAnonPlayerId, type StoragePort } from '../features/cpu-game/anonPlayerId';
 import { buildMatchConfig, isValidTotalPlayers } from '../features/cpu-game/matchConfig';

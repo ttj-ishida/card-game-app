@@ -4,7 +4,7 @@
 
 **Goal:** ホーム →「CPU戦」→ 人数選択 → 配布 → 人間1人とCPUが交互に手番 → 勝者 → 結果 → 再戦/ホーム、を1本のアプリ内フローとして完走できるようにする（M2-EX-04/05/06/07-UI/08 + M2-SB-02 + M2-EX-09 + M2-QA-02/03）。
 
-**Architecture:** 判定は `@card-game-app/game-core`（サブプロジェクト1完成）へ全委譲。UI 用ターンドライバ（人間入力とCPU自動手番を交互に回す純粋状態機械）＋盤面ビューモデル＋手札選択＋結果保存を、すべて `apps/mobile/src/features/cpu-game/*.ts` の純モジュールに置き `.test.ts` でカバー。画面（`src/app/cpu-game/*.tsx`）は `cpuGameStore` / `boardViewModel` の薄い皮に徹し、ロジックを持たない。
+**Architecture:** 判定は `@ragnarok-millennium/game-core`（サブプロジェクト1完成）へ全委譲。UI 用ターンドライバ（人間入力とCPU自動手番を交互に回す純粋状態機械）＋盤面ビューモデル＋手札選択＋結果保存を、すべて `apps/mobile/src/features/cpu-game/*.ts` の純モジュールに置き `.test.ts` でカバー。画面（`src/app/cpu-game/*.tsx`）は `cpuGameStore` / `boardViewModel` の薄い皮に徹し、ロジックを持たない。
 
 **Tech Stack:** Expo SDK 57 / expo-router / `zustand/vanilla` / TypeScript / `node:test` + `tsx`。新規ネイティブ依存：`@react-native-async-storage/async-storage`、`expo-crypto`。
 
@@ -16,7 +16,7 @@
 - 描画は `View` / `Text` / `Pressable` / `ScrollView` のみ。SVG・アニメライブラリ・`react-test-renderer` 不使用。**画面のレンダーテストは書かない。**
 - `game-core` は変更しない。公開 API のみ使用。
 - **純モジュールは `@react-native-async-storage/async-storage` / `expo-crypto` / global `fetch` を直接 import しない。** ストレージ・HTTP・UUID生成・seed生成は注入ポート（`StoragePort` / `HttpPort` / `() => string` / `() => number`）で受け、実体は画面側アダプタ（`src/features/cpu-game/cpuGameAdapters.ts`）で配線。
-- デザイントークンは `@card-game-app/ui`（`colors` / `spacing` / `radius` / `typography` / `card`）。新規ハードコード色を増やさない。
+- デザイントークンは `@ragnarok-millennium/ui`（`colors` / `spacing` / `radius` / `typography` / `card`）。新規ハードコード色を増やさない。
 - **決定性**：1局は `seed` から完全再現。`createRng(seed)` を作り、配布に `fork()` 1回、手番ごとに `fork()` 1回（手番 index = `turnLog.length` で消費）。`roundLoop.ts` と同じ規律。
 - `seatId`（`'seat-0'`..`'seat-5'`）を `game-core` の `playerId` として渡す。
 - 相手の手札の中身を保持・表示・記録しない（枚数のみ、VIS-102）。`TurnLogEntry` / 保存ペイロードに cardId・スキル種別・個人情報を出さない。
@@ -169,7 +169,7 @@ test('seatPolicies covers only CPU seats; humanSeatIds is the one human', () => 
 
 - [ ] **Step 3: 実装** — `matchConfig.ts`:
 ```ts
-import type { CpuPolicyId } from '@card-game-app/game-core';
+import type { CpuPolicyId } from '@ragnarok-millennium/game-core';
 
 export type SeatKind = 'HUMAN' | 'CPU';
 export type SeatConfig = { seatId: string; kind: SeatKind; policyId?: CpuPolicyId; nameKey: string };
@@ -225,7 +225,7 @@ export function isHumanSeat(config: MatchConfig, seatId: string): boolean {
 ```ts
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { enumerateLegalPlays } from '@card-game-app/game-core';
+import { enumerateLegalPlays } from '@ragnarok-millennium/game-core';
 import { buildMatchConfig } from './matchConfig';
 import { initGame, humanPlay, cpuStep, isHumanTurn, activeSeatId, legalPlaysForHuman } from './turnDriver';
 
@@ -290,7 +290,7 @@ import {
   createRng, createRoundState, dealRound, enumerateLegalPlays, INITIAL_RULESET_VERSION,
   resolveCpuPolicy, resolvePlay, rollThinkDelayMillis,
   type DayNight, type LegalPlay, type PlayInput, type PlayRejectionReason, type RoundState, type Rng,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import { isHumanSeat, seatPolicies, type MatchConfig } from './matchConfig';
 
 export type GamePhase = 'HUMAN_TURN' | 'CPU_PENDING' | 'ROUND_OVER';
@@ -410,7 +410,7 @@ export function isHumanTurn(state: DriverState): boolean { return state.phase ==
 
 - [ ] **Step 3: 実装** — `handSelection.ts`:
 ```ts
-import type { LegalPlay, PlayInput } from '@card-game-app/game-core';
+import type { LegalPlay, PlayInput } from '@ragnarok-millennium/game-core';
 
 export type HandSelection = string[];
 
@@ -590,7 +590,7 @@ export function __resetAnonPlayerIdMemoForTest(): void { memo = null; }
 - Rewrite: `apps/mobile/src/app/cpu-game/setup.tsx`, `play.tsx`, `result.tsx`
 - Modify: `apps/mobile/src/app/_layout.tsx`（`configureCpuGameStore` 配線）
 
-- [ ] **Step 1: `CardFace.tsx`** — props `{ rank: number; suitCode: SuitCode; isJoker: boolean; size: 'hand' | 'field' | 'mini' }`。既存 `sandbox/index.tsx` の `CardChip` 相当（数字大＋属性色ボーダー＋日本語ラベル＋変化Joker「J」バッジ）。`size` で寸法を変える。`@card-game-app/ui` の `colors.suit` / `radius.card` / `typography` 使用。パック非依存。**ロジック無し。**
+- [ ] **Step 1: `CardFace.tsx`** — props `{ rank: number; suitCode: SuitCode; isJoker: boolean; size: 'hand' | 'field' | 'mini' }`。既存 `sandbox/index.tsx` の `CardChip` 相当（数字大＋属性色ボーダー＋日本語ラベル＋変化Joker「J」バッジ）。`size` で寸法を変える。`@ragnarok-millennium/ui` の `colors.suit` / `radius.card` / `typography` 使用。パック非依存。**ロジック無し。**
 
 - [ ] **Step 2: `cpuGameAdapters.ts`** — 実体を組む：
 ```ts

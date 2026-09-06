@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it } from 'node:test';
 
-import type { RoundState } from '@card-game-app/game-core';
+import type { RoundState } from '@ragnarok-millennium/game-core';
 
 import type { StoragePort } from '../features/cpu-game/anonPlayerId';
 import { __resetAnonPlayerIdMemoForTest } from '../features/cpu-game/anonPlayerId';

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useStore } from 'zustand/react';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 import { cpuGameHistoryStore } from '../../state/cpuGameHistoryStore';
 import { translate } from '../../i18n/translate';
 

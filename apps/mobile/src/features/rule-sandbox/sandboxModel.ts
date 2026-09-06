@@ -16,7 +16,7 @@ import {
   type RoundState,
   type SkillEffectCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 export const SANDBOX_MIN_PLAYERS = 2;
 export const SANDBOX_MAX_PLAYERS = 6;

@@ -20,7 +20,7 @@ import {
   INITIAL_RULESET_VERSION,
   parseNumberCombination,
   type LegalPlay,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 /** seat-0 (human) が指定 effectCode を未使用で持ち、かつ人間手番の局面を線形探索する。
  *  requireField: true なら場あり、false なら場なしの人間手番のみ採用。 */

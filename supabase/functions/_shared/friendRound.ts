@@ -12,7 +12,7 @@ import {
   type ServerPlayerSnapshot,
   type ServerRoundSnapshot,
   type ServerPlayRequestResolution,
-} from "@card-game-app/game-core/server";
+} from "@ragnarok-millennium/game-core/server";
 
 export type Json = Record<string, unknown>;
 

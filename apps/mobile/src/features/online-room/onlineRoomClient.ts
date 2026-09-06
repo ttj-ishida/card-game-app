@@ -1,4 +1,4 @@
-import type { PlayInput } from '@card-game-app/game-core';
+import type { PlayInput } from '@ragnarok-millennium/game-core';
 
 import type { OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import type { StoragePort } from '../cpu-game/anonPlayerId';

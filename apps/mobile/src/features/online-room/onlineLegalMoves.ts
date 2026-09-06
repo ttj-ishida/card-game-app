@@ -9,7 +9,7 @@ import {
   type NumberCard,
   type RoundState,
   type SkillCard,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import {
   normalizeLock,

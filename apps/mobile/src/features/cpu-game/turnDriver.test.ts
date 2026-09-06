@@ -11,7 +11,7 @@ import {
   type DriverState,
   type PublicRoundEvent,
 } from './turnDriver';
-import type { PlayInput } from '@card-game-app/game-core';
+import type { PlayInput } from '@ragnarok-millennium/game-core';
 
 const start = (n: number, seed = n * 1000 + 1): DriverState =>
   initGame({ config: buildMatchConfig(n), seed });

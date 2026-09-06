@@ -1,4 +1,4 @@
-import type { CpuPolicyId } from '@card-game-app/game-core';
+import type { CpuPolicyId } from '@ragnarok-millennium/game-core';
 
 export type SeatKind = 'HUMAN' | 'CPU';
 export type SeatConfig = {

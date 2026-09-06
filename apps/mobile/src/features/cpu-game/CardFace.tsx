@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, typography } from '@card-game-app/ui';
+import { colors, radius, typography } from '@ragnarok-millennium/ui';
 
-import type { SuitCode } from '@card-game-app/game-core';
+import type { SuitCode } from '@ragnarok-millennium/game-core';
 
 import { translate } from '../../i18n/translate';
 

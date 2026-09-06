@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useStore } from 'zustand/react';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import {
   CPU_GAME_TUTORIAL_PAGES,

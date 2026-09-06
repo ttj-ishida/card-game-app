@@ -86,7 +86,7 @@ function playRound(input): RoundResult;  // 内部で enumerateLegalPlays(state)
   - `rng.ts`: 相対 import 無し（変更不要）。
   - 循環が消えたので、各ファイルのトップコメントにあった「TDZ 回避のため関数本体でのみ使う」注記は残してよい（害なし）が、`deal.ts` の `numberDeck()`/`skillDeck()` を `const` に戻す必要はない。
 
-- [ ] **Step 4: metro シム除去** — `apps/mobile/metro.config.js` から `gameCoreSrc` 定数とそれを使う `resolveRequest` 内の分岐（`moduleName.startsWith("./") && moduleName.endsWith(".js") && ... originModulePath.startsWith(gameCoreSrc)`）を削除。`@card-game-app/ui` → `uiTokensEntry` の分岐と既定リゾルバ委譲は残す。
+- [ ] **Step 4: metro シム除去** — `apps/mobile/metro.config.js` から `gameCoreSrc` 定数とそれを使う `resolveRequest` 内の分岐（`moduleName.startsWith("./") && moduleName.endsWith(".js") && ... originModulePath.startsWith(gameCoreSrc)`）を削除。`@ragnarok-millennium/ui` → `uiTokensEntry` の分岐と既定リゾルバ委譲は残す。
 
 - [ ] **Step 5: バレルテスト** — `packages/game-core/src/barrelExports.test.ts`:
 ```ts

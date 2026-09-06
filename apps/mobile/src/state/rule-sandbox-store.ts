@@ -6,7 +6,7 @@ import {
   type FieldLock,
   type NumberCard,
   type RoundState,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import {
   buildPlayInput,

@@ -8,7 +8,7 @@ import {
   type PlayInput,
   type RankCode,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import {
   canPass,
   canSelectCard,

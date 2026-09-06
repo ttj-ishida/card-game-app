@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { translate, type TranslationKey } from '../../i18n/translate';
 import type { OnlineRoomSeat } from '../../features/online-room/onlineRoomClient';

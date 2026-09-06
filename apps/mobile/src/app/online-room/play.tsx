@@ -3,8 +3,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
-import { rankNumber, type SuitCode } from '@card-game-app/game-core';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
+import { rankNumber, type SuitCode } from '@ragnarok-millennium/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
 import {

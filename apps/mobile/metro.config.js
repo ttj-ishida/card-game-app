@@ -11,8 +11,8 @@ config.watchFolders = [
   path.resolve(monorepoRoot, 'assets'),
 ];
 config.resolver.extraNodeModules = {
-  '@card-game-app/game-core': path.resolve(monorepoRoot, 'packages/game-core'),
-  '@card-game-app/ui': path.resolve(monorepoRoot, 'packages/ui'),
+  '@ragnarok-millennium/game-core': path.resolve(monorepoRoot, 'packages/game-core'),
+  '@ragnarok-millennium/ui': path.resolve(monorepoRoot, 'packages/ui'),
 };
 
 // packages/ui/src/index.ts re-exports from './tokens.js', which Metro cannot
@@ -22,7 +22,7 @@ const uiTokensEntry = path.resolve(monorepoRoot, 'packages/ui/src/tokens.ts');
 
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === '@card-game-app/ui') {
+  if (moduleName === '@ragnarok-millennium/ui') {
     return { type: 'sourceFile', filePath: uiTokensEntry };
   }
   return defaultResolveRequest

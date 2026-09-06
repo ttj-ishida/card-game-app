@@ -5,7 +5,7 @@
 
 ## 概要
 
-既存の`@card-game-app/game-core`にサーバー向け公開入口を追加し、Supabase Edge Functionから同じTypeScriptルールをimportして実行できることを確認した。
+既存の`@ragnarok-millennium/game-core`にサーバー向け公開入口を追加し、Supabase Edge Functionから同じTypeScriptルールをimportして実行できることを確認した。
 
 M4-ARC-01の決定に従い、ルールの正本は`packages/game-core`に置く。クライアントとEdge Functionは、表示・通信・永続化を持たない純粋なルール入口を共有する。
 
@@ -20,7 +20,7 @@ M4-ARC-01の決定に従い、ルールの正本は`packages/game-core`に置く
 - `packages/game-core/package.json`
   - `exports["./server"]`を追加し、サーバー向け入口を明示する。
 - `supabase/functions/m4-rule-smoke/index.ts`
-  - Edge Runtime上で`@card-game-app/game-core/server`をimportし、`resolvePlay`を実行するsmoke function。
+  - Edge Runtime上で`@ragnarok-millennium/game-core/server`をimportし、`resolvePlay`を実行するsmoke function。
 - `supabase/functions/m4-rule-smoke/deno.json`
   - 関数単位のDeno import設定。
 - `scripts/check-m4-edge-function-config.mjs`

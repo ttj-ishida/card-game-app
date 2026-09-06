@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 import type { AnimationSpeed } from '../../features/cpu-game/cpuGameSettings';
 import { cpuGameSettingsStore } from '../../state/cpuGameSettingsStore';
 import { translate } from '../../i18n/translate';

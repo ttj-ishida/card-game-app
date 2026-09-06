@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { UNLOCKED_FIELD } from '@card-game-app/game-core';
+import { UNLOCKED_FIELD } from '@ragnarok-millennium/game-core';
 
 import {
   addCardToHand,

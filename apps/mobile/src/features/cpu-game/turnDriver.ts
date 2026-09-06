@@ -18,7 +18,7 @@ import {
   type RoundState,
   type Rng,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import { isHumanSeat, seatPolicies, type MatchConfig } from './matchConfig';
 
 export type GamePhase = 'HUMAN_TURN' | 'CPU_PENDING' | 'ROUND_OVER';

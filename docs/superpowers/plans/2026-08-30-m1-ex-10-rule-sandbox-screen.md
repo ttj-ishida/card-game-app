@@ -4,7 +4,7 @@
 
 **Goal:** 開発者が任意の局面を組み・1手入力し・`resolvePlay` の判定結果と遷移後の盤面を目視できる、Expo 横画面1枚のデバッグ盤面を作る。
 
-**Architecture:** 判定は既存の `@card-game-app/game-core` の `resolvePlay` に委譲する。新規コードは「操作 → `RoundState` / `PlayInput` 変換」と「結果 → i18n キー変換」の純粋モジュール（`sandboxModel.ts`）、代表局面データ（`sandboxPresets.ts`）、zustand ストア（`ruleSandboxStore.ts`）、薄い画面（`app/sandbox/index.tsx`）。M0 カタログ画面と同構成で、ロジックは `.test.ts` で網羅し画面はビューに徹する。
+**Architecture:** 判定は既存の `@ragnarok-millennium/game-core` の `resolvePlay` に委譲する。新規コードは「操作 → `RoundState` / `PlayInput` 変換」と「結果 → i18n キー変換」の純粋モジュール（`sandboxModel.ts`）、代表局面データ（`sandboxPresets.ts`）、zustand ストア（`ruleSandboxStore.ts`）、薄い画面（`app/sandbox/index.tsx`）。M0 カタログ画面と同構成で、ロジックは `.test.ts` で網羅し画面はビューに徹する。
 
 **Tech Stack:** Expo SDK 57 / React Native 0.86 / expo-router / TypeScript 6 / zustand 5 / `node:test` + `tsx`（`.test.ts` のみ実行、react-test-renderer なし）。
 
@@ -13,7 +13,7 @@
 - 表示文字列はすべて `apps/mobile/src/i18n/translate.ts` の `jaDictionary` に `sandbox.*` キーとして追加し、`translate(key)` 経由で取得する。内部コード・ID・条件分岐に日本語表示名を使わない。
 - 属性・状態は色だけに依存させず、必ず文字ラベルを併記する（要件 §10.1・M0-GR-03 準拠）。
 - 判定ロジックを新規に書かない。合法性・遷移・上がりは `resolvePlay` の戻り値をそのまま使う。
-- `react-native-svg` を導入しない。View/Text と `@card-game-app/ui` のデザイントークンで描画する（M0-QA-01 の判断を踏襲）。
+- `react-native-svg` を導入しない。View/Text と `@ragnarok-millennium/ui` のデザイントークンで描画する（M0-QA-01 の判断を踏襲）。
 - `apps/mobile/package.json` と `apps/mobile/package-lock.json` は変更しない。モノレポ解決は `metro.config.js` と `tsconfig.json` の `paths` だけで行う。
 - ファイル名・ディレクトリは `kebab-case`、型・コンポーネントは `PascalCase`、関数・変数は `camelCase`、boolean は `is`/`has`/`can`/`should`（`CONTRIBUTING.md`）。
 - コミットは Conventional Commits。件名に `[M1-EX-10]` を含める。作業は `main` で行い、コミット後に `git push origin main`。`.idea/` に触れない。
@@ -40,7 +40,7 @@
 
 | ファイル | 変更内容 |
 |---|---|
-| `apps/mobile/tsconfig.json` | `baseUrl` と `paths`（`@card-game-app/game-core`・`@card-game-app/ui`） |
+| `apps/mobile/tsconfig.json` | `baseUrl` と `paths`（`@ragnarok-millennium/game-core`・`@ragnarok-millennium/ui`） |
 | `apps/mobile/src/i18n/translate.ts` | `sandbox.*` キー追加 |
 | `apps/mobile/src/i18n/translate.test.ts` | 必須キー一覧に `sandbox.*` を追記 |
 | `apps/mobile/src/app/_layout.tsx` | `sandbox/index` ルート登録 |
@@ -58,7 +58,7 @@
 - Test: `apps/mobile/src/features/rule-sandbox/sandboxModel.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` — `createRoundState`, `createPlayerState`, `createNumberCard`, `INITIAL_RULESET_VERSION`, `type RoundState`, `type RankCode`, `type SuitCode`, `type NumberCard`.
+- Consumes: `@ragnarok-millennium/game-core` — `createRoundState`, `createPlayerState`, `createNumberCard`, `INITIAL_RULESET_VERSION`, `type RoundState`, `type RankCode`, `type SuitCode`, `type NumberCard`.
 - Produces:
   - `apps/mobile/src/features/rule-sandbox/sandboxModel.ts`:
     - `export const SANDBOX_MIN_PLAYERS = 2`
@@ -80,8 +80,8 @@ const config = getDefaultConfig(projectRoot);
 
 config.watchFolders = [path.resolve(monorepoRoot, 'packages')];
 config.resolver.extraNodeModules = {
-  '@card-game-app/game-core': path.resolve(monorepoRoot, 'packages/game-core'),
-  '@card-game-app/ui': path.resolve(monorepoRoot, 'packages/ui'),
+  '@ragnarok-millennium/game-core': path.resolve(monorepoRoot, 'packages/game-core'),
+  '@ragnarok-millennium/ui': path.resolve(monorepoRoot, 'packages/ui'),
 };
 
 module.exports = config;
@@ -99,8 +99,8 @@ module.exports = config;
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@card-game-app/game-core": ["../../packages/game-core/src/index.ts"],
-      "@card-game-app/ui": ["../../packages/ui/src/index.ts"]
+      "@ragnarok-millennium/game-core": ["../../packages/game-core/src/index.ts"],
+      "@ragnarok-millennium/ui": ["../../packages/ui/src/index.ts"]
     }
   }
 }
@@ -152,7 +152,7 @@ test('createInitialRound returns a playable two-player day round with no field',
 - [ ] **Step 4: Run the test to verify it fails**
 
 Run: `npm run mobile:test`
-Expected: FAIL — `Cannot find module './sandboxModel'` (module not yet created). This also proves `tsx` picks up the tsconfig `paths` once `sandboxModel.ts` imports `@card-game-app/game-core` in the next step.
+Expected: FAIL — `Cannot find module './sandboxModel'` (module not yet created). This also proves `tsx` picks up the tsconfig `paths` once `sandboxModel.ts` imports `@ragnarok-millennium/game-core` in the next step.
 
 - [ ] **Step 5: Write `apps/mobile/src/features/rule-sandbox/sandboxModel.ts`**
 
@@ -166,7 +166,7 @@ import {
   type RankCode,
   type RoundState,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 export const SANDBOX_MIN_PLAYERS = 2;
 export const SANDBOX_MAX_PLAYERS = 6;
@@ -207,9 +207,9 @@ Run: `npm run mobile:test`
 Expected: PASS (all three tests, plus the existing suite).
 
 Run: `npm run mobile:typecheck`
-Expected: PASS — proves `tsc` resolves `@card-game-app/game-core` via the new `paths`.
+Expected: PASS — proves `tsc` resolves `@ragnarok-millennium/game-core` via the new `paths`.
 
-If either resolver fails to find `@card-game-app/game-core`, fall back to a relative import in `sandboxModel.ts` (`../../../../packages/game-core/src/index.ts`) and keep the alias only where Metro needs it; re-run both commands.
+If either resolver fails to find `@ragnarok-millennium/game-core`, fall back to a relative import in `sandboxModel.ts` (`../../../../packages/game-core/src/index.ts`) and keep the alias only where Metro needs it; re-run both commands.
 
 - [ ] **Step 7: Commit**
 
@@ -398,7 +398,7 @@ git push origin main
 - Test: `apps/mobile/src/features/rule-sandbox/sandboxModel.test.ts`
 
 **Interfaces:**
-- Consumes: Task 1 の `createInitialRound`, `makeSandboxCard`; `@card-game-app/game-core` — `parseNumberCombination`, `createRoundState`, `type DayNight`, `type SuitCode`, `type NumberCard`, `type RoundState`.
+- Consumes: Task 1 の `createInitialRound`, `makeSandboxCard`; `@ragnarok-millennium/game-core` — `parseNumberCombination`, `createRoundState`, `type DayNight`, `type SuitCode`, `type NumberCard`, `type RoundState`.
 - Produces (all pure `RoundState → RoundState` unless noted):
   - `setDayNight(round, dayNight: DayNight): RoundState`
   - `setActivePlayer(round, playerId: string): RoundState` — 実在しない `playerId` は無視して `round` を返す
@@ -517,7 +517,7 @@ import {
   type DayNight,
   type PlayerState,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 ```
 
 末尾に実装を追加:
@@ -666,7 +666,7 @@ git push origin main
 - Test: `apps/mobile/src/features/rule-sandbox/sandboxModel.test.ts`
 
 **Interfaces:**
-- Consumes: Task 1・3 の `createInitialRound`, `makeSandboxCard`, `cloneRound`, `withoutCardId`; `@card-game-app/game-core` — `createPlayerState`, `type PlayerStatus`, `type SkillEffectCode`, `type RankCode`, `type SuitCode`.
+- Consumes: Task 1・3 の `createInitialRound`, `makeSandboxCard`, `cloneRound`, `withoutCardId`; `@ragnarok-millennium/game-core` — `createPlayerState`, `type PlayerStatus`, `type SkillEffectCode`, `type RankCode`, `type SuitCode`.
 - Produces:
   - `setPlayerCount(round, count: number): RoundState` — `[SANDBOX_MIN_PLAYERS, SANDBOX_MAX_PLAYERS]` にクランプ。増えた席は `P{n}`・空手札・スキルなし・`status: 'ACTIVE'`。減って手番席が消えたら `activePlayerId` を先頭席へ
   - `setPlayerSkill(round, playerId, effectCode: SkillEffectCode | null): RoundState` — `null` でスキル削除。付与時 `skillId` は `` `SBX_SKILL_${playerId}` ``・`used: false`
@@ -745,7 +745,7 @@ import {
   createPlayerState,
   type PlayerStatus,
   type SkillEffectCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 ```
 
 末尾に追加:
@@ -876,7 +876,7 @@ git push origin main
 - Test: `apps/mobile/src/features/rule-sandbox/sandboxModel.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` — `type PlayInput`, `type RankCode`, `type SuitCode`, `type RoundState`.
+- Consumes: `@ragnarok-millennium/game-core` — `type PlayInput`, `type RankCode`, `type SuitCode`, `type RoundState`.
 - Produces:
   - `export type PlayDraft = { kind: 'PASS' | 'PLAY'; cardIds: string[]; useSkill?: 'EXTENSION_SEAL' | 'REVOLUTION' | 'JOKER_TRANSFORM' | 'JOKER_CLEAR'; jokerDeclaration?: { rankCode: RankCode; suitCode: SuitCode } }`
   - `export function emptyPlayDraft(): PlayDraft` → `{ kind: 'PLAY', cardIds: [] }`
@@ -1003,7 +1003,7 @@ git push origin main
 - Test: `apps/mobile/src/features/rule-sandbox/sandboxModel.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` — `resolvePlay`, `type PlayResolution`; Task 1–5 exports; `../i18n/translate` — `translate`.
+- Consumes: `@ragnarok-millennium/game-core` — `resolvePlay`, `type PlayResolution`; Task 1–5 exports; `../i18n/translate` — `translate`.
 - Produces:
   - `export type SandboxBadge = 'naturalRevolution' | 'fieldCleared' | 'winner'`
   - `export type ResolutionView = { ok: boolean; reasonKey?: string; actionKey?: string; badges: SandboxBadge[]; winnerId?: string }`
@@ -1013,7 +1013,7 @@ git push origin main
 
 ```ts
 import { describeResolution } from './sandboxModel';
-import { resolvePlay } from '@card-game-app/game-core';
+import { resolvePlay } from '@ragnarok-millennium/game-core';
 import { translate } from '../../i18n/translate';
 
 test('describeResolution maps an illegal result to a translatable reason key', () => {
@@ -1122,7 +1122,7 @@ git push origin main
 - Modify: `apps/mobile/src/i18n/translate.ts`, `apps/mobile/src/i18n/translate.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` — `createRoundState`, `createPlayerState`, `parseNumberCombination`, `INITIAL_RULESET_VERSION`, `resolvePlay`, `type RoundState`; `./sandboxModel` — `makeSandboxCard`, `buildPlayInput`, `type PlayDraft`.
+- Consumes: `@ragnarok-millennium/game-core` — `createRoundState`, `createPlayerState`, `parseNumberCombination`, `INITIAL_RULESET_VERSION`, `resolvePlay`, `type RoundState`; `./sandboxModel` — `makeSandboxCard`, `buildPlayInput`, `type PlayDraft`.
 - Produces:
   - `export type SandboxPreset = { id: string; titleKey: string; round: RoundState; play: PlayDraft }`
   - `export const SANDBOX_PRESETS: readonly SandboxPreset[]` — 10件、`id` 一意、各 `titleKey` は `` `sandbox.preset.${id}` ``
@@ -1133,7 +1133,7 @@ git push origin main
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { resolvePlay } from '@card-game-app/game-core';
+import { resolvePlay } from '@ragnarok-millennium/game-core';
 
 import { buildPlayInput } from './sandboxModel';
 import { SANDBOX_PRESETS } from './sandboxPresets';
@@ -1218,7 +1218,7 @@ import {
   type NumberCard,
   type RoundState,
   type SkillEffectCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 
 import { makeSandboxCard, type PlayDraft } from './sandboxModel';
 
@@ -1413,7 +1413,7 @@ git push origin main
 - Test: `apps/mobile/src/state/rule-sandbox-store.test.ts`
 
 **Interfaces:**
-- Consumes: `zustand/vanilla` — `createStore`; `@card-game-app/game-core` — `resolvePlay`, `type RoundState`; `../features/rule-sandbox/sandboxModel` — `createInitialRound`, `buildPlayInput`, `describeResolution`, `emptyPlayDraft`, `type PlayDraft`, `type ResolutionView`; `../features/rule-sandbox/sandboxPresets` — `SANDBOX_PRESETS`.
+- Consumes: `zustand/vanilla` — `createStore`; `@ragnarok-millennium/game-core` — `resolvePlay`, `type RoundState`; `../features/rule-sandbox/sandboxModel` — `createInitialRound`, `buildPlayInput`, `describeResolution`, `emptyPlayDraft`, `type PlayDraft`, `type ResolutionView`; `../features/rule-sandbox/sandboxPresets` — `SANDBOX_PRESETS`.
 - Produces:
   - `export type SandboxHistoryEntry = { round: RoundState; playDraft: PlayDraft; view: ResolutionView }`
   - `export type RuleSandboxState = { draft: RoundState; playDraft: PlayDraft; history: SandboxHistoryEntry[]; lastResult: ResolutionView | null; editRound: (fn: (round: RoundState) => RoundState) => void; setPlayDraft: (patch: Partial<PlayDraft>) => void; resetPlayDraft: () => void; applyPlay: () => void; undo: () => void; reset: () => void; loadPreset: (id: string) => void }`
@@ -1510,7 +1510,7 @@ Expected: FAIL — `./rule-sandbox-store` not found.
 ```ts
 import { createStore, type StoreApi } from 'zustand/vanilla';
 
-import { resolvePlay, type RoundState } from '@card-game-app/game-core';
+import { resolvePlay, type RoundState } from '@ragnarok-millennium/game-core';
 
 import {
   buildPlayInput,
@@ -1628,7 +1628,7 @@ git push origin main
 - Create: `docs/progress/M1-EX-10.md`
 
 **Interfaces:**
-- Consumes: `zustand` — `useStore`; `../../state/rule-sandbox-store` — `ruleSandboxStore`, `type RuleSandboxState`; `../../features/rule-sandbox/sandboxModel` — editor functions + `emptyPlayDraft`; `../../features/rule-sandbox/sandboxPresets` — `SANDBOX_PRESETS`; `@card-game-app/ui` — `colors`, `spacing`, `radius`, `typography`; `../../i18n/translate` — `translate`.
+- Consumes: `zustand` — `useStore`; `../../state/rule-sandbox-store` — `ruleSandboxStore`, `type RuleSandboxState`; `../../features/rule-sandbox/sandboxModel` — editor functions + `emptyPlayDraft`; `../../features/rule-sandbox/sandboxPresets` — `SANDBOX_PRESETS`; `@ragnarok-millennium/ui` — `colors`, `spacing`, `radius`, `typography`; `../../i18n/translate` — `translate`.
 - Produces: expo-router route `/sandbox` rendering `SandboxScreen` (default export). No test module (no react-test-renderer in this repo — verified by typecheck / lint / `expo export`, matching `app/catalog/index.tsx`).
 
 - [ ] **Step 1: Write `apps/mobile/src/app/sandbox/index.tsx`**
@@ -1639,12 +1639,12 @@ git push origin main
 import { useStore } from 'zustand';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@card-game-app/ui';
+import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import {
   RANK_CODES,
   SUIT_CODES,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 import {
   addCardToHand,
   clearField,
@@ -2211,9 +2211,9 @@ Run: `npm run game-core:typecheck` → PASS
 
 Run: `npx --prefix apps/mobile expo export --platform android --output-dir apps/mobile/dist`
 （または `cd apps/mobile && npx expo export --platform android --output-dir dist`）
-Expected: 成功（Android バンドルが書き出される）。`@card-game-app/game-core` / `@card-game-app/ui` の解決が Metro で失敗する場合:
+Expected: 成功（Android バンドルが書き出される）。`@ragnarok-millennium/game-core` / `@ragnarok-millennium/ui` の解決が Metro で失敗する場合:
 1. `apps/mobile/metro.config.js` の `config.resolver.sourceExts` に `'ts'`, `'tsx'` が含まれることを確認（`getDefaultConfig` は既定で含む）。
-2. それでも `@card-game-app/ui` の `./tokens.js` が解決できない場合、`metro.config.js` に `config.resolver.extraNodeModules['@card-game-app/ui'] = path.resolve(monorepoRoot, 'packages/ui/src/tokens.ts')` は不可（ディレクトリ指定のみ）。代わりに `config.resolver.resolveRequest` で `@card-game-app/ui` を `packages/ui/src/tokens.ts` へ返すシムを追加する。
+2. それでも `@ragnarok-millennium/ui` の `./tokens.js` が解決できない場合、`metro.config.js` に `config.resolver.extraNodeModules['@ragnarok-millennium/ui'] = path.resolve(monorepoRoot, 'packages/ui/src/tokens.ts')` は不可（ディレクトリ指定のみ）。代わりに `config.resolver.resolveRequest` で `@ragnarok-millennium/ui` を `packages/ui/src/tokens.ts` へ返すシムを追加する。
 3. `tsconfig.json` の `paths` を `["../../packages/ui/src/tokens.ts"]` に変更しても `tsc` は通る（`tokens.ts` が全エクスポートを持つため）。
 
 `git status` に `apps/mobile/dist/` が出る場合、それは `.gitignore` 済み（`eslint.config.js` の `ignores: ['dist/**']` と別に mobile の `.gitignore` に `dist` がある）。コミットに含めないこと。
@@ -2229,7 +2229,7 @@ Expected: 成功（Android バンドルが書き出される）。`@card-game-ap
 
 ## 概要
 
-任意の局面を編集し1手を入力して `resolvePlay` の判定結果と遷移後の盤面を目視できる、Expo 横画面1枚のデバッグ盤面を追加した。判定は `@card-game-app/game-core` の `resolvePlay` に委譲し、新規コードは操作→データ変換・結果→i18n変換の純粋モジュール、代表プリセット10件、zustand ストア、薄い画面。
+任意の局面を編集し1手を入力して `resolvePlay` の判定結果と遷移後の盤面を目視できる、Expo 横画面1枚のデバッグ盤面を追加した。判定は `@ragnarok-millennium/game-core` の `resolvePlay` に委譲し、新規コードは操作→データ変換・結果→i18n変換の純粋モジュール、代表プリセット10件、zustand ストア、薄い画面。
 
 ## 成果物
 

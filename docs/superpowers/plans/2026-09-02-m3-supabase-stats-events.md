@@ -935,7 +935,7 @@ git commit -m "feat(mobile): [M3-SB-03] add ruleset_id to PracticeResultPayload"
 - Test: `apps/mobile/src/features/cpu-game/turnDriver.test.ts`
 
 **Interfaces:**
-- Consumes: `@card-game-app/game-core` の `RankCode`/`SuitCode`/`PlaySkillUse`/`NumberCard`（型）、既存 `DriverState`/`appendTurn`/`humanPlay`/`cpuStep`。
+- Consumes: `@ragnarok-millennium/game-core` の `RankCode`/`SuitCode`/`PlaySkillUse`/`NumberCard`（型）、既存 `DriverState`/`appendTurn`/`humanPlay`/`cpuStep`。
 - Produces: 型 `PublicRoundEvent`（`index`/`seatId`/`seatKind`/`kind`/`actionKind`/`cards: { rankCode; suitCode }[]`/`skillEffect: PlaySkillUse | null`/`fieldCleared`/`dayNightAfter`/`handCountsAfter`）。`DriverState.publicEvents: PublicRoundEvent[]`（`humanPlay`/`cpuStep` の両方が更新する）。Task 7 がこれを消費する。
 
 - [ ] **Step 1: 失敗するテストを書く**
@@ -1028,7 +1028,7 @@ import {
   type RoundState,
   type Rng,
   type SuitCode,
-} from '@card-game-app/game-core';
+} from '@ragnarok-millennium/game-core';
 ```
 
 `TurnActionKind` の直後に `PublicRoundEvent` 型を追加する：

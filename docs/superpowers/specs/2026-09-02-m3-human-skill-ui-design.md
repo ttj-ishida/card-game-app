@@ -106,7 +106,7 @@ M3 サブプロジェクト1 では「人間UIは M3-EX-01/02」として数字�
 
 ## 6. `skillPlayOptions.ts`（新規・純関数）
 
-実装場所：`apps/mobile/src/features/cpu-game/skillPlayOptions.ts`。`@card-game-app/game-core` と `./turnDriver` / `./handSelection` の型のみ import。
+実装場所：`apps/mobile/src/features/cpu-game/skillPlayOptions.ts`。`@ragnarok-millennium/game-core` と `./turnDriver` / `./handSelection` の型のみ import。
 
 ```ts
 export type SkillSubmitOption = {
