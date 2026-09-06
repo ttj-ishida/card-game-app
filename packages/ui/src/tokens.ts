@@ -26,6 +26,31 @@ export const colors = {
   },
 } as const;
 
+export type ThemeScheme = 'light' | 'dark';
+
+type WidenStringLeaves<T> = {
+  readonly [K in keyof T]: T[K] extends string ? string : WidenStringLeaves<T[K]>;
+};
+
+/** Same shape as `colors`, with every colour value widened to `string` so
+ *  alternate theme palettes can be assigned to it. */
+export type ThemeColors = WidenStringLeaves<typeof colors>;
+
+export const darkColors: ThemeColors = {
+  surface: {
+    table: { day: '#12161C', night: '#0B0E14' },
+    card: { face: '#1B2028', back: '#0E1116' },
+  },
+  ink: { primary: '#EDE6D6', secondary: '#A7AEB8', inverse: '#12161C' },
+  suit: { fire: '#F06A4A', water: '#4FA0DE', wind: '#57B98F', earth: '#C39A4E' },
+  state: { warning: '#E0A32B', disabled: '#4A525C' },
+} as const;
+
+export const themeColors: Record<ThemeScheme, ThemeColors> = {
+  light: colors,
+  dark: darkColors,
+};
+
 export const spacing = {
   none: 0,
   xs: 4,
