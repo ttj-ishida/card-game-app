@@ -1,7 +1,7 @@
 export type TranslationKey = keyof typeof jaDictionary;
 
 export const jaDictionary = {
-  'app.title': '大貧民2000',
+  'app.title': 'ラグナロク・ミレニアム',
   'home.subtitle': 'M0 開発シェル',
   'home.openCatalog': 'カードカタログを開く',
   'home.cpuGame': 'CPU戦',

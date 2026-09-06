@@ -31,7 +31,7 @@ const REASON_CODES = {
 } satisfies Record<PlayRejectionReason, true>;
 
 test('translate returns Japanese text for an existing key', () => {
-  assert.equal(translate('app.title'), '大貧民2000');
+  assert.equal(translate('app.title'), 'ラグナロク・ミレニアム');
 });
 
 test('translate rejects missing keys so display strings are not silently lost', () => {

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Card Game App",
-    "slug": "card-game-app",
+    "name": "ラグナロク・ミレニアム",
+    "slug": "ragnarok-millennium",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.ttjishida.cardgameapp.dev"
+      "package": "com.ttjishida.ragnarokmillennium"
     },
     "web": {
       "favicon": "./assets/favicon.png"
