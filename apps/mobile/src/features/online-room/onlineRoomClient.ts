@@ -102,6 +102,11 @@ export type OnlineWaitingRoomView = {
   maxPlayers: number;
   turnSeconds: number;
   cpuTakeoverEnabled: boolean;
+  /**
+   * ルームが対局中なら round_number=1 の round id、待機中は null。
+   * ロビーが自分でポーリングして対局画面へ自動遷移するために使う。
+   */
+  roundId: string | null;
   seats: OnlineRoomSeat[];
 };
 
@@ -282,6 +287,17 @@ export async function fetchOnlineWaitingRoom(
     status: seat.status,
   }));
 
+  let roundId: string | null = null;
+  if (room.status === 'IN_ROUND') {
+    const roundResponse = await deps.http.get(
+      tableUrl(deps, `rounds?select=id&room_id=eq.${roomId}&round_number=eq.1&limit=1`),
+      headers,
+    );
+    if (roundResponse.status >= 200 && roundResponse.status < 300) {
+      roundId = parseJson<{ id: string }[]>(roundResponse.body)[0]?.id ?? null;
+    }
+  }
+
   return {
     roomId: room.id,
     inviteCode: room.invite_code,
@@ -289,6 +305,7 @@ export async function fetchOnlineWaitingRoom(
     maxPlayers: room.max_players,
     turnSeconds: room.turn_seconds,
     cpuTakeoverEnabled: room.cpu_takeover_enabled,
+    roundId,
     seats,
   };
 }

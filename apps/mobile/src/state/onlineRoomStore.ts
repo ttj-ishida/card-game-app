@@ -28,6 +28,12 @@ export type OnlineRoomState = {
   createRoom(settings: OnlineRoomSettings): Promise<void>;
   joinRoom(): Promise<void>;
   refreshRoom(): Promise<void>;
+  /**
+   * ロビー滞在中に 1 秒間隔で呼ぶ静かな更新。参加者の増減を反映し、
+   * ホストが対局を開始したら status を 'started' にして roundId を埋める
+   * （ゲスト側も自動で対局画面へ遷移できるように）。`loading` にはしない。
+   */
+  pollRoom(): Promise<void>;
   startRound(): Promise<void>;
   reset(): void;
 };
@@ -151,6 +157,23 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       set({ status: 'ready', inviteCode: room.inviteCode, room });
     } catch (err) {
       set(failureState(err));
+    }
+  },
+
+  async pollRoom() {
+    const roomId = get().room?.roomId;
+    if (!roomId) return;
+    if (get().status === 'started' || get().status === 'starting') return;
+    try {
+      const d = requireDeps();
+      const room = await fetchOnlineWaitingRoom(roomId, d);
+      if (room.roundId) {
+        set({ room, inviteCode: room.inviteCode, status: 'started', roundId: room.roundId });
+      } else {
+        set({ room, inviteCode: room.inviteCode });
+      }
+    } catch {
+      // 一時的な通信失敗は無視。ロビーは直前の表示のまま、次のティックで再取得する。
     }
   },
 

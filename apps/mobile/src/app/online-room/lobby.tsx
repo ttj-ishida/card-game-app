@@ -26,6 +26,7 @@ export default function OnlineRoomLobbyScreen() {
   const router = useRouter();
   const state = useStore(onlineRoomStore, (s) => s);
   const room = state.room;
+  const roomId = room?.roomId;
   const busy = ['loading', 'starting'].includes(state.status);
   const isHost =
     !!state.myPlayerId && room?.seats.find((s) => s.playerId === state.myPlayerId)?.role === 'HOST';
@@ -33,6 +34,17 @@ export default function OnlineRoomLobbyScreen() {
   useEffect(() => {
     if (!room) router.replace('/online-room');
   }, [room, router]);
+
+  // ロビー滞在中は 1 秒間隔でルームを更新する。参加者の増減が自動で反映され、
+  // ホストが対局を開始すると status が 'started' になって下の useEffect が
+  // ゲスト側も対局画面へ遷移させる。
+  useEffect(() => {
+    if (!roomId || state.status === 'started') return;
+    const timer = setInterval(() => {
+      void onlineRoomStore.getState().pollRoom();
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [roomId, state.status]);
 
   // 対局が成立したら onlineRoundStore を起動して対局画面へ遷移する。
   useEffect(() => {

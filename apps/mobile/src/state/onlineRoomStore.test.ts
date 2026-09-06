@@ -45,8 +45,25 @@ function roomBody() {
   ]);
 }
 
-function seatsBody() {
-  return JSON.stringify([{ player_id: 'player-1', seat_index: 0, role: 'HOST', status: 'JOINED' }]);
+function seatsBody(
+  seats: { player_id: string; seat_index: number; role: string; status: string }[] = [
+    { player_id: 'player-1', seat_index: 0, role: 'HOST', status: 'JOINED' },
+  ],
+) {
+  return JSON.stringify(seats);
+}
+
+function inRoundRoomBody() {
+  return JSON.stringify([
+    {
+      id: 'room-1',
+      invite_code: 'ROOM123',
+      status: 'IN_ROUND',
+      max_players: 2,
+      turn_seconds: 60,
+      cpu_takeover_enabled: true,
+    },
+  ]);
 }
 
 function configure(fakeHttp: OnlineHttpPort) {
@@ -210,5 +227,101 @@ describe('onlineRoomStore', () => {
 
     assert.equal(onlineRoomStore.getState().status, 'failed');
     assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.notHost');
+  });
+
+  it('pollRoom reflects new seats without entering the loading state', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-1',
+            invite_code: 'ROOM123',
+            seat_index: 0,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        // pollRoom
+        { status: 200, body: roomBody() },
+        {
+          status: 200,
+          body: seatsBody([
+            { player_id: 'player-1', seat_index: 0, role: 'HOST', status: 'JOINED' },
+            { player_id: 'player-2', seat_index: 1, role: 'GUEST', status: 'JOINED' },
+          ]),
+        },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore
+      .getState()
+      .createRoom({ maxPlayers: 2, turnSeconds: 60, cpuTakeoverEnabled: true });
+    await onlineRoomStore.getState().pollRoom();
+
+    assert.equal(onlineRoomStore.getState().status, 'ready');
+    assert.equal(onlineRoomStore.getState().room?.seats.length, 2);
+  });
+
+  it('pollRoom moves to "started" with the round id once the host has started', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-2',
+            invite_code: 'ROOM123',
+            seat_index: 1,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        // pollRoom: room now IN_ROUND
+        { status: 200, body: inRoundRoomBody() },
+        { status: 200, body: seatsBody() },
+        { status: 200, body: JSON.stringify([{ id: 'round-1' }]) },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore.getState().joinRoom();
+    await onlineRoomStore.getState().pollRoom();
+
+    assert.equal(onlineRoomStore.getState().status, 'started');
+    assert.equal(onlineRoomStore.getState().roundId, 'round-1');
+  });
+
+  it('pollRoom ignores a transient fetch failure and keeps the lobby usable', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-1',
+            invite_code: 'ROOM123',
+            seat_index: 0,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        { status: 500, body: 'oops' },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore
+      .getState()
+      .createRoom({ maxPlayers: 2, turnSeconds: 60, cpuTakeoverEnabled: true });
+    await onlineRoomStore.getState().pollRoom();
+
+    assert.equal(onlineRoomStore.getState().status, 'ready');
+    assert.equal(onlineRoomStore.getState().errorMessageKey, null);
   });
 });
