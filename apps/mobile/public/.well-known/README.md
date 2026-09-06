@@ -5,27 +5,12 @@ reachable at `https://<host>/.well-known/…`.
 
 ## `assetlinks.json` (Android App Links)
 
-Needed so `https://<host>/join?code=…` opens the app directly instead of the browser.
+`assetlinks.json` here makes `https://<host>/join?code=…` open the app directly.
+`eas deploy` does not auto-generate it, so it is committed as a static file.
 
-Confirmed (2026-09-06): `eas deploy` does **not** auto-generate it —
-`https://card-game-app.expo.app/.well-known/assetlinks.json` currently returns
-the app HTML. So commit the file here:
-
-```json
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.ttjishida.ragnarokmillennium",
-      "sha256_cert_fingerprints": ["<SHA-256 of the EAS Android signing cert>"]
-    }
-  }
-]
-```
-
-Get the fingerprint from the Expo dashboard (Project → Credentials → Android →
-the build credential) or `eas credentials --platform android` → the keystore's
-SHA-256. Then redeploy.
+The SHA-256 in it is the EAS-managed Android signing cert for
+`com.ttjishida.ragnarokmillennium` (`eas credentials --platform android`,
+profile `preview` → Keystore → SHA256 Fingerprint). If the keystore is ever
+rotated, update the fingerprint here and redeploy.
 
 See `docs/progress/M4-EX-02.md` for the full checklist.

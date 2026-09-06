@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ttjishida.ragnarokmillennium",
+      "sha256_cert_fingerprints": [
+        "58:92:EB:53:E7:36:D9:14:22:71:9D:33:F2:36:97:31:1B:AF:40:53:45:11:25:50:1D:07:18:9A:94:FE:F2:F8"
+      ]
+    }
+  }
+]
