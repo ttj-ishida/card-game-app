@@ -20,6 +20,8 @@ export type OnlineRoomState = {
   status: OnlineRoomStatus;
   inviteCode: string;
   room: OnlineWaitingRoomView | null;
+  /** このクライアントの席の player_id（create/join の応答）。ホスト判定に使う。 */
+  myPlayerId: string | null;
   roundId: string | null;
   errorMessageKey: TranslationKey | null;
   setInviteCode(inviteCode: string): void;
@@ -36,6 +38,7 @@ const initialState = {
   status: 'idle' as OnlineRoomStatus,
   inviteCode: '',
   room: null as OnlineWaitingRoomView | null,
+  myPlayerId: null as string | null,
   roundId: null as string | null,
   errorMessageKey: null as TranslationKey | null,
 };
@@ -66,6 +69,8 @@ function errorKeyFor(err: unknown): TranslationKey {
       case 'room is not waiting':
       case 'room is not in progress':
         return 'onlineRoom.error.roomUnavailable';
+      case 'only host can start the round':
+        return 'onlineRoom.error.notHost';
     }
   }
   return 'onlineRoom.error.network';
@@ -97,7 +102,13 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       const d = requireDeps();
       const created = await createOnlineRoom(inviteCode, settings, d);
       const room = await fetchOnlineWaitingRoom(created.room_id, d);
-      set({ status: 'ready', inviteCode: room.inviteCode, room, roundId: null });
+      set({
+        status: 'ready',
+        inviteCode: room.inviteCode,
+        room,
+        myPlayerId: created.player_id,
+        roundId: null,
+      });
     } catch (err) {
       set(failureState(err));
     }
@@ -118,7 +129,13 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       const d = requireDeps();
       const joined = await joinOnlineRoom(inviteCode, d);
       const room = await fetchOnlineWaitingRoom(joined.room_id, d);
-      set({ status: 'ready', inviteCode: room.inviteCode, room, roundId: null });
+      set({
+        status: 'ready',
+        inviteCode: room.inviteCode,
+        room,
+        myPlayerId: joined.player_id,
+        roundId: null,
+      });
     } catch (err) {
       set(failureState(err));
     }

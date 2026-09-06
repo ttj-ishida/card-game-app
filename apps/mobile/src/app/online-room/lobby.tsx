@@ -24,6 +24,8 @@ export default function OnlineRoomLobbyScreen() {
   const state = useStore(onlineRoomStore, (s) => s);
   const room = state.room;
   const busy = ['loading', 'starting'].includes(state.status);
+  const isHost =
+    !!state.myPlayerId && room?.seats.find((s) => s.playerId === state.myPlayerId)?.role === 'HOST';
 
   useEffect(() => {
     if (!room) router.replace('/online-room');
@@ -106,14 +108,18 @@ export default function OnlineRoomLobbyScreen() {
         >
           <Text style={styles.secondaryText}>{translate('onlineRoom.lobby.refresh')}</Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => void onlineRoomStore.getState().startRound()}
-          style={[styles.primaryButton, busy && styles.disabled]}
-        >
-          <Text style={styles.primaryText}>{translate('onlineRoom.lobby.start')}</Text>
-        </Pressable>
+        {isHost ? (
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={() => void onlineRoomStore.getState().startRound()}
+            style={[styles.primaryButton, busy && styles.disabled]}
+          >
+            <Text style={styles.primaryText}>{translate('onlineRoom.lobby.start')}</Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.muted}>{translate('onlineRoom.lobby.waitingHost')}</Text>
+        )}
       </View>
 
       {state.status === 'started' ? (

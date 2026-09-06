@@ -22,6 +22,7 @@ export const jaDictionary = {
   'onlineRoom.error.roomNotFound': '招待コードのルームが見つかりません。',
   'onlineRoom.error.roomFull': 'ルームが満員です。',
   'onlineRoom.error.roomUnavailable': 'このルームには参加できません。',
+  'onlineRoom.error.notHost': '対局を開始できるのはホストだけです。',
   'onlineRoom.error.network': 'オンラインルームの通信に失敗しました。',
   'onlineRoom.lobby.title': '待機室',
   'onlineRoom.lobby.invite': '招待コード',
@@ -30,6 +31,7 @@ export const jaDictionary = {
   'onlineRoom.lobby.empty': '参加者を読み込めません。',
   'onlineRoom.lobby.refresh': '更新',
   'onlineRoom.lobby.start': '対局開始',
+  'onlineRoom.lobby.waitingHost': 'ホストが対局を開始するのを待っています。',
   'onlineRoom.lobby.started': '対局を開始しました。',
   'onlineRoom.lobby.share': '招待リンクを共有',
   'onlineRoom.invite.shareLead':

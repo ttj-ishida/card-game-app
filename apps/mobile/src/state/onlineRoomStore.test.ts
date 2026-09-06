@@ -90,6 +90,7 @@ describe('onlineRoomStore', () => {
     assert.equal(onlineRoomStore.getState().status, 'ready');
     assert.equal(onlineRoomStore.getState().inviteCode, 'ROOM123');
     assert.equal(onlineRoomStore.getState().room?.seats.length, 1);
+    assert.equal(onlineRoomStore.getState().myPlayerId, 'player-1');
   });
 
   it('rejects empty invite code before network access', async () => {
@@ -174,9 +175,40 @@ describe('onlineRoomStore', () => {
 
     onlineRoomStore.getState().setInviteCode('ROOM123');
     await onlineRoomStore.getState().joinRoom();
+    assert.equal(onlineRoomStore.getState().myPlayerId, 'player-2');
     await onlineRoomStore.getState().startRound();
 
     assert.equal(onlineRoomStore.getState().status, 'started');
     assert.equal(onlineRoomStore.getState().roundId, 'round-1');
+  });
+
+  it('maps "only host can start the round" to a specific message', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-2',
+            invite_code: 'ROOM123',
+            seat_index: 1,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        {
+          status: 400,
+          body: JSON.stringify({ code: 'P0001', message: 'only host can start the round' }),
+        },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore.getState().joinRoom();
+    await onlineRoomStore.getState().startRound();
+
+    assert.equal(onlineRoomStore.getState().status, 'failed');
+    assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.notHost');
   });
 });
