@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
+import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
 import { translate } from '../i18n/translate';
 import {
@@ -19,8 +19,11 @@ import {
   parseInviteFromLink,
   resolveJoinTarget,
 } from '../features/online-room/inviteLink';
+import { AppBackground } from '../features/theme/AppBackground';
+import { useThemedStyles } from '../features/theme/ThemeProvider';
 
 export default function JoinInviteScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const params = useLocalSearchParams<{ code?: string }>();
   const raw = Array.isArray(params.code) ? params.code[0] : params.code;
@@ -43,108 +46,111 @@ export default function JoinInviteScreen() {
   const storeUrl = target.store === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>{translate('onlineRoom.join.title')}</Text>
+    <AppBackground variant="universal">
+      <View style={styles.screen}>
+        <Text style={styles.title}>{translate('onlineRoom.join.title')}</Text>
 
-      {code ? (
-        <>
-          <Text style={styles.codeLabel}>{translate('onlineRoom.join.codeLabel')}</Text>
-          <Text style={styles.code}>{code}</Text>
-        </>
-      ) : (
-        <Text style={styles.muted}>{translate('onlineRoom.error.inviteRequired')}</Text>
-      )}
+        {code ? (
+          <>
+            <Text style={styles.codeLabel}>{translate('onlineRoom.join.codeLabel')}</Text>
+            <Text style={styles.code}>{code}</Text>
+          </>
+        ) : (
+          <Text style={styles.muted}>{translate('onlineRoom.error.inviteRequired')}</Text>
+        )}
 
-      {storeUrl ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void Linking.openURL(storeUrl)}
-          style={styles.primary}
-        >
-          <Text style={styles.primaryText}>
-            {target.store === 'ios'
-              ? translate('onlineRoom.join.getAppIos')
-              : translate('onlineRoom.join.getAppAndroid')}
-          </Text>
-        </Pressable>
-      ) : (
-        <Text style={styles.muted}>{translate('onlineRoom.join.iosComingSoon')}</Text>
-      )}
+        {storeUrl ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void Linking.openURL(storeUrl)}
+            style={styles.primary}
+          >
+            <Text style={styles.primaryText}>
+              {target.store === 'ios'
+                ? translate('onlineRoom.join.getAppIos')
+                : translate('onlineRoom.join.getAppAndroid')}
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.muted}>{translate('onlineRoom.join.iosComingSoon')}</Text>
+        )}
 
-      {code ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void Linking.openURL(buildInviteAppLink(code))}
-          style={styles.secondary}
-        >
-          <Text style={styles.secondaryText}>{translate('onlineRoom.join.openApp')}</Text>
-        </Pressable>
-      ) : null}
+        {code ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void Linking.openURL(buildInviteAppLink(code))}
+            style={styles.secondary}
+          >
+            <Text style={styles.secondaryText}>{translate('onlineRoom.join.openApp')}</Text>
+          </Pressable>
+        ) : null}
 
-      {code ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.replace(`/online-room?invite=${code}`)}
-          style={styles.link}
-        >
-          <Text style={styles.linkText}>{translate('onlineRoom.join.playOnWeb')}</Text>
-        </Pressable>
-      ) : null}
+        {code ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.replace(`/online-room?invite=${code}`)}
+            style={styles.link}
+          >
+            <Text style={styles.linkText}>{translate('onlineRoom.join.playOnWeb')}</Text>
+          </Pressable>
+        ) : null}
 
-      <Text style={styles.muted}>{translate('onlineRoom.join.hint')}</Text>
-    </View>
+        <Text style={styles.muted}>{translate('onlineRoom.join.hint')}</Text>
+      </View>
+    </AppBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.xl,
-    backgroundColor: '#f8fafc',
-  },
-  title: {
-    color: colors.ink.primary,
-    fontSize: typography.size.title,
-    fontWeight: typography.weight.bold,
-  },
-  codeLabel: { color: colors.ink.secondary, fontSize: typography.size.body },
-  code: {
-    color: colors.ink.primary,
-    fontSize: 32,
-    fontWeight: typography.weight.bold,
-    letterSpacing: 2,
-  },
-  muted: { color: colors.ink.secondary, fontSize: typography.size.caption, textAlign: 'center' },
-  primary: {
-    backgroundColor: '#166534',
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  primaryText: {
-    color: '#f8fafc',
-    fontSize: typography.size.body,
-    fontWeight: typography.weight.bold,
-  },
-  secondary: {
-    borderColor: '#166534',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  secondaryText: {
-    color: '#166534',
-    fontSize: typography.size.body,
-    fontWeight: typography.weight.bold,
-  },
-  link: { paddingVertical: spacing.xs },
-  linkText: {
-    color: colors.ink.secondary,
-    fontSize: typography.size.caption,
-    textDecorationLine: 'underline',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+      padding: spacing.xl,
+    },
+    title: {
+      color: c.ink.primary,
+      fontSize: typography.size.title,
+      fontWeight: typography.weight.bold,
+    },
+    codeLabel: { color: c.ink.secondary, fontSize: typography.size.body },
+    code: {
+      color: c.ink.primary,
+      fontSize: 32,
+      fontWeight: typography.weight.bold,
+      letterSpacing: 2,
+    },
+    muted: { color: c.ink.secondary, fontSize: typography.size.caption, textAlign: 'center' },
+    primary: {
+      backgroundColor: c.suit.wind,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    primaryText: {
+      color: c.ink.inverse,
+      fontSize: typography.size.body,
+      fontWeight: typography.weight.bold,
+    },
+    secondary: {
+      backgroundColor: c.surface.card.face,
+      borderColor: c.suit.wind,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    secondaryText: {
+      color: c.ink.primary,
+      fontSize: typography.size.body,
+      fontWeight: typography.weight.bold,
+    },
+    link: { paddingVertical: spacing.xs },
+    linkText: {
+      color: c.ink.secondary,
+      fontSize: typography.size.caption,
+      textDecorationLine: 'underline',
+    },
+  });
