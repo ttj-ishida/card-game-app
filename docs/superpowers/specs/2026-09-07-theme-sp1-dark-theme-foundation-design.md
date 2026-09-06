@@ -1,10 +1,11 @@
 # デザイン刷新 サブプロジェクト1：テーマ基盤 + ダークトークン + 背景コンポーネント 設計書
 
 - 文書ID：GAME-SPEC-THEME-SP1
-- 版数：0.1
+- 版数：0.2
 - 作成日：2026-09-07
 - 背景：遊戯王マスターデュエルのデュエルフィールドを参照したダーク基調へアプリ全体を刷新する取り組み。全体像は「デザイン刷新サブプロジェクト分解」（本文 §1.1）。
-- 対象アセット：`assets/backgrounds/ragnarok-battle-bg.png` / `ragnarok-home-bg.png` / `ragnarok-bg-universal.png`（コミット済み `2bbfa84`）
+- 対象アセット：`assets/backgrounds/ragnarok-{battle-bg,home-bg,bg-universal}{,-day}.png`（dark 3枚コミット済み `2bbfa84`、day 3枚は本サブプロジェクトで追加。詳細は `assets/backgrounds/README.md`）
+- 版数 0.2 の変更点：§8 のレビュー確定を反映（§4.4 案C＝ライト用「昼」背景を採用 / §4.5・§4.6 を 6アセット出し分けに更新 / OS不明時ダーク固定 / 生 hex 暫定トークン化）
 - 実装場所：`packages/ui/src/`、`apps/mobile/src/features/theme/`（新設）、`apps/mobile/src/state/`、`apps/mobile/src/app/`（全画面 + `_layout.tsx`）
 
 ---
@@ -42,7 +43,7 @@
 | プレイマット/フィールド枠アート | SP3 |
 | 革命バリアント背景・クロスフェード・昼夜逆転演出 | SP3 |
 | カード（`CardFace`）の意匠変更 | SP4（SP1 では新トークンに追従して色だけ変わる） |
-| ライトテーマ専用の「昼」背景アートの新規生成 | §4.4 の判断次第。既定では SP1 スコープ外 |
+| ライト用「昼」背景の**追加調整・作り直し** | 初版3枚は本SPで用意済み。意匠のブラッシュアップは SP3 の盤面アートに合流可 |
 | `@ragnarok-millennium/ui` の `.js` バレル問題 / metro ui シム除去 | 別件（本書は metro シムを温存し、テーマ機構は `apps/mobile` 側に置く） |
 
 ## 2. Global Constraints
@@ -171,17 +172,13 @@ type ThemeContextValue = {
   - `useMemo(() => StyleSheet.create(factory(colors)), [scheme])`。
   - 依存は `scheme` のみ（`colors` はスキームごとに安定参照）。
 
-### 4.4 ライトテーマ時の背景の扱い ★スペックレビューでの決定事項
+### 4.4 ライトテーマ時の背景（レビュー確定：案C）
 
-マスターデュエル風背景は本質的に暗い。ライト（昼）テーマでの見せ方を決める必要がある。
+ライト（昼）テーマ用に「昼」バリアント背景を3枚用意済み（`*-day.png`）。`<AppBackground>` は
+`variant × scheme` で 6枚を出し分ける。両テーマともマスターデュエル風の世界観を保つ。
 
-- **案A（本書の既定・推奨）**：ライトテーマでは `<AppBackground>` は**画像を出さず**、`surface.table.day`（ライト値）のベタ塗り。ダークテーマでのみ背景画像＋スクリム。
-  - 利点：SP1 で追加アート不要、両テーマとも即出荷可能、コントラスト管理が単純。
-  - 欠点：マスターデュエル感はダーク時のみ。
-- 案B：ライトも同じ画像を、明るいスクリム（`rgba(238,245,241,0.72)` など）で減光して使う。1枚で両対応。追加アートなし。ただしライト時の見え方が中途半端になりやすい。
-- 案C：ライト用に「昼」バリアント背景をCanvaでSP1内に生成（3枚 → 6枚）。スコープ増。
-
-> 実装は案Aで進める。レビューで案B/Cへ変更可。`<AppBackground>` の内部分岐だけの違いなので後からの差し替えは容易。
+- day 画像はライトUI（濃色テキスト `ink.primary` = `#1B1D24`）が乗る前提で明るく作ってある。
+- スクリムはテーマで向きが逆：dark は暗いスクリム、light は薄い**明るい**スクリムで文字の下地を整える（§4.5）。
 
 ### 4.5 `<AppBackground>`
 
@@ -190,26 +187,34 @@ type Variant = 'battle' | 'home' | 'universal';
 function AppBackground({ variant, children }: { variant: Variant; children: ReactNode }): JSX.Element;
 ```
 
-- dark：`ImageBackground`（RN コア。`expo-image` は未導入なので使わない）
-  - `source = require('../../../../../assets/backgrounds/ragnarok-<map[variant]>.png')`
+- 常に `ImageBackground`（RN コア。`expo-image` は未導入なので使わない）
+  - `source` は `variant × scheme` で 6枚から選択（`resolveBackgroundSource(variant, scheme)`）
   - `resizeMode="cover"`、`style={{ flex: 1 }}`
-  - 上に**スクリム** `View`（`StyleSheet.absoluteFill`）：
-    | variant | スクリム |
-    |---|---|
-    | battle | `rgba(11,14,20,0.42)` 均一（盤面の可読性優先） |
-    | home | 下方向グラデ相当を単色2枚で近似（上 `0.30` / 下 `0.55`）。画像側で既に暗いので軽め |
-    | universal | `rgba(11,14,20,0.50)` |
-  - グラデはコア RN のみ（`react-native-linear-gradient` 未導入）なので**重ね `View` 2〜3枚**で近似（`home-bg` は画像側で対応済みのため 1〜2枚で十分）。
-- light（案A）：`View` に `backgroundColor: colors.surface.table.day`、画像なし。
+  - 上に**スクリム** `View`（`StyleSheet.absoluteFill`）。テーマで色が反転する：
+    | variant | dark スクリム | light スクリム |
+    |---|---|---|
+    | battle | `rgba(11,14,20,0.42)` 均一 | `rgba(244,240,230,0.40)` 均一 |
+    | home | 上 `rgba(11,14,20,0.28)` / 下 `0.52` の2枚 | 上 `rgba(244,240,230,0.20)` / 下 `0.45` の2枚 |
+    | universal | `rgba(11,14,20,0.50)` | `rgba(244,240,230,0.55)` |
+  - グラデはコア RN のみ（`react-native-linear-gradient` 未導入）なので**重ね `View` 2枚**で近似。
+  - スクリム値は実装時に主要画面で目視調整（微修正はスペック改訂不要）。
 - `require` の相対パスが深い問題 → `apps/mobile/src/features/theme/backgroundAssets.ts` に集約：
   ```ts
   export const backgroundAssets = {
-    battle: require('../../../../../assets/backgrounds/ragnarok-battle-bg.png'),
-    home: require('../../../../../assets/backgrounds/ragnarok-home-bg.png'),
-    universal: require('../../../../../assets/backgrounds/ragnarok-bg-universal.png'),
+    dark: {
+      battle: require('../../../../../assets/backgrounds/ragnarok-battle-bg.png'),
+      home: require('../../../../../assets/backgrounds/ragnarok-home-bg.png'),
+      universal: require('../../../../../assets/backgrounds/ragnarok-bg-universal.png'),
+    },
+    light: {
+      battle: require('../../../../../assets/backgrounds/ragnarok-battle-bg-day.png'),
+      home: require('../../../../../assets/backgrounds/ragnarok-home-bg-day.png'),
+      universal: require('../../../../../assets/backgrounds/ragnarok-bg-universal-day.png'),
+    },
   } as const;
+  export const resolveBackgroundSource = (v: Variant, s: ThemeScheme) => backgroundAssets[s][v];
   ```
-  - Metro は `assets/backgrounds/*.png` を素で解決する（`react-native-svg` 不要、PNG はコア対応）。`assets/` はプロジェクト直下だが monorepo ルート配下なので Metro の `watchFolders` に含まれる（既存 `assets/runtime/**/*.svg` を `require` 済みという事実で確認済み）。
+  - Metro は `assets/backgrounds/*.png` を素で解決する（`react-native-svg` 不要、PNG はコア対応）。`assets/` は monorepo ルート配下で Metro の `watchFolders` に含まれる（既存 `assets/runtime/**/*.svg` を `require` 済みという事実で確認済み）。
 - アクセシビリティ：背景は `accessibilityElementsHidden` / `importantForAccessibility="no-hide-descendants"` は付けない（子が本文）。画像自体は装飾なので `accessible={false}`。
 
 ### 4.6 画面への配線
@@ -283,11 +288,11 @@ const styles = useThemedStyles(makeStyles);
 | 単体 | `resolveScheme` マトリクス、`parse/serializeThemePreference` | `features/theme/themePreference.test.ts`（新） |
 | 単体 | `themeStore` load/setPreference（storage スタブ） | `state/themeStore.test.ts`（新） |
 | 単体 | `darkColors` キー網羅・hex 形式・AA コントラスト | `packages/ui/src/tokens.test.ts`（追記） |
-| 単体 | `<AppBackground>` が variant→asset を正しく引く／light では画像を出さない | `features/theme/AppBackground.test.tsx`（新、RTL があれば） |
+| 単体 | `resolveBackgroundSource(variant, scheme)` が 6枚を正しく引く | `features/theme/backgroundAssets.test.ts`（新） |
 | 回帰 | 既存 `npm run -w … mobile:test` 全緑、`ui:test`、`game-core:test` | CI 相当をローカル実行 |
 | 目視 | 主要3画面（ホーム / CPU対戦 / カタログ）を light/dark 双方でスクリーンショット | `/run` で Expo 起動、`SendUserFile` で提出 |
 
-- RTL（`@testing-library/react-native`）が未導入なら `<AppBackground>` はロジック関数（`resolveBackgroundSource(variant, scheme)`）を切り出してそれを単体テスト、コンポーネントは薄く保つ。
+- RTL（`@testing-library/react-native`）は未導入。`<AppBackground>` のロジックは `resolveBackgroundSource` に寄せて単体テスト、コンポーネント自体は薄く保つ。
 
 ## 7. 実装順序（プラン化の目安）
 
@@ -300,9 +305,11 @@ const styles = useThemedStyles(makeStyles);
 7. `cpu-game/settings.tsx` にテーマ切替行 + i18n キー。
 8. 全テスト・typecheck・lint・format:check → コミット（バッチごと）。
 
-## 8. 未解決 / レビュー確認事項
+## 8. レビュー結果（2026-09-07 確定）
 
-1. **§4.4 ライトテーマの背景**：案A（ライトは画像なし）で確定してよいか。
-2. **OS不明時の既定**（`resolveScheme('system', null)`）：ダーク固定でよいか（本書はダーク）。
-3. **dark パレットの実値**（§3.2）：方向性の確認（最終値は実装時に目視調整）。
-4. 生 hex を持つ `app/index.tsx` のボタン色を SP1 で暫定トークン化することの是非（意匠刷新は SP2）。
+1. **§4.4 ライトテーマの背景** → 案C（ライト用「昼」背景を3枚生成・使用）。実施済み。
+2. **OS不明時の既定**（`resolveScheme('system', null)`）→ ダーク固定。
+3. **dark パレットの実値**（§3.2）→ 方向性 OK。最終値は実装時に主要画面で目視調整。
+4. `app/index.tsx` 等の生 hex → SP1 で暫定トークン化（意匠刷新は SP2）。
+
+残る調整余地（プラン化には影響しない）：dark パレット実値、スクリム不透明度、`*-day.png` の意匠ブラッシュアップ（SP3 合流可）。
