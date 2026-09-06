@@ -8,6 +8,7 @@ import {
   isValidInviteCode,
   normalizeInviteCode,
   parseInviteFromLink,
+  resolveJoinTarget,
 } from './inviteLink';
 
 describe('parseInviteFromLink', () => {
@@ -64,6 +65,51 @@ describe('normalizeInviteCode / isValidInviteCode', () => {
     assert.equal(isValidInviteCode('ROOM 1'), false);
     assert.equal(isValidInviteCode('A'.repeat(17)), false);
     assert.equal(isValidInviteCode(''), false);
+  });
+});
+
+describe('resolveJoinTarget', () => {
+  const chrome =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
+  const androidChrome =
+    'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36';
+  const iosSafari =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+  it('native app -> straight into the join screen', () => {
+    assert.deepEqual(resolveJoinTarget({ platformOS: 'android', userAgent: '', code: 'ROOM9' }), {
+      kind: 'app',
+      href: '/online-room?invite=ROOM9',
+    });
+  });
+
+  it('desktop web -> straight into the join screen (play on web)', () => {
+    assert.deepEqual(resolveJoinTarget({ platformOS: 'web', userAgent: chrome, code: 'ROOM9' }), {
+      kind: 'app',
+      href: '/online-room?invite=ROOM9',
+    });
+  });
+
+  it('android mobile web -> store page for android', () => {
+    assert.deepEqual(
+      resolveJoinTarget({ platformOS: 'web', userAgent: androidChrome, code: 'ROOM9' }),
+      { kind: 'mobile-web', store: 'android', code: 'ROOM9' },
+    );
+  });
+
+  it('ios mobile web -> store page for ios', () => {
+    assert.deepEqual(resolveJoinTarget({ platformOS: 'web', userAgent: iosSafari, code: null }), {
+      kind: 'mobile-web',
+      store: 'ios',
+      code: null,
+    });
+  });
+
+  it('missing code -> the bare online-room path', () => {
+    assert.deepEqual(resolveJoinTarget({ platformOS: 'web', userAgent: chrome, code: null }), {
+      kind: 'app',
+      href: '/online-room',
+    });
   });
 });
 

@@ -1,52 +1,96 @@
 // M4-EX-02: HTTPS 招待リンクの着地点（`/join?code=CODE`）。
-// ネイティブでは +native-intent が先に /online-room?invite= へ飛ばすので、
-// このルートが実際に描画されるのは Web（未導入端末・PC）と保険のリダイレクト。
+//
+// - ネイティブアプリ内 / デスクトップ Web  → そのまま参加画面へ
+//   （ネイティブは通常 +native-intent が先に処理する）
+// - スマホのブラウザ（＝アプリ未導入の可能性大）→ Store 案内・アプリで開く・
+//   ブラウザで参加 を提示
 
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { useMemo } from 'react';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
 import { translate } from '../i18n/translate';
-import { buildInviteAppLink, parseInviteFromLink } from '../features/online-room/inviteLink';
-
-// 未公開のため仮。公開後に Google Play の URL へ差し替える。
-const STORE_URL = 'https://play.google.com/store/apps';
+import {
+  APP_STORE_URL,
+  PLAY_STORE_URL,
+  buildInviteAppLink,
+  parseInviteFromLink,
+  resolveJoinTarget,
+} from '../features/online-room/inviteLink';
 
 export default function JoinInviteScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ code?: string }>();
   const raw = Array.isArray(params.code) ? params.code[0] : params.code;
   const code = raw ? parseInviteFromLink(`/join?code=${raw}`) : null;
 
-  if (Platform.OS !== 'web') {
-    return <Redirect href={code ? `/online-room?invite=${code}` : '/online-room'} />;
+  const target = useMemo(
+    () =>
+      resolveJoinTarget({
+        platformOS: Platform.OS,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        code,
+      }),
+    [code],
+  );
+
+  if (target.kind === 'app') {
+    return <Redirect href={target.href} />;
   }
+
+  const storeUrl = target.store === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
 
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>{translate('onlineRoom.join.title')}</Text>
+
       {code ? (
         <>
           <Text style={styles.codeLabel}>{translate('onlineRoom.join.codeLabel')}</Text>
           <Text style={styles.code}>{code}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void Linking.openURL(buildInviteAppLink(code))}
-            style={styles.primary}
-          >
-            <Text style={styles.primaryText}>{translate('onlineRoom.join.openApp')}</Text>
-          </Pressable>
         </>
       ) : (
         <Text style={styles.muted}>{translate('onlineRoom.error.inviteRequired')}</Text>
       )}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => void Linking.openURL(STORE_URL)}
-        style={styles.secondary}
-      >
-        <Text style={styles.secondaryText}>{translate('onlineRoom.join.getApp')}</Text>
-      </Pressable>
+
+      {storeUrl ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void Linking.openURL(storeUrl)}
+          style={styles.primary}
+        >
+          <Text style={styles.primaryText}>
+            {target.store === 'ios'
+              ? translate('onlineRoom.join.getAppIos')
+              : translate('onlineRoom.join.getAppAndroid')}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text style={styles.muted}>{translate('onlineRoom.join.iosComingSoon')}</Text>
+      )}
+
+      {code ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void Linking.openURL(buildInviteAppLink(code))}
+          style={styles.secondary}
+        >
+          <Text style={styles.secondaryText}>{translate('onlineRoom.join.openApp')}</Text>
+        </Pressable>
+      ) : null}
+
+      {code ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.replace(`/online-room?invite=${code}`)}
+          style={styles.link}
+        >
+          <Text style={styles.linkText}>{translate('onlineRoom.join.playOnWeb')}</Text>
+        </Pressable>
+      ) : null}
+
       <Text style={styles.muted}>{translate('onlineRoom.join.hint')}</Text>
     </View>
   );
@@ -96,5 +140,11 @@ const styles = StyleSheet.create({
     color: '#166534',
     fontSize: typography.size.body,
     fontWeight: typography.weight.bold,
+  },
+  link: { paddingVertical: spacing.xs },
+  linkText: {
+    color: colors.ink.secondary,
+    fontSize: typography.size.caption,
+    textDecorationLine: 'underline',
   },
 });

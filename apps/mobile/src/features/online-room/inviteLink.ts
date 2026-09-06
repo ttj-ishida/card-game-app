@@ -72,3 +72,34 @@ export function buildInviteWebLink(code: string): string {
 export function buildInviteAppLink(code: string): string {
   return `${APP_SCHEME}://join?code=${encodeURIComponent(normalizeInviteCode(code))}`;
 }
+
+export const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.ttjishida.ragnarokmillennium';
+/** iOS 版は未提供。用意でき次第 App Store の URL を入れる。 */
+export const APP_STORE_URL: string | null = null;
+
+/**
+ * 招待リンクを開いた環境ごとの遷移先。
+ * - `app`: そのままアプリ/Webの参加画面へ（ネイティブアプリ内・デスクトップWeb）
+ * - `mobile-web`: スマホのブラウザ。アプリ未導入の可能性が高いので Store 案内＋
+ *   「アプリで開く」「ブラウザで参加」を提示する
+ */
+export type JoinTarget =
+  | { kind: 'app'; href: string }
+  | { kind: 'mobile-web'; store: 'android' | 'ios' | null; code: string | null };
+
+export function resolveJoinTarget(input: {
+  platformOS: string;
+  userAgent: string;
+  code: string | null;
+}): JoinTarget {
+  const href = input.code ? `/online-room?invite=${input.code}` : '/online-room';
+  if (input.platformOS !== 'web') return { kind: 'app', href };
+
+  const ua = input.userAgent ?? '';
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Mobile/i.test(ua));
+  if (!isAndroid && !isIOS) return { kind: 'app', href };
+
+  return { kind: 'mobile-web', store: isAndroid ? 'android' : 'ios', code: input.code };
+}
