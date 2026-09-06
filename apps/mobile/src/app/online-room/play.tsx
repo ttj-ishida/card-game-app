@@ -3,10 +3,12 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
-import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
+import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 import { rankNumber, type SuitCode } from '@ragnarok-millennium/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
+import { AppBackground } from '../../features/theme/AppBackground';
+import { useThemedStyles } from '../../features/theme/ThemeProvider';
 import {
   canPass,
   canSelectCard,
@@ -49,6 +51,7 @@ function skillEffectLabelKey(effect: OnlineRoundEventView['skillEffect']): strin
 }
 
 export default function OnlineRoomPlayScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const state = useStore(onlineRoundStore, (s) => s);
   const [showHistory, setShowHistory] = useState(false);
@@ -131,9 +134,11 @@ export default function OnlineRoomPlayScreen() {
 
   if (!view) {
     return (
-      <View style={styles.screen}>
-        <Text style={styles.muted}>{translate('onlineRoom.loading')}</Text>
-      </View>
+      <AppBackground variant="battle">
+        <View style={styles.screen}>
+          <Text style={styles.muted}>{translate('onlineRoom.loading')}</Text>
+        </View>
+      </AppBackground>
     );
   }
 
@@ -186,411 +191,422 @@ export default function OnlineRoomPlayScreen() {
   ) : null;
 
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.topBar}>
-          <Text style={styles.topText}>
-            {view.dayNight === 'DAY'
-              ? translate('cpuGame.dayNight.day')
-              : translate('cpuGame.dayNight.night')}
-          </Text>
-          <Text style={styles.topText}>
-            {view.isMyTurn
-              ? translate('onlineRoom.play.myTurn')
-              : translate('onlineRoom.play.waitingTurn')}
-          </Text>
-          {state.connection === 'reconnecting' ? (
-            <Text style={styles.reconnecting}>{translate('onlineRoom.play.reconnecting')}</Text>
-          ) : null}
-          {state.connection === 'offline' ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void onlineRoundStore.getState().reconnect()}
-              style={styles.offlineBtn}
-            >
-              <Text style={styles.offlineText}>
-                {translate('onlineRoom.play.offline')} · {translate('onlineRoom.play.retry')}
-              </Text>
-            </Pressable>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showHistory }}
-            onPress={() => setShowHistory((v) => !v)}
-            style={styles.historyToggle}
-          >
-            <Text style={styles.topText}>
-              {translate('cpuGame.history')} {showHistory ? '▲' : '▾'}
-            </Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={confirmLeave} style={styles.leaveBtn}>
-            <Text style={styles.leaveText}>{translate('onlineRoom.play.leave')}</Text>
-          </Pressable>
-        </View>
-
-        {winnerBanner}
-
-        {showHistory ? (
-          <ScrollView style={styles.historyPanel}>
-            {state.eventLog.length === 0 ? (
-              <Text style={styles.muted}>{translate('sandbox.history.empty')}</Text>
-            ) : (
-              state.eventLog.map((line) => (
-                <View key={line.eventSeq} style={styles.historyLine}>
-                  <Text style={styles.muted}>
-                    {line.index + 1}. {actorLabel(line.seatId)}
-                    {line.eventKind === 'PLAYER_LEFT_CPU_TAKEOVER'
-                      ? ` · ${translate('onlineRoom.play.eventTakeover')}`
-                      : line.eventKind === 'PLAYER_FORFEITED'
-                        ? ` · ${translate('onlineRoom.play.eventForfeit')}`
-                        : ''}
-                    {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
-                    line.eventKind !== 'PLAYER_FORFEITED' &&
-                    line.kind === 'PASS'
-                      ? ` · ${translate('cpuGame.turnLog.PASS')}`
-                      : ''}
-                    {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
-                    line.eventKind !== 'PLAYER_FORFEITED' &&
-                    line.kind === 'PLAY'
-                      ? ` · ${translate(`cpuGame.turnLog.${line.actionKind}`)}`
-                      : ''}
-                    {skillEffectLabelKey(line.skillEffect)
-                      ? ` [${translate(skillEffectLabelKey(line.skillEffect)!)}]`
-                      : ''}
-                  </Text>
-                  {line.cards.length > 0 ? (
-                    <View style={styles.historyCards}>
-                      {eventCardViews(line).map((card, ci) => (
-                        <CardFace
-                          key={ci}
-                          rank={card.rank}
-                          suitCode={card.suitCode as SuitCode}
-                          isJoker={card.isJoker}
-                          size="mini"
-                        />
-                      ))}
-                    </View>
-                  ) : null}
-                </View>
-              ))
-            )}
-          </ScrollView>
-        ) : null}
-
+    <AppBackground variant="battle">
+      <View style={styles.screen}>
         <ScrollView
-          horizontal
-          style={styles.opponentRow}
-          contentContainerStyle={styles.opponentRowContent}
+          style={styles.scrollArea}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          {view.opponents.map((opp, index) => (
-            <View
-              key={opp.playerId}
-              style={[styles.oppPanel, opp.isActive && styles.oppPanelActive]}
-            >
-              <Text style={styles.oppName}>
-                {translate('onlineRoom.play.opponentPrefix')}
-                {index + 1}
-              </Text>
-              <Text style={styles.oppLine}>
-                {opp.numberCardCount}
-                {translate('cpuGame.opponent.cardsSuffix')}
-              </Text>
-              {takeovers[opp.playerId] === 'CPU' ? (
-                <Text style={styles.oppTakeover}>{translate('onlineRoom.play.opponentCpu')}</Text>
-              ) : null}
-              {takeovers[opp.playerId] === 'LEFT' ? (
-                <Text style={styles.oppTakeover}>{translate('onlineRoom.play.opponentLeft')}</Text>
-              ) : null}
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={styles.field}>
-          {view.field ? (
-            <View style={styles.fieldCards}>
-              {view.field.cards.map((card, index) => (
-                <CardFace
-                  key={index}
-                  rank={card.rank}
-                  suitCode={card.suitCode}
-                  isJoker={card.isJoker}
-                  size="field"
-                />
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
-          )}
-          <View style={styles.lockRow}>
-            {view.lock.countLocked ? (
-              <Text style={styles.lockTag}>{translate('cpuGame.lock.count')}</Text>
-            ) : null}
-            {view.lock.suitFixed ? (
-              <Text style={styles.lockTag}>
-                {translate('cpuGame.lock.suitFixed')}:{' '}
-                {view.lock.suitFixed.map((s) => translate(`sandbox.suit.${s}`)).join('')}
-              </Text>
-            ) : null}
-            {view.lock.suitUniform ? (
-              <Text style={styles.lockTag}>{translate('cpuGame.lock.suitUniform')}</Text>
-            ) : null}
-          </View>
-        </View>
-
-        {heldSkill ? (
-          <View style={styles.skillPanel}>
-            <Text style={styles.skillTitle}>
-              {translate('cpuGame.skill.held')}:{' '}
-              {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
+          <View style={styles.topBar}>
+            <Text style={styles.topText}>
+              {view.dayNight === 'DAY'
+                ? translate('cpuGame.dayNight.day')
+                : translate('cpuGame.dayNight.night')}
             </Text>
-            {skillSubmitOptions.map((opt) => (
+            <Text style={styles.topText}>
+              {view.isMyTurn
+                ? translate('onlineRoom.play.myTurn')
+                : translate('onlineRoom.play.waitingTurn')}
+            </Text>
+            {state.connection === 'reconnecting' ? (
+              <Text style={styles.reconnecting}>{translate('onlineRoom.play.reconnecting')}</Text>
+            ) : null}
+            {state.connection === 'offline' ? (
               <Pressable
-                key={opt.useSkill}
                 accessibilityRole="button"
-                accessibilityState={{ selected: pendingSkill?.useSkill === opt.useSkill }}
-                onPress={() => onDeclareSkill(opt.useSkill)}
-                style={[
-                  styles.actionBtn,
-                  pendingSkill?.useSkill === opt.useSkill && styles.actionBtnSelected,
-                ]}
+                onPress={() => void onlineRoundStore.getState().reconnect()}
+                style={styles.offlineBtn}
               >
-                <Text style={styles.actionText}>
-                  {translate(`cpuGame.skill.submit.${opt.useSkill}`)}
+                <Text style={styles.offlineText}>
+                  {translate('onlineRoom.play.offline')} · {translate('onlineRoom.play.retry')}
                 </Text>
               </Pressable>
-            ))}
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showHistory }}
+              onPress={() => setShowHistory((v) => !v)}
+              style={styles.historyToggle}
+            >
+              <Text style={styles.topText}>
+                {translate('cpuGame.history')} {showHistory ? '▲' : '▾'}
+              </Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={confirmLeave} style={styles.leaveBtn}>
+              <Text style={styles.leaveText}>{translate('onlineRoom.play.leave')}</Text>
+            </Pressable>
           </View>
-        ) : null}
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
-          {view.hand.map((card) => {
-            const selected = selection.includes(card.cardId);
-            const selectable =
-              view.isMyTurn && (selected || canSelectCard(selection, card.cardId, skillLegalPlays));
-            return (
-              <Pressable
-                key={card.cardId}
-                accessibilityRole="button"
-                accessibilityState={{ selected, disabled: !selectable }}
-                disabled={!selectable}
-                onPress={() => onSelectCard(card.cardId)}
-                style={[
-                  styles.handCard,
-                  selected && styles.handCardSelected,
-                  !selectable && styles.handCardDim,
-                ]}
+          {winnerBanner}
+
+          {showHistory ? (
+            <ScrollView style={styles.historyPanel}>
+              {state.eventLog.length === 0 ? (
+                <Text style={styles.muted}>{translate('sandbox.history.empty')}</Text>
+              ) : (
+                state.eventLog.map((line) => (
+                  <View key={line.eventSeq} style={styles.historyLine}>
+                    <Text style={styles.muted}>
+                      {line.index + 1}. {actorLabel(line.seatId)}
+                      {line.eventKind === 'PLAYER_LEFT_CPU_TAKEOVER'
+                        ? ` · ${translate('onlineRoom.play.eventTakeover')}`
+                        : line.eventKind === 'PLAYER_FORFEITED'
+                          ? ` · ${translate('onlineRoom.play.eventForfeit')}`
+                          : ''}
+                      {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
+                      line.eventKind !== 'PLAYER_FORFEITED' &&
+                      line.kind === 'PASS'
+                        ? ` · ${translate('cpuGame.turnLog.PASS')}`
+                        : ''}
+                      {line.eventKind !== 'PLAYER_LEFT_CPU_TAKEOVER' &&
+                      line.eventKind !== 'PLAYER_FORFEITED' &&
+                      line.kind === 'PLAY'
+                        ? ` · ${translate(`cpuGame.turnLog.${line.actionKind}`)}`
+                        : ''}
+                      {skillEffectLabelKey(line.skillEffect)
+                        ? ` [${translate(skillEffectLabelKey(line.skillEffect)!)}]`
+                        : ''}
+                    </Text>
+                    {line.cards.length > 0 ? (
+                      <View style={styles.historyCards}>
+                        {eventCardViews(line).map((card, ci) => (
+                          <CardFace
+                            key={ci}
+                            rank={card.rank}
+                            suitCode={card.suitCode as SuitCode}
+                            isJoker={card.isJoker}
+                            size="mini"
+                          />
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          ) : null}
+
+          <ScrollView
+            horizontal
+            style={styles.opponentRow}
+            contentContainerStyle={styles.opponentRowContent}
+          >
+            {view.opponents.map((opp, index) => (
+              <View
+                key={opp.playerId}
+                style={[styles.oppPanel, opp.isActive && styles.oppPanelActive]}
               >
-                <CardFace
-                  rank={card.rank}
-                  suitCode={card.suitCode}
-                  isJoker={card.isJoker}
-                  size="hand"
-                />
-              </Pressable>
-            );
-          })}
+                <Text style={styles.oppName}>
+                  {translate('onlineRoom.play.opponentPrefix')}
+                  {index + 1}
+                </Text>
+                <Text style={styles.oppLine}>
+                  {opp.numberCardCount}
+                  {translate('cpuGame.opponent.cardsSuffix')}
+                </Text>
+                {takeovers[opp.playerId] === 'CPU' ? (
+                  <Text style={styles.oppTakeover}>{translate('onlineRoom.play.opponentCpu')}</Text>
+                ) : null}
+                {takeovers[opp.playerId] === 'LEFT' ? (
+                  <Text style={styles.oppTakeover}>
+                    {translate('onlineRoom.play.opponentLeft')}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </ScrollView>
+
+          <View style={styles.field}>
+            {view.field ? (
+              <View style={styles.fieldCards}>
+                {view.field.cards.map((card, index) => (
+                  <CardFace
+                    key={index}
+                    rank={card.rank}
+                    suitCode={card.suitCode}
+                    isJoker={card.isJoker}
+                    size="field"
+                  />
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
+            )}
+            <View style={styles.lockRow}>
+              {view.lock.countLocked ? (
+                <Text style={styles.lockTag}>{translate('cpuGame.lock.count')}</Text>
+              ) : null}
+              {view.lock.suitFixed ? (
+                <Text style={styles.lockTag}>
+                  {translate('cpuGame.lock.suitFixed')}:{' '}
+                  {view.lock.suitFixed.map((s) => translate(`sandbox.suit.${s}`)).join('')}
+                </Text>
+              ) : null}
+              {view.lock.suitUniform ? (
+                <Text style={styles.lockTag}>{translate('cpuGame.lock.suitUniform')}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          {heldSkill ? (
+            <View style={styles.skillPanel}>
+              <Text style={styles.skillTitle}>
+                {translate('cpuGame.skill.held')}:{' '}
+                {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
+              </Text>
+              {skillSubmitOptions.map((opt) => (
+                <Pressable
+                  key={opt.useSkill}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: pendingSkill?.useSkill === opt.useSkill }}
+                  onPress={() => onDeclareSkill(opt.useSkill)}
+                  style={[
+                    styles.actionBtn,
+                    pendingSkill?.useSkill === opt.useSkill && styles.actionBtnSelected,
+                  ]}
+                >
+                  <Text style={styles.actionText}>
+                    {translate(`cpuGame.skill.submit.${opt.useSkill}`)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </ScrollView>
 
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: !view.isMyTurn || !canSubmit(selection, skillLegalPlays),
-            }}
-            disabled={!view.isMyTurn || !canSubmit(selection, skillLegalPlays)}
-            onPress={onSubmit}
-            style={[
-              styles.actionBtn,
-              (!view.isMyTurn || !canSubmit(selection, skillLegalPlays)) && styles.actionDisabled,
-            ]}
-          >
-            <Text style={styles.actionText}>{translate('cpuGame.action.submit')}</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: !view.isMyTurn || pendingSkill != null || !canPass(legalPlays),
-            }}
-            disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
-            onPress={onPass}
-            style={[
-              styles.actionBtn,
-              (!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)) &&
-                styles.actionDisabled,
-            ]}
-          >
-            <Text style={styles.actionText}>{translate('cpuGame.action.pass')}</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onlineRoundStore.getState().clearSelection()}
-            style={styles.actionBtnGhost}
-          >
-            <Text style={styles.actionTextGhost}>{translate('cpuGame.action.clear')}</Text>
-          </Pressable>
+        <View style={styles.footer}>
+          <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
+            {view.hand.map((card) => {
+              const selected = selection.includes(card.cardId);
+              const selectable =
+                view.isMyTurn &&
+                (selected || canSelectCard(selection, card.cardId, skillLegalPlays));
+              return (
+                <Pressable
+                  key={card.cardId}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, disabled: !selectable }}
+                  disabled={!selectable}
+                  onPress={() => onSelectCard(card.cardId)}
+                  style={[
+                    styles.handCard,
+                    selected && styles.handCardSelected,
+                    !selectable && styles.handCardDim,
+                  ]}
+                >
+                  <CardFace
+                    rank={card.rank}
+                    suitCode={card.suitCode}
+                    isJoker={card.isJoker}
+                    size="hand"
+                  />
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: !view.isMyTurn || !canSubmit(selection, skillLegalPlays),
+              }}
+              disabled={!view.isMyTurn || !canSubmit(selection, skillLegalPlays)}
+              onPress={onSubmit}
+              style={[
+                styles.actionBtn,
+                (!view.isMyTurn || !canSubmit(selection, skillLegalPlays)) && styles.actionDisabled,
+              ]}
+            >
+              <Text style={styles.actionText}>{translate('cpuGame.action.submit')}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: !view.isMyTurn || pendingSkill != null || !canPass(legalPlays),
+              }}
+              disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
+              onPress={onPass}
+              style={[
+                styles.actionBtn,
+                (!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)) &&
+                  styles.actionDisabled,
+              ]}
+            >
+              <Text style={styles.actionText}>{translate('cpuGame.action.pass')}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onlineRoundStore.getState().clearSelection()}
+              style={styles.actionBtnGhost}
+            >
+              <Text style={styles.actionTextGhost}>{translate('cpuGame.action.clear')}</Text>
+            </Pressable>
+          </View>
+          {reasonText(state.lastReason) ? (
+            <Text style={styles.invalid}>{reasonText(state.lastReason)}</Text>
+          ) : null}
+          {!canSubmitPlain(selection, legalPlays) && selection.length === 0 && !view.isMyTurn ? (
+            <Text style={styles.muted}>{translate('onlineRoom.play.waitingTurn')}</Text>
+          ) : null}
         </View>
-        {reasonText(state.lastReason) ? (
-          <Text style={styles.invalid}>{reasonText(state.lastReason)}</Text>
-        ) : null}
-        {!canSubmitPlain(selection, legalPlays) && selection.length === 0 && !view.isMyTurn ? (
-          <Text style={styles.muted}>{translate('onlineRoom.play.waitingTurn')}</Text>
-        ) : null}
       </View>
-    </View>
+    </AppBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.xs, backgroundColor: colors.surface.table.day },
-  scrollArea: { flexShrink: 1, flexGrow: 1 },
-  scrollContent: { gap: spacing.xs, paddingBottom: spacing.xs },
-  footer: { gap: spacing.xs, paddingTop: spacing.xs },
-  topBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-  topText: { fontSize: typography.size.caption, color: colors.ink.primary },
-  reconnecting: {
-    fontSize: typography.size.caption,
-    color: colors.state.warning,
-    fontWeight: typography.weight.bold,
-  },
-  offlineBtn: {
-    borderWidth: 1,
-    borderColor: colors.suit.fire,
-    borderRadius: radius.control,
-    backgroundColor: colors.surface.card.face,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  offlineText: {
-    fontSize: typography.size.caption,
-    color: colors.suit.fire,
-    fontWeight: typography.weight.bold,
-  },
-  historyToggle: {
-    borderWidth: 1,
-    borderColor: colors.state.disabled,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  leaveBtn: {
-    marginLeft: 'auto',
-    borderWidth: 1,
-    borderColor: colors.suit.fire,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  leaveText: { fontSize: typography.size.caption, color: colors.suit.fire },
-  historyPanel: {
-    maxHeight: 140,
-    borderWidth: 1,
-    borderColor: colors.state.disabled,
-    borderRadius: radius.control,
-    padding: spacing.xs,
-  },
-  historyLine: { gap: 2, paddingVertical: 2 },
-  historyCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-  opponentRow: { flexGrow: 0 },
-  opponentRowContent: { gap: spacing.sm, paddingVertical: spacing.xs },
-  oppPanel: {
-    minWidth: 96,
-    borderWidth: 1,
-    borderColor: colors.state.disabled,
-    borderRadius: radius.control,
-    padding: spacing.xs,
-    gap: 2,
-    backgroundColor: colors.surface.card.face,
-  },
-  oppPanelActive: { borderColor: colors.ink.primary, borderWidth: 2 },
-  oppName: {
-    fontSize: typography.size.caption,
-    fontWeight: typography.weight.bold,
-    color: colors.ink.primary,
-  },
-  oppLine: { fontSize: typography.size.caption, color: colors.ink.secondary },
-  oppTakeover: {
-    fontSize: typography.size.caption,
-    color: colors.state.warning,
-    fontWeight: typography.weight.bold,
-  },
-  field: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-  },
-  fieldCards: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
-  lockRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
-  lockTag: {
-    fontSize: typography.size.caption,
-    color: colors.ink.primary,
-    borderWidth: 1,
-    borderColor: colors.state.warning,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.xs,
-  },
-  muted: { fontSize: typography.size.caption, color: colors.ink.secondary },
-  handScroll: { flexGrow: 0 },
-  handRow: { gap: spacing.xs, paddingVertical: spacing.xs, alignItems: 'flex-end' },
-  handCard: { borderRadius: radius.control, borderWidth: 2, borderColor: 'transparent' },
-  handCardSelected: { borderColor: colors.ink.primary },
-  handCardDim: { opacity: 0.4 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-  skillPanel: {
-    borderWidth: 1,
-    borderColor: colors.state.disabled,
-    borderRadius: radius.control,
-    padding: spacing.xs,
-    gap: spacing.xs,
-  },
-  skillTitle: {
-    fontSize: typography.size.caption,
-    fontWeight: typography.weight.bold,
-    color: colors.ink.primary,
-  },
-  winnerPanel: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.ink.primary,
-    borderRadius: radius.control,
-    padding: spacing.sm,
-  },
-  winnerText: {
-    fontSize: typography.size.title,
-    fontWeight: typography.weight.bold,
-    color: colors.ink.primary,
-  },
-  actionBtn: {
-    backgroundColor: colors.ink.primary,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  actionDisabled: { backgroundColor: colors.state.disabled },
-  actionBtnSelected: { backgroundColor: colors.state.warning },
-  actionText: {
-    fontSize: typography.size.body,
-    fontWeight: typography.weight.bold,
-    color: colors.ink.inverse,
-  },
-  actionBtnGhost: {
-    borderWidth: 1,
-    borderColor: colors.ink.primary,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  actionTextGhost: { fontSize: typography.size.body, color: colors.ink.primary },
-  invalid: {
-    fontSize: typography.size.caption,
-    color: colors.suit.fire,
-    fontWeight: typography.weight.bold,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    screen: { flex: 1, padding: spacing.xs },
+    scrollArea: { flexShrink: 1, flexGrow: 1 },
+    scrollContent: { gap: spacing.xs, paddingBottom: spacing.xs },
+    footer: { gap: spacing.xs, paddingTop: spacing.xs },
+    topBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+    topText: { fontSize: typography.size.caption, color: c.ink.primary },
+    reconnecting: {
+      fontSize: typography.size.caption,
+      color: c.state.warning,
+      fontWeight: typography.weight.bold,
+    },
+    offlineBtn: {
+      borderWidth: 1,
+      borderColor: c.suit.fire,
+      borderRadius: radius.control,
+      backgroundColor: c.surface.card.face,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    offlineText: {
+      fontSize: typography.size.caption,
+      color: c.suit.fire,
+      fontWeight: typography.weight.bold,
+    },
+    historyToggle: {
+      borderWidth: 1,
+      borderColor: c.state.disabled,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    leaveBtn: {
+      marginLeft: 'auto',
+      borderWidth: 1,
+      borderColor: c.suit.fire,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    leaveText: { fontSize: typography.size.caption, color: c.suit.fire },
+    historyPanel: {
+      maxHeight: 140,
+      borderWidth: 1,
+      borderColor: c.state.disabled,
+      borderRadius: radius.control,
+      padding: spacing.xs,
+    },
+    historyLine: { gap: 2, paddingVertical: 2 },
+    historyCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
+    opponentRow: { flexGrow: 0 },
+    opponentRowContent: { gap: spacing.sm, paddingVertical: spacing.xs },
+    oppPanel: {
+      minWidth: 96,
+      borderWidth: 1,
+      borderColor: c.state.disabled,
+      borderRadius: radius.control,
+      padding: spacing.xs,
+      gap: 2,
+      backgroundColor: c.surface.card.face,
+    },
+    oppPanelActive: { borderColor: c.ink.primary, borderWidth: 2 },
+    oppName: {
+      fontSize: typography.size.caption,
+      fontWeight: typography.weight.bold,
+      color: c.ink.primary,
+    },
+    oppLine: { fontSize: typography.size.caption, color: c.ink.secondary },
+    oppTakeover: {
+      fontSize: typography.size.caption,
+      color: c.state.warning,
+      fontWeight: typography.weight.bold,
+    },
+    field: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      paddingVertical: spacing.xs,
+    },
+    fieldCards: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      justifyContent: 'center',
+    },
+    lockRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
+    lockTag: {
+      fontSize: typography.size.caption,
+      color: c.ink.primary,
+      borderWidth: 1,
+      borderColor: c.state.warning,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.xs,
+    },
+    muted: { fontSize: typography.size.caption, color: c.ink.secondary },
+    handScroll: { flexGrow: 0 },
+    handRow: { gap: spacing.xs, paddingVertical: spacing.xs, alignItems: 'flex-end' },
+    handCard: { borderRadius: radius.control, borderWidth: 2, borderColor: 'transparent' },
+    handCardSelected: { borderColor: c.ink.primary },
+    handCardDim: { opacity: 0.4 },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+    skillPanel: {
+      borderWidth: 1,
+      borderColor: c.state.disabled,
+      borderRadius: radius.control,
+      padding: spacing.xs,
+      gap: spacing.xs,
+    },
+    skillTitle: {
+      fontSize: typography.size.caption,
+      fontWeight: typography.weight.bold,
+      color: c.ink.primary,
+    },
+    winnerPanel: {
+      alignItems: 'center',
+      gap: spacing.sm,
+      borderWidth: 1,
+      borderColor: c.ink.primary,
+      borderRadius: radius.control,
+      padding: spacing.sm,
+    },
+    winnerText: {
+      fontSize: typography.size.title,
+      fontWeight: typography.weight.bold,
+      color: c.ink.primary,
+    },
+    actionBtn: {
+      backgroundColor: c.ink.primary,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    actionDisabled: { backgroundColor: c.state.disabled },
+    actionBtnSelected: { backgroundColor: c.state.warning },
+    actionText: {
+      fontSize: typography.size.body,
+      fontWeight: typography.weight.bold,
+      color: c.ink.inverse,
+    },
+    actionBtnGhost: {
+      borderWidth: 1,
+      borderColor: c.ink.primary,
+      borderRadius: radius.control,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    actionTextGhost: { fontSize: typography.size.body, color: c.ink.primary },
+    invalid: {
+      fontSize: typography.size.caption,
+      color: c.suit.fire,
+      fontWeight: typography.weight.bold,
+    },
+  });
