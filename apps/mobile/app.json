@@ -27,7 +27,7 @@
             {
               "scheme": "https",
               "host": "card-game-app.expo.app",
-              "pathPrefix": "/join"
+              "path": "/join"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

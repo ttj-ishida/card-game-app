@@ -48,12 +48,16 @@ export function parseInviteFromLink(url: string): string | null {
   return normalize(fromPath) ?? normalize(parsed.searchParams.get('code'));
 }
 
-/** 招待コードから共有用の HTTPS リンクを作る。 */
+/**
+ * 招待コードから共有用の HTTPS リンクを作る。コードはパスではなくクエリに置く
+ * （`/join?code=…`）— 静的 Web エクスポートで `/join` を素の1ページにでき、
+ * 動的ルート `[code]` 用のサーバー出力が不要になる。
+ */
 export function buildInviteWebLink(code: string): string {
-  return `https://${INVITE_WEB_HOST}/join/${encodeURIComponent(code.trim().toUpperCase())}`;
+  return `https://${INVITE_WEB_HOST}/join?code=${encodeURIComponent(code.trim().toUpperCase())}`;
 }
 
 /** 招待コードからアプリスキームの直リンクを作る。 */
 export function buildInviteAppLink(code: string): string {
-  return `${APP_SCHEME}://join/${encodeURIComponent(code.trim().toUpperCase())}`;
+  return `${APP_SCHEME}://join?code=${encodeURIComponent(code.trim().toUpperCase())}`;
 }

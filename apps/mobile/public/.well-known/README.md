@@ -5,33 +5,27 @@ reachable at `https://<host>/.well-known/…`.
 
 ## `assetlinks.json` (Android App Links)
 
-Needed so `https://<host>/join/…` opens the app directly instead of the browser.
+Needed so `https://<host>/join?code=…` opens the app directly instead of the browser.
 
-Two ways to provide it:
+Confirmed (2026-09-06): `eas deploy` does **not** auto-generate it —
+`https://card-game-app.expo.app/.well-known/assetlinks.json` currently returns
+the app HTML. So commit the file here:
 
-1. **Let Expo generate it.** With `android.intentFilters` (autoVerify) in
-   `app.json` and the project linked, `eas deploy` can generate and serve
-   `assetlinks.json` from the EAS Android credentials. Check
-   `https://<host>/.well-known/assetlinks.json` after the first deploy — if it
-   is there, do nothing else.
+```json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ttjishida.ragnarokmillennium",
+      "sha256_cert_fingerprints": ["<SHA-256 of the EAS Android signing cert>"]
+    }
+  }
+]
+```
 
-2. **Commit it here** if step 1 does not produce it:
-
-   ```json
-   [
-     {
-       "relation": ["delegate_permission/common.handle_all_urls"],
-       "target": {
-         "namespace": "android_app",
-         "package_name": "com.ttjishida.ragnarokmillennium",
-         "sha256_cert_fingerprints": ["<SHA-256 of the EAS Android signing cert>"]
-       }
-     }
-   ]
-   ```
-
-   Get the fingerprint from the Expo dashboard (Project → Credentials → Android →
-   the build credential) or `eas credentials --platform android` → the keystore's
-   SHA-256. Then redeploy.
+Get the fingerprint from the Expo dashboard (Project → Credentials → Android →
+the build credential) or `eas credentials --platform android` → the keystore's
+SHA-256. Then redeploy.
 
 See `docs/progress/M4-EX-02.md` for the full checklist.

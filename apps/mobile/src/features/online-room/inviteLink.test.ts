@@ -47,13 +47,15 @@ describe('parseInviteFromLink', () => {
 });
 
 describe('buildInvite*Link', () => {
-  it('builds a normalized https link', () => {
-    assert.equal(buildInviteWebLink(' room9 '), 'https://card-game-app.expo.app/join/ROOM9');
+  it('builds a normalized https link with the code in the query and round-trips', () => {
+    const link = buildInviteWebLink(' room9 ');
+    assert.equal(link, 'https://card-game-app.expo.app/join?code=ROOM9');
+    assert.equal(parseInviteFromLink(link), 'ROOM9');
   });
 
   it('builds a normalized app-scheme link that round-trips', () => {
     const link = buildInviteAppLink('room9');
-    assert.equal(link, `${APP_SCHEME}://join/ROOM9`);
+    assert.equal(link, `${APP_SCHEME}://join?code=ROOM9`);
     assert.equal(parseInviteFromLink(link), 'ROOM9');
   });
 });

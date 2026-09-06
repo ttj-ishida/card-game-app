@@ -1,4 +1,4 @@
-// M4-EX-02: HTTPS 招待リンクの着地点。
+// M4-EX-02: HTTPS 招待リンクの着地点（`/join?code=CODE`）。
 // ネイティブでは +native-intent が先に /online-room?invite= へ飛ばすので、
 // このルートが実際に描画されるのは Web（未導入端末・PC）と保険のリダイレクト。
 
@@ -7,8 +7,8 @@ import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { colors, radius, spacing, typography } from '@ragnarok-millennium/ui';
 
-import { translate } from '../../i18n/translate';
-import { buildInviteAppLink, parseInviteFromLink } from '../../features/online-room/inviteLink';
+import { translate } from '../i18n/translate';
+import { buildInviteAppLink, parseInviteFromLink } from '../features/online-room/inviteLink';
 
 // 未公開のため仮。公開後に Google Play の URL へ差し替える。
 const STORE_URL = 'https://play.google.com/store/apps';
@@ -16,7 +16,7 @@ const STORE_URL = 'https://play.google.com/store/apps';
 export default function JoinInviteScreen() {
   const params = useLocalSearchParams<{ code?: string }>();
   const raw = Array.isArray(params.code) ? params.code[0] : params.code;
-  const code = raw ? parseInviteFromLink(`/join/${raw}`) : null;
+  const code = raw ? parseInviteFromLink(`/join?code=${raw}`) : null;
 
   if (Platform.OS !== 'web') {
     return <Redirect href={code ? `/online-room?invite=${code}` : '/online-room'} />;
