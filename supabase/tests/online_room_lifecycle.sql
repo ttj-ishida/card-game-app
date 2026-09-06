@@ -1,6 +1,6 @@
 begin;
 
-select plan(18);
+select plan(19);
 
 select has_function(
   'public',
@@ -96,6 +96,13 @@ select throws_ok(
   'P0001',
   NULL,
   'joining a full room is rejected'
+);
+
+select throws_ok(
+  $$select public.create_friend_room('ROOMFLOW1', 2::smallint, 60::smallint, true)$$,
+  'P0001',
+  'INVITE_CODE_TAKEN',
+  'creating a room with an invite code taken by another host is rejected as INVITE_CODE_TAKEN'
 );
 
 select set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', true);

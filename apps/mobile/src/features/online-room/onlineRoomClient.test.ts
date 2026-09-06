@@ -9,6 +9,7 @@ import {
   fetchOnlineWaitingRoom,
   joinOnlineRoom,
   leaveOnlineRound,
+  OnlineRoomRpcError,
   startOnlineRound,
   submitOnlinePlayRequest,
   type OnlineHttpPort,
@@ -136,6 +137,22 @@ describe('online room RPC client', () => {
       requested_turn_seconds: 60,
       requested_cpu_takeover_enabled: true,
     });
+  });
+
+  it('createOnlineRoom throws OnlineRoomRpcError carrying the server message', async () => {
+    const fakeHttp = http([
+      { status: 200, body: JSON.stringify({ access_token: 'access-1', expires_in: 3600 }) },
+      { status: 400, body: JSON.stringify({ code: 'P0001', message: 'INVITE_CODE_TAKEN' }) },
+    ]);
+
+    await assert.rejects(
+      createOnlineRoom(
+        'ROOM123',
+        { maxPlayers: 4, turnSeconds: 60, cpuTakeoverEnabled: true },
+        deps(fakeHttp),
+      ),
+      (err: unknown) => err instanceof OnlineRoomRpcError && err.serverCode === 'INVITE_CODE_TAKEN',
+    );
   });
 
   it('joinOnlineRoom calls join_friend_room with normalized invite code', async () => {

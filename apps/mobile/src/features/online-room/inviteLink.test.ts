@@ -5,6 +5,8 @@ import {
   APP_SCHEME,
   buildInviteAppLink,
   buildInviteWebLink,
+  isValidInviteCode,
+  normalizeInviteCode,
   parseInviteFromLink,
 } from './inviteLink';
 
@@ -40,9 +42,28 @@ describe('parseInviteFromLink', () => {
     assert.equal(parseInviteFromLink('mailto:foo@bar.com'), null);
   });
 
-  it('rejects codes with illegal characters or excessive length', () => {
+  it('rejects codes outside 4-16 alphanumeric', () => {
     assert.equal(parseInviteFromLink(`${APP_SCHEME}://join/room-123`), null);
-    assert.equal(parseInviteFromLink(`${APP_SCHEME}://join/${'A'.repeat(25)}`), null);
+    assert.equal(parseInviteFromLink(`${APP_SCHEME}://join/${'A'.repeat(17)}`), null);
+    assert.equal(parseInviteFromLink(`${APP_SCHEME}://join/AB`), null);
+  });
+});
+
+describe('normalizeInviteCode / isValidInviteCode', () => {
+  it('normalizes and validates', () => {
+    assert.equal(normalizeInviteCode('  room9  '), 'ROOM9');
+    assert.equal(isValidInviteCode(' room9 '), true);
+    assert.equal(isValidInviteCode('ROOM'), true); // 4 chars, boundary
+    assert.equal(isValidInviteCode('R2D2C3P0R2D2C3P0'), true); // 16 chars, boundary
+  });
+
+  it('rejects too short, too long, non-alphanumeric', () => {
+    assert.equal(isValidInviteCode('ab'), false);
+    assert.equal(isValidInviteCode('ああ'), false);
+    assert.equal(isValidInviteCode('ROOM-1'), false);
+    assert.equal(isValidInviteCode('ROOM 1'), false);
+    assert.equal(isValidInviteCode('A'.repeat(17)), false);
+    assert.equal(isValidInviteCode(''), false);
   });
 });
 

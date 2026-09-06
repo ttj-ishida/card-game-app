@@ -155,12 +155,13 @@ async function snapshotFor(client: Client, roundId: string) {
   return withRetry(() => fetchOnlineRoundSnapshot(roundId, null, client.deps));
 }
 
-const RUN_ID = `${Date.now().toString(36)}${randomUUID().slice(0, 4)}`.toUpperCase();
+// 招待コードは英数字4〜16文字。RUN 全体でユニークにしつつ短く保つ。
+const RUN_ID = `${Date.now().toString(36).slice(-5)}${randomUUID().slice(0, 3)}`.toUpperCase();
 
 async function runOneRound(roundIndex: number): Promise<void> {
   // Globally unique per run so a stale room from an earlier run cannot be
   // joined by invite code (which would hand back its already-finished round).
-  const inviteCode = `SP${RUN_ID}R${roundIndex}`.slice(0, 24);
+  const inviteCode = `SP${RUN_ID}R${roundIndex}`.slice(0, 16);
   const clients: Client[] = Array.from({ length: PLAYERS }, (_, i) => ({
     deps: makeDeps(),
     playerId: '',

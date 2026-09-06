@@ -1,10 +1,12 @@
 import { createStore } from 'zustand/vanilla';
 
 import type { TranslationKey } from '../i18n/translate';
+import { isValidInviteCode, normalizeInviteCode } from '../features/online-room/inviteLink';
 import {
   createOnlineRoom,
   fetchOnlineWaitingRoom,
   joinOnlineRoom,
+  OnlineRoomRpcError,
   startOnlineRound,
   type OnlineRoomDeps,
   type OnlineRoomSettings,
@@ -51,12 +53,26 @@ function requireDeps(): OnlineRoomDeps {
   return deps;
 }
 
-function normalizeInviteCode(input: string): string {
-  return input.trim().toUpperCase();
+/** サーバー/通信エラーを画面向けのメッセージキーへ写す。 */
+function errorKeyFor(err: unknown): TranslationKey {
+  if (err instanceof OnlineRoomRpcError) {
+    switch (err.serverCode) {
+      case 'INVITE_CODE_TAKEN':
+        return 'onlineRoom.error.inviteTaken';
+      case 'room not found':
+        return 'onlineRoom.error.roomNotFound';
+      case 'room is full':
+        return 'onlineRoom.error.roomFull';
+      case 'room is not waiting':
+      case 'room is not in progress':
+        return 'onlineRoom.error.roomUnavailable';
+    }
+  }
+  return 'onlineRoom.error.network';
 }
 
-function failureState(): Pick<OnlineRoomState, 'status' | 'errorMessageKey'> {
-  return { status: 'failed', errorMessageKey: 'onlineRoom.error.network' };
+function failureState(err?: unknown): Pick<OnlineRoomState, 'status' | 'errorMessageKey'> {
+  return { status: 'failed', errorMessageKey: errorKeyFor(err) };
 }
 
 export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
@@ -72,14 +88,18 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       set({ status: 'failed', errorMessageKey: 'onlineRoom.error.inviteRequired' });
       return;
     }
+    if (!isValidInviteCode(inviteCode)) {
+      set({ status: 'failed', errorMessageKey: 'onlineRoom.error.inviteInvalid' });
+      return;
+    }
     set({ status: 'creating', errorMessageKey: null });
     try {
       const d = requireDeps();
       const created = await createOnlineRoom(inviteCode, settings, d);
       const room = await fetchOnlineWaitingRoom(created.room_id, d);
       set({ status: 'ready', inviteCode: room.inviteCode, room, roundId: null });
-    } catch {
-      set(failureState());
+    } catch (err) {
+      set(failureState(err));
     }
   },
 
@@ -89,14 +109,18 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       set({ status: 'failed', errorMessageKey: 'onlineRoom.error.inviteRequired' });
       return;
     }
+    if (!isValidInviteCode(inviteCode)) {
+      set({ status: 'failed', errorMessageKey: 'onlineRoom.error.inviteInvalid' });
+      return;
+    }
     set({ status: 'joining', errorMessageKey: null });
     try {
       const d = requireDeps();
       const joined = await joinOnlineRoom(inviteCode, d);
       const room = await fetchOnlineWaitingRoom(joined.room_id, d);
       set({ status: 'ready', inviteCode: room.inviteCode, room, roundId: null });
-    } catch {
-      set(failureState());
+    } catch (err) {
+      set(failureState(err));
     }
   },
 
@@ -108,8 +132,8 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       const d = requireDeps();
       const room = await fetchOnlineWaitingRoom(roomId, d);
       set({ status: 'ready', inviteCode: room.inviteCode, room });
-    } catch {
-      set(failureState());
+    } catch (err) {
+      set(failureState(err));
     }
   },
 
@@ -121,8 +145,8 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
       const d = requireDeps();
       const roundId = await startOnlineRound(roomId, d);
       set({ status: 'started', roundId });
-    } catch {
-      set(failureState());
+    } catch (err) {
+      set(failureState(err));
     }
   },
 

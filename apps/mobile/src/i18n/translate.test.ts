@@ -260,6 +260,11 @@ test('jaDictionary includes every invite-link key required by M4-EX-02', () => {
     'onlineRoom.join.openApp',
     'onlineRoom.join.getApp',
     'onlineRoom.join.hint',
+    'onlineRoom.error.inviteInvalid',
+    'onlineRoom.error.inviteTaken',
+    'onlineRoom.error.roomNotFound',
+    'onlineRoom.error.roomFull',
+    'onlineRoom.error.roomUnavailable',
   ];
   for (const key of requiredKeys) {
     assert.equal(typeof jaDictionary[key], 'string');

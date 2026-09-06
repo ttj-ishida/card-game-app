@@ -58,6 +58,8 @@ export default function OnlineRoomScreen() {
         <TextInput
           accessibilityLabel={translate('onlineRoom.inviteCode')}
           autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={16}
           editable={!busy}
           onChangeText={state.setInviteCode}
           placeholder={translate('onlineRoom.invitePlaceholder')}

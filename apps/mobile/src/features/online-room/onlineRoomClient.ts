@@ -1,7 +1,35 @@
 import type { PlayInput } from '@ragnarok-millennium/game-core';
 
+import { normalizeInviteCode } from './inviteLink';
 import type { OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import type { StoragePort } from '../cpu-game/anonPlayerId';
+
+/**
+ * ルーム RPC（create/join）が返した、想定済みのサーバー側エラー。
+ * `serverCode` は Postgres の `raise exception` メッセージ（例 INVITE_CODE_TAKEN /
+ * "room not found" / "room is full"）または `HTTP_<status>`。
+ */
+export class OnlineRoomRpcError extends Error {
+  constructor(readonly serverCode: string) {
+    super(serverCode);
+    this.name = 'OnlineRoomRpcError';
+  }
+}
+
+function rpcErrorFrom(status: number, body: string): OnlineRoomRpcError {
+  try {
+    const parsed = JSON.parse(body) as { message?: string; code?: string };
+    if (typeof parsed.message === 'string' && parsed.message.length > 0) {
+      return new OnlineRoomRpcError(parsed.message);
+    }
+    if (typeof parsed.code === 'string' && parsed.code.length > 0) {
+      return new OnlineRoomRpcError(parsed.code);
+    }
+  } catch {
+    /* fall through */
+  }
+  return new OnlineRoomRpcError(`HTTP_${status}`);
+}
 
 export type OnlineHttpPort = {
   get(url: string, headers: Record<string, string>): Promise<{ status: number; body: string }>;
@@ -100,10 +128,6 @@ function tableUrl(deps: OnlineRoomDeps, path: string): string {
   return `${deps.supabaseUrl}/rest/v1/${path}`;
 }
 
-function normalizeInviteCode(input: string): string {
-  return input.trim().toUpperCase();
-}
-
 function parseStoredSession(raw: string | null, now: number): OnlineAuthSession | null {
   if (!raw) return null;
   try {
@@ -172,7 +196,7 @@ export async function createOnlineRoom(
     }),
   );
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Create online room failed: ${response.status}`);
+    throw rpcErrorFrom(response.status, response.body);
   }
   return parseJson<OnlineRoomRpcResult>(response.body);
 }
@@ -188,7 +212,7 @@ export async function joinOnlineRoom(
     JSON.stringify({ requested_invite_code: normalizeInviteCode(inviteCode) }),
   );
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Join online room failed: ${response.status}`);
+    throw rpcErrorFrom(response.status, response.body);
   }
   return parseJson<OnlineRoomRpcResult>(response.body);
 }
@@ -201,7 +225,7 @@ export async function startOnlineRound(roomId: string, deps: OnlineRoomDeps): Pr
     JSON.stringify({ target_room_id: roomId }),
   );
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Start online round failed: ${response.status}`);
+    throw rpcErrorFrom(response.status, response.body);
   }
   return parseJson<{ round_id: string }>(response.body).round_id;
 }

@@ -9,11 +9,22 @@ export const APP_SCHEME = 'ragnarokmillennium';
  */
 export const INVITE_WEB_HOST = 'card-game-app.expo.app';
 
-const INVITE_CODE_RE = /^[A-Z0-9]{1,24}$/;
+/** 招待コードは英数字4〜16文字（大文字へ正規化）。 */
+export const INVITE_CODE_RE = /^[A-Z0-9]{4,16}$/;
+
+/** 前後空白を除去し大文字へ。文字種チェックはしない。 */
+export function normalizeInviteCode(input: string): string {
+  return input.trim().toUpperCase();
+}
+
+/** 正規化後に `INVITE_CODE_RE` を満たすか。 */
+export function isValidInviteCode(input: string): boolean {
+  return INVITE_CODE_RE.test(normalizeInviteCode(input));
+}
 
 function normalize(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  const code = raw.trim().toUpperCase();
+  const code = normalizeInviteCode(raw);
   return INVITE_CODE_RE.test(code) ? code : null;
 }
 
@@ -54,10 +65,10 @@ export function parseInviteFromLink(url: string): string | null {
  * 動的ルート `[code]` 用のサーバー出力が不要になる。
  */
 export function buildInviteWebLink(code: string): string {
-  return `https://${INVITE_WEB_HOST}/join?code=${encodeURIComponent(code.trim().toUpperCase())}`;
+  return `https://${INVITE_WEB_HOST}/join?code=${encodeURIComponent(normalizeInviteCode(code))}`;
 }
 
 /** 招待コードからアプリスキームの直リンクを作る。 */
 export function buildInviteAppLink(code: string): string {
-  return `${APP_SCHEME}://join?code=${encodeURIComponent(code.trim().toUpperCase())}`;
+  return `${APP_SCHEME}://join?code=${encodeURIComponent(normalizeInviteCode(code))}`;
 }

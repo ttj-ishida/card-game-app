@@ -103,6 +103,56 @@ describe('onlineRoomStore', () => {
     assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.inviteRequired');
   });
 
+  it('rejects a malformed invite code before network access', async () => {
+    let posted = false;
+    configure({
+      async get() {
+        return { status: 200, body: '' };
+      },
+      async post() {
+        posted = true;
+        return { status: 200, body: '' };
+      },
+    });
+
+    onlineRoomStore.getState().setInviteCode('ああ');
+    await onlineRoomStore
+      .getState()
+      .createRoom({ maxPlayers: 4, turnSeconds: 60, cpuTakeoverEnabled: true });
+
+    assert.equal(onlineRoomStore.getState().status, 'failed');
+    assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.inviteInvalid');
+    assert.equal(posted, false);
+  });
+
+  it('maps a taken invite code to a specific message', async () => {
+    configure(
+      http([
+        { status: 400, body: JSON.stringify({ code: 'P0001', message: 'INVITE_CODE_TAKEN' }) },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore
+      .getState()
+      .createRoom({ maxPlayers: 4, turnSeconds: 60, cpuTakeoverEnabled: true });
+
+    assert.equal(onlineRoomStore.getState().status, 'failed');
+    assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.inviteTaken');
+  });
+
+  it('maps "room not found" on join to a specific message', async () => {
+    configure(
+      http([{ status: 400, body: JSON.stringify({ code: 'P0001', message: 'room not found' }) }]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('NOPE99');
+    await onlineRoomStore.getState().joinRoom();
+
+    assert.equal(onlineRoomStore.getState().status, 'failed');
+    assert.equal(onlineRoomStore.getState().errorMessageKey, 'onlineRoom.error.roomNotFound');
+  });
+
   it('joins a room and then starts the round', async () => {
     configure(
       http([
