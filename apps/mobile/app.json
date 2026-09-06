@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ラグナロク・ミレニアム",
-    "slug": "ragnarok-millennium",
+    "slug": "card-game-app",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/icon.png",

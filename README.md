@@ -9,8 +9,8 @@ v1.0の対象は、Android 10以上のスマートフォン・タブレット、
 2〜6人のフレンド対戦です。
 
 - Android package: `com.ttjishida.ragnarokmillennium`
-- EAS slug: `ragnarok-millennium`
 - 内部npmスコープ: `@ragnarok-millennium/*`（2026-09-06 に旧 `@card-game-app/*` から改称）
+- EAS slug は `card-game-app` のまま（作成済みプロジェクトのスラッグは変更不可・非公開の内部ID。projectId `a6f6026e-...` が実体）。招待リンク用ドメインは `eas deploy` のエイリアス/独自ドメインで別名可
 
 ## 現在地
 
