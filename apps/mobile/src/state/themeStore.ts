@@ -54,10 +54,7 @@ export const themeStore = createStore<ThemeStoreState>((set) => ({
     const d = requireDeps();
     set({ preference });
     try {
-      await d.storage.setItem(
-        THEME_PREFERENCE_STORAGE_KEY,
-        serializeThemePreference(preference),
-      );
+      await d.storage.setItem(THEME_PREFERENCE_STORAGE_KEY, serializeThemePreference(preference));
       set({ status: 'ready' });
     } catch {
       set({ status: 'failed' });

@@ -1,8 +1,9 @@
 # デザイン刷新 サブプロジェクト1：テーマ基盤 + ダークトークン + 背景コンポーネント 設計書
 
 - 文書ID：GAME-SPEC-THEME-SP1
-- 版数：0.2
+- 版数：0.3
 - 作成日：2026-09-07
+- ステータス：**実装完了**（2026-09-07、コミット `bd84b09`〜、プラン `docs/superpowers/plans/2026-09-07-theme-sp1-dark-theme-foundation.md` の Task 1〜8）。mobile 342 / ui 8 / game-core 218 テスト緑、`tsc`・`eslint`・`prettier` クリーン。dark パレット実値とスクリム不透明度の最終調整は実機目視の結果に応じて別コミット。目視確認は未実施（要実機）。
 - 背景：遊戯王マスターデュエルのデュエルフィールドを参照したダーク基調へアプリ全体を刷新する取り組み。全体像は「デザイン刷新サブプロジェクト分解」（本文 §1.1）。
 - 対象アセット：`assets/backgrounds/ragnarok-{battle-bg,home-bg,bg-universal}{,-day}.png`（dark 3枚コミット済み `2bbfa84`、day 3枚は本サブプロジェクトで追加。詳細は `assets/backgrounds/README.md`）
 - 版数 0.2 の変更点：§8 のレビュー確定を反映（§4.4 案C＝ライト用「昼」背景を採用 / §4.5・§4.6 を 6アセット出し分けに更新 / OS不明時ダーク固定 / 生 hex 暫定トークン化）

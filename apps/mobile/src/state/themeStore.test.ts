@@ -7,7 +7,7 @@ import { __resetThemeStoreForTest, configureThemeStore, themeStore } from './the
 
 function makeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));
-  const calls: Array<[string, string]> = [];
+  const calls: [string, string][] = [];
   const storage: StoragePort = {
     getItem: async (k) => map.get(k) ?? null,
     setItem: async (k, v) => {
@@ -48,9 +48,7 @@ test('setPreference updates state and persists the serialized value', async () =
   configureThemeStore({ storage });
   await themeStore.getState().setPreference('dark');
   assert.equal(themeStore.getState().preference, 'dark');
-  assert.deepEqual(calls, [
-    [THEME_PREFERENCE_STORAGE_KEY, JSON.stringify({ preference: 'dark' })],
-  ]);
+  assert.deepEqual(calls, [[THEME_PREFERENCE_STORAGE_KEY, JSON.stringify({ preference: 'dark' })]]);
 });
 
 test('throws when used before configure', async () => {
