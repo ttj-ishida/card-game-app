@@ -17,6 +17,7 @@ import { configureCpuGameStatsStore } from '../state/cpuGameStatsStore';
 import { configureCpuGameTutorialStore, cpuGameTutorialStore } from '../state/cpuGameTutorialStore';
 import { configureOnlineRoomStore } from '../state/onlineRoomStore';
 import { configureOnlineRoundStore } from '../state/onlineRoundStore';
+import { configureThemeStore, themeStore } from '../state/themeStore';
 
 // Wire the CPU-game store to its native adapters once, at module load. If the
 // public env is unset `getAppConfig()` throws — degrade so the rest of the app
@@ -25,6 +26,7 @@ try {
   const deps = cpuGameDeps();
   configureCpuGameStore(deps);
   configureCpuGameSettingsStore({ storage: deps.storage });
+  configureThemeStore({ storage: deps.storage });
   configureCpuGameHistoryStore(cpuGameHistoryDeps());
   configureCpuGameStatsStore(cpuGameStatsDeps());
   configureCpuGameTutorialStore({ storage: deps.storage, now: deps.now });
@@ -39,6 +41,7 @@ export default function RootLayout() {
   // back to the foreground (spec §4.7). `flushQueue` no-ops when unconfigured and
   // swallows its own errors, so this is safe to fire unconditionally.
   useEffect(() => {
+    void themeStore.getState().load();
     void cpuGameSettingsStore.getState().load();
     void cpuGameTutorialStore.getState().load();
     void cpuGameStore.getState().flushQueue();
