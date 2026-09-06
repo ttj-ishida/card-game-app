@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 import { translate } from '../i18n/translate';
+import { ThemeProvider, useTheme } from '../features/theme/ThemeProvider';
 import {
   cpuGameDeps,
   cpuGameHistoryDeps,
@@ -52,49 +54,64 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: '#111827' },
-        headerTintColor: '#f9fafb',
-        contentStyle: { backgroundColor: '#f8fafc' },
-      }}
-    >
-      <Stack.Screen name="index" options={{ title: translate('app.title') }} />
-      <Stack.Screen name="join" options={{ title: translate('onlineRoom.join.title') }} />
-      <Stack.Screen name="catalog/index" options={{ title: translate('catalog.title') }} />
-      <Stack.Screen name="sandbox/index" options={{ title: translate('sandbox.title') }} />
-      <Stack.Screen name="diagnostics/index" options={{ title: translate('diagnostics.title') }} />
-      <Stack.Screen name="cpu-game/setup" options={{ title: translate('cpuGame.setup.title') }} />
-      <Stack.Screen name="online-room/index" options={{ title: translate('onlineRoom.title') }} />
-      <Stack.Screen
-        name="online-room/lobby"
-        options={{ title: translate('onlineRoom.lobby.title') }}
-      />
-      <Stack.Screen
-        name="online-room/play"
-        options={{ title: translate('app.title'), headerBackVisible: false }}
-      />
-      <Stack.Screen
-        name="cpu-game/play"
-        options={{ title: translate('app.title'), headerBackVisible: false }}
-      />
-      <Stack.Screen
-        name="cpu-game/result"
-        options={{ title: translate('cpuGame.result.title'), headerBackVisible: false }}
-      />
-      <Stack.Screen
-        name="cpu-game/history"
-        options={{ title: translate('cpuGame.history.title') }}
-      />
-      <Stack.Screen name="cpu-game/stats" options={{ title: translate('cpuGame.stats.title') }} />
-      <Stack.Screen
-        name="cpu-game/settings"
-        options={{ title: translate('cpuGame.settings.title') }}
-      />
-      <Stack.Screen
-        name="cpu-game/tutorial"
-        options={{ title: translate('cpuGame.tutorial.title') }}
-      />
-    </Stack>
+    <ThemeProvider>
+      <ThemedStack />
+    </ThemeProvider>
+  );
+}
+
+function ThemedStack() {
+  const { scheme, colors } = useTheme();
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.surface.card.back },
+          headerTintColor: colors.ink.primary,
+          contentStyle: { backgroundColor: colors.surface.table.day },
+        }}
+      >
+        <Stack.Screen name="index" options={{ title: translate('app.title') }} />
+        <Stack.Screen name="join" options={{ title: translate('onlineRoom.join.title') }} />
+        <Stack.Screen name="catalog/index" options={{ title: translate('catalog.title') }} />
+        <Stack.Screen name="sandbox/index" options={{ title: translate('sandbox.title') }} />
+        <Stack.Screen
+          name="diagnostics/index"
+          options={{ title: translate('diagnostics.title') }}
+        />
+        <Stack.Screen name="cpu-game/setup" options={{ title: translate('cpuGame.setup.title') }} />
+        <Stack.Screen name="online-room/index" options={{ title: translate('onlineRoom.title') }} />
+        <Stack.Screen
+          name="online-room/lobby"
+          options={{ title: translate('onlineRoom.lobby.title') }}
+        />
+        <Stack.Screen
+          name="online-room/play"
+          options={{ title: translate('app.title'), headerBackVisible: false }}
+        />
+        <Stack.Screen
+          name="cpu-game/play"
+          options={{ title: translate('app.title'), headerBackVisible: false }}
+        />
+        <Stack.Screen
+          name="cpu-game/result"
+          options={{ title: translate('cpuGame.result.title'), headerBackVisible: false }}
+        />
+        <Stack.Screen
+          name="cpu-game/history"
+          options={{ title: translate('cpuGame.history.title') }}
+        />
+        <Stack.Screen name="cpu-game/stats" options={{ title: translate('cpuGame.stats.title') }} />
+        <Stack.Screen
+          name="cpu-game/settings"
+          options={{ title: translate('cpuGame.settings.title') }}
+        />
+        <Stack.Screen
+          name="cpu-game/tutorial"
+          options={{ title: translate('cpuGame.tutorial.title') }}
+        />
+      </Stack>
+    </>
   );
 }
