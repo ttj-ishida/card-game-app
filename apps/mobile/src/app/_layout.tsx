@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { translate } from '../i18n/translate';
 import { ThemeProvider, useTheme } from '../features/theme/ThemeProvider';
+import { AppShell } from '../features/theme/AppShell';
 import {
   cpuGameDeps,
   cpuGameHistoryDeps,
@@ -55,7 +56,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <ThemedStack />
+      <AppShell>
+        <ThemedStack />
+      </AppShell>
     </ThemeProvider>
   );
 }
