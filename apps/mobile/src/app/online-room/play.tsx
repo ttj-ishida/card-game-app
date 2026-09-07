@@ -29,6 +29,10 @@ import { translate } from '../../i18n/translate';
 
 const POLL_INTERVAL_MS = 1000;
 
+// Width reserved for each side column of the battle footer (held-skill panel on
+// the left, action buttons on the right); the fan sits centred between them.
+const FOOTER_SIDE_W = 220;
+
 function reasonText(reason: string | null): string | null {
   if (!reason) return null;
   try {
@@ -312,6 +316,7 @@ export default function OnlineRoomPlayScreen() {
           <View style={styles.field}>
             {view.field ? (
               <FieldTrail
+                maxWidth={Math.min(shell.width - spacing.md * 2, 760)}
                 steps={[
                   {
                     key: 'current',
@@ -338,61 +343,67 @@ export default function OnlineRoomPlayScreen() {
               ) : null}
             </View>
           </View>
-
-          {heldSkill ? (
-            <Panel>
-              <Text style={styles.skillTitle}>
-                {translate('cpuGame.skill.held')}:{' '}
-                {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
-              </Text>
-              {skillSubmitOptions.map((opt) => (
-                <Button
-                  key={opt.useSkill}
-                  label={translate(`cpuGame.skill.submit.${opt.useSkill}`)}
-                  selected={pendingSkill?.useSkill === opt.useSkill}
-                  onPress={() => onDeclareSkill(opt.useSkill)}
-                />
-              ))}
-            </Panel>
-          ) : null}
         </ScrollView>
 
         <View style={styles.footer}>
-          <HandFan
-            maxWidth={Math.min(shell.width - spacing.md * 2, 720)}
-            onPressCard={onSelectCard}
-            cards={view.hand.map((card) => {
-              const selected = selection.includes(card.cardId);
-              return {
-                key: card.cardId,
-                rank: card.rank,
-                suitCode: card.suitCode,
-                isJoker: card.isJoker,
-                selected,
-                selectable:
-                  view.isMyTurn &&
-                  (selected || canSelectCard(selection, card.cardId, skillLegalPlays)),
-                locked: false,
-              };
-            })}
-          />
+          <View style={styles.footerRow}>
+            <View style={styles.footerSide}>
+              {heldSkill ? (
+                <Panel>
+                  <Text style={styles.skillTitle}>
+                    {translate('cpuGame.skill.held')}:{' '}
+                    {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
+                  </Text>
+                  {skillSubmitOptions.map((opt) => (
+                    <Button
+                      key={opt.useSkill}
+                      label={translate(`cpuGame.skill.submit.${opt.useSkill}`)}
+                      selected={pendingSkill?.useSkill === opt.useSkill}
+                      onPress={() => onDeclareSkill(opt.useSkill)}
+                    />
+                  ))}
+                </Panel>
+              ) : null}
+            </View>
 
-          <View style={styles.actions}>
-            <Button
-              label={translate('cpuGame.action.submit')}
-              disabled={!view.isMyTurn || !canSubmit(selection, skillLegalPlays)}
-              onPress={onSubmit}
+            <HandFan
+              maxWidth={Math.min(shell.width - FOOTER_SIDE_W * 2 - spacing.md * 4, 620)}
+              onPressCard={onSelectCard}
+              cards={view.hand.map((card) => {
+                const selected = selection.includes(card.cardId);
+                return {
+                  key: card.cardId,
+                  rank: card.rank,
+                  suitCode: card.suitCode,
+                  isJoker: card.isJoker,
+                  selected,
+                  selectable:
+                    view.isMyTurn &&
+                    (selected || canSelectCard(selection, card.cardId, skillLegalPlays)),
+                  locked: false,
+                };
+              })}
             />
-            <Button
-              label={translate('cpuGame.action.pass')}
-              disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
-              onPress={onPass}
-            />
-            <Button
-              variant="ghost"
-              label={translate('cpuGame.action.clear')}
-              onPress={() => onlineRoundStore.getState().clearSelection()}
-            />
+
+            <View style={styles.footerSide}>
+              <View style={styles.actions}>
+                <Button
+                  label={translate('cpuGame.action.submit')}
+                  disabled={!view.isMyTurn || !canSubmit(selection, skillLegalPlays)}
+                  onPress={onSubmit}
+                />
+                <Button
+                  label={translate('cpuGame.action.pass')}
+                  disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
+                  onPress={onPass}
+                />
+                <Button
+                  variant="ghost"
+                  label={translate('cpuGame.action.clear')}
+                  onPress={() => onlineRoundStore.getState().clearSelection()}
+                />
+              </View>
+            </View>
           </View>
           {reasonText(state.lastReason) ? (
             <Text style={styles.invalid}>{reasonText(state.lastReason)}</Text>
@@ -412,6 +423,13 @@ const makeStyles = (c: ThemeColors) =>
     scrollArea: { flexShrink: 1, flexGrow: 1 },
     scrollContent: { gap: spacing.xs, paddingBottom: spacing.xs },
     footer: { gap: spacing.xs, paddingTop: spacing.xs },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+      gap: spacing.sm,
+    },
+    footerSide: { width: FOOTER_SIDE_W },
     topBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
     topText: { fontSize: typography.size.caption, color: c.ink.primary },
     reconnecting: {
