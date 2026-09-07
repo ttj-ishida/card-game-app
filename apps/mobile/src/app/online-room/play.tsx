@@ -10,7 +10,7 @@ import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, FieldCardRow, HandFan, Panel } from '../../components';
+import { Button, FieldTrail, HandFan, Panel } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -283,11 +283,7 @@ export default function OnlineRoomPlayScreen() {
             </ScrollView>
           ) : null}
 
-          <ScrollView
-            horizontal
-            style={styles.opponentRow}
-            contentContainerStyle={styles.opponentRowContent}
-          >
+          <View style={styles.opponentRow}>
             {view.opponents.map((opp, index) => (
               <View
                 key={opp.playerId}
@@ -311,11 +307,19 @@ export default function OnlineRoomPlayScreen() {
                 ) : null}
               </View>
             ))}
-          </ScrollView>
+          </View>
 
           <View style={styles.field}>
             {view.field ? (
-              <FieldCardRow cards={view.field.cards} />
+              <FieldTrail
+                steps={[
+                  {
+                    key: 'current',
+                    cards: view.field.cards,
+                    label: translate('cpuGame.field.trail.latest'),
+                  },
+                ]}
+              />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
             )}
@@ -424,8 +428,14 @@ const makeStyles = (c: ThemeColors) =>
     },
     historyLine: { gap: 2, paddingVertical: 2 },
     historyCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-    opponentRow: { flexGrow: 0 },
-    opponentRowContent: { gap: spacing.sm, paddingVertical: spacing.xs },
+    opponentRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-evenly',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
     oppPanel: {
       minWidth: 96,
       borderWidth: 1,

@@ -15,7 +15,7 @@ import { cpuGameSettingsStore } from '../../state/cpuGameSettingsStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, Chip, FieldCardRow, HandFan, Panel } from '../../components';
+import { Button, Chip, FieldTrail, HandFan, Panel, type FieldTrailStep } from '../../components';
 import { translate } from '../../i18n/translate';
 import { useStore } from 'zustand';
 
@@ -133,6 +133,31 @@ export default function CpuGamePlayScreen() {
     );
   }
 
+  const fieldTrailSteps: FieldTrailStep[] = (() => {
+    if (!vm.field) return [];
+    const raw =
+      vm.field.trail.length > 0
+        ? vm.field.trail
+        : [
+            {
+              index: -1,
+              seatNameKey: vm.field.lastPlayerNameKey,
+              cards: vm.field.cards,
+            },
+          ];
+    return raw.map((step, i, arr) => ({
+      key: String(step.index),
+      cards: step.cards,
+      label:
+        i === arr.length - 1
+          ? translate('cpuGame.field.trail.latest')
+          : i === 0
+            ? translate('cpuGame.field.trail.lead')
+            : `${i + 1}${translate('cpuGame.field.trail.nthSuffix')}`,
+      seatLabel: step.seatNameKey ? translate(step.seatNameKey) : undefined,
+    }));
+  })();
+
   const onSubmit = () => {
     const res = cpuGameStore.getState().submitPlay();
     setInvalidReason(res.ok ? null : reasonText(res.reason));
@@ -218,11 +243,7 @@ export default function CpuGamePlayScreen() {
             </ScrollView>
           ) : null}
 
-          <ScrollView
-            horizontal
-            style={styles.opponentRow}
-            contentContainerStyle={styles.opponentRowContent}
-          >
+          <View style={styles.opponentRow}>
             {vm.opponents.map((opp) => (
               <View
                 key={opp.seatId}
@@ -249,43 +270,11 @@ export default function CpuGamePlayScreen() {
                 ) : null}
               </View>
             ))}
-          </ScrollView>
+          </View>
 
           <View style={styles.field}>
             {vm.field ? (
-              <>
-                <FieldCardRow lowMotion={lowMotion} cards={vm.field.cards} />
-                {vm.field.lastPlayerNameKey ? (
-                  <Text style={styles.muted}>
-                    {translate('cpuGame.field.lastPlayer')}: {translate(vm.field.lastPlayerNameKey)}
-                  </Text>
-                ) : null}
-                {vm.field.trail.length > 1 ? (
-                  <View style={styles.trailPanel}>
-                    <Text style={styles.muted}>{translate('cpuGame.field.trail')}</Text>
-                    {vm.field.trail.map((step) => (
-                      <View key={step.index} style={styles.trailLine}>
-                        <Text style={styles.muted}>
-                          {translate(step.seatNameKey)} ·{' '}
-                          {translate(`cpuGame.turnLog.${step.actionKind}`)}
-                          {step.skillEffectKey ? ` [${translate(step.skillEffectKey)}]` : ''}
-                        </Text>
-                        <View style={styles.historyCards}>
-                          {step.cards.map((card, ci) => (
-                            <CardFace
-                              key={ci}
-                              rank={card.rank}
-                              suitCode={card.suitCode}
-                              isJoker={card.isJoker}
-                              size="mini"
-                            />
-                          ))}
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
-              </>
+              <FieldTrail lowMotion={lowMotion} steps={fieldTrailSteps} />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
             )}
@@ -506,17 +495,14 @@ const makeStyles = (c: ThemeColors) =>
     },
     historyLine: { gap: 2, paddingVertical: 2 },
     historyCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-    trailPanel: {
-      alignSelf: 'stretch',
-      gap: 3,
-      borderTopWidth: 1,
-      borderTopColor: c.state.disabled,
-      paddingTop: spacing.xs,
-      marginTop: spacing.xs,
+    opponentRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-evenly',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+      paddingVertical: spacing.xs,
     },
-    trailLine: { gap: 2 },
-    opponentRow: { flexGrow: 0 },
-    opponentRowContent: { gap: spacing.sm, paddingVertical: spacing.xs },
     oppPanel: {
       minWidth: 96,
       borderWidth: 1,

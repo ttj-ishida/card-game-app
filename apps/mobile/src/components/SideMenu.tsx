@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 
 import { spacing, typography } from '@ragnarok-millennium/ui';
@@ -16,30 +16,42 @@ export function SideMenu({ visible, onClose }: { visible: boolean; onClose: () =
   const { colors } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
-  const [translateX] = useState(() => new Animated.Value(-PANEL_WIDTH));
+  const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
   const isProduction = getOptionalAppConfig()?.appEnv === 'production';
   const items = visibleNavItems(NAV_ITEMS, isProduction);
 
   useEffect(() => {
-    Animated.timing(translateX, {
-      toValue: visible ? 0 : -PANEL_WIDTH,
+    Animated.timing(progress, {
+      toValue: visible ? 1 : 0,
       duration: 180,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: false,
     }).start();
-  }, [visible, translateX]);
+  }, [visible, progress]);
+
+  const translateX = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-PANEL_WIDTH, 0],
+  });
 
   const go = (href: string) => {
     onClose();
     router.replace(href as never);
   };
 
+  // Rendered inside the app frame (not a Modal) so it stays within the 16:9 shell.
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      <Pressable
-        accessibilityLabel={translate('nav.close')}
-        style={styles.backdrop}
-        onPress={onClose}
-      />
+    <View
+      style={styles.overlay}
+      pointerEvents={visible ? 'auto' : 'none'}
+      accessibilityViewIsModal={visible}
+    >
+      <Animated.View style={[styles.backdrop, { opacity: progress }]}>
+        <Pressable
+          accessibilityLabel={translate('nav.close')}
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+        />
+      </Animated.View>
       <Animated.View
         style={[
           styles.panel,
@@ -86,11 +98,12 @@ export function SideMenu({ visible, onClose }: { visible: boolean; onClose: () =
           );
         })}
       </Animated.View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 30 },
   backdrop: {
     position: 'absolute',
     left: 0,
