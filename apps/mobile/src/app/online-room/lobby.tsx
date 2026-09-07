@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
 import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
@@ -12,6 +12,7 @@ import { onlineRoomStore } from '../../state/onlineRoomStore';
 import { onlineRoundStore } from '../../state/onlineRoundStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, ScreenTitle } from '../../components';
 
 function roleKey(role: OnlineRoomSeat['role']): TranslationKey {
   return ('onlineRoom.role.' + role) as TranslationKey;
@@ -74,23 +75,21 @@ export default function OnlineRoomLobbyScreen() {
   return (
     <AppBackground variant="home">
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{translate('onlineRoom.lobby.title')}</Text>
+        <ScreenTitle title={translate('onlineRoom.lobby.title')} />
 
         <View style={styles.section}>
           <Text style={styles.label}>{translate('onlineRoom.lobby.invite')}</Text>
           <Text style={styles.inviteCode}>{room.inviteCode}</Text>
-          <Pressable
-            accessibilityRole="button"
+          <Button
+            variant="secondary"
+            label={translate('onlineRoom.lobby.share')}
             onPress={() => {
               const link = buildInviteWebLink(room.inviteCode);
               void Share.share({
                 message: `${translate('onlineRoom.invite.shareLead')}\n${link}`,
               });
             }}
-            style={styles.shareButton}
-          >
-            <Text style={styles.shareText}>{translate('onlineRoom.lobby.share')}</Text>
-          </Pressable>
+          />
         </View>
 
         <View style={styles.section}>
@@ -118,23 +117,18 @@ export default function OnlineRoomLobbyScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
+          <Button
+            variant="secondary"
+            label={translate('onlineRoom.lobby.refresh')}
             disabled={busy}
             onPress={() => void onlineRoomStore.getState().refreshRoom()}
-            style={[styles.secondaryButton, busy && styles.disabled]}
-          >
-            <Text style={styles.secondaryText}>{translate('onlineRoom.lobby.refresh')}</Text>
-          </Pressable>
+          />
           {isHost ? (
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              label={translate('onlineRoom.lobby.start')}
               disabled={busy}
               onPress={() => void onlineRoomStore.getState().startRound()}
-              style={[styles.primaryButton, busy && styles.disabled]}
-            >
-              <Text style={styles.primaryText}>{translate('onlineRoom.lobby.start')}</Text>
-            </Pressable>
+            />
           ) : (
             <Text style={styles.muted}>{translate('onlineRoom.lobby.waitingHost')}</Text>
           )}
@@ -158,11 +152,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     screen: { flex: 1 },
     content: { flexGrow: 1, gap: spacing.md, padding: spacing.xl },
-    title: {
-      color: c.ink.primary,
-      fontSize: typography.size.title,
-      fontWeight: typography.weight.bold,
-    },
     section: { gap: spacing.xs },
     label: { color: c.ink.secondary, fontSize: typography.size.body },
     inviteCode: {
@@ -195,44 +184,5 @@ const makeStyles = (c: ThemeColors) =>
       textAlign: 'center',
     },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    primaryButton: {
-      backgroundColor: c.suit.wind,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    primaryText: {
-      color: c.ink.inverse,
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-    },
-    secondaryButton: {
-      backgroundColor: c.surface.card.face,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    secondaryText: {
-      color: c.ink.primary,
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-    },
-    disabled: { opacity: 0.5 },
     error: { color: c.suit.fire, fontSize: typography.size.caption },
-    shareButton: {
-      alignSelf: 'flex-start',
-      backgroundColor: c.surface.card.face,
-      borderColor: c.suit.wind,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-    },
-    shareText: {
-      color: c.ink.primary,
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-    },
   });

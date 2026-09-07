@@ -6,6 +6,7 @@ import type { SuitCode } from '@ragnarok-millennium/game-core';
 
 import { translate } from '../../i18n/translate';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
+import { ACCENT } from '../../components';
 
 export type CardFaceSize = 'hand' | 'field' | 'mini';
 
@@ -92,8 +93,8 @@ const makeStyles = (c: ThemeColors) =>
       top: -6,
       right: -6,
       fontWeight: typography.weight.bold,
-      color: c.ink.inverse,
-      backgroundColor: c.ink.primary,
+      color: '#1B1D24',
+      backgroundColor: ACCENT,
       borderRadius: radius.control,
       paddingHorizontal: 3,
       overflow: 'hidden',

@@ -1,8 +1,9 @@
 # デザイン刷新 サブプロジェクト2：マスターデュエル風UIキット 設計書
 
 - 文書ID：GAME-SPEC-THEME-SP2
-- 版数：0.1
+- 版数：0.2
 - 作成日：2026-09-07
+- ステータス：**実装完了**（2026-09-07、`547e28e`〜。プラン `docs/superpowers/plans/2026-09-07-theme-sp2-ui-kit.md`）。`Button`/`Chip`/`Panel`/`ScreenTitle` + `resolveButtonVisual`(6 test) を新設、全13画面 + `CardFace` を移行。mobile 356 / ui 8 / game-core 218 テスト緑、tsc・eslint・prettier クリーン。`online-room/play.tsx` の移行分は並行 M4 作業のコミット `27a0c81` に相乗り。目視確認は未実施（要実機）。ACCENT `#C9A94E` / パネル不透明度 0.86 の最終調整は実機目視の結果次第。
 - 前提：SP1（`GAME-SPEC-THEME-SP1`、実装完了）。テーマ機構 `useTheme` / `useThemedStyles` / `<AppBackground>` と light/dark トークンが入っている。
 - 実装場所：`apps/mobile/src/components/`（新設）、全画面（13ファイル）+ `CardFace`
 
