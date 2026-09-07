@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
 import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
@@ -8,8 +8,9 @@ import { rankNumber, type SuitCode } from '@ragnarok-millennium/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
+import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, Panel } from '../../components';
+import { Button, HandFan, Panel } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -55,6 +56,7 @@ function skillEffectLabelKey(effect: OnlineRoundEventView['skillEffect']): strin
 
 export default function OnlineRoomPlayScreen() {
   const styles = useThemedStyles(makeStyles);
+  const shell = useShellSize();
   const router = useRouter();
   const state = useStore(onlineRoundStore, (s) => s);
   const [showHistory, setShowHistory] = useState(false);
@@ -362,35 +364,24 @@ export default function OnlineRoomPlayScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
-            {view.hand.map((card) => {
+          <HandFan
+            maxWidth={Math.min(shell.width - spacing.md * 2, 720)}
+            onPressCard={onSelectCard}
+            cards={view.hand.map((card) => {
               const selected = selection.includes(card.cardId);
-              const selectable =
-                view.isMyTurn &&
-                (selected || canSelectCard(selection, card.cardId, skillLegalPlays));
-              return (
-                <Pressable
-                  key={card.cardId}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected, disabled: !selectable }}
-                  disabled={!selectable}
-                  onPress={() => onSelectCard(card.cardId)}
-                  style={[
-                    styles.handCard,
-                    selected && styles.handCardSelected,
-                    !selectable && styles.handCardDim,
-                  ]}
-                >
-                  <CardFace
-                    rank={card.rank}
-                    suitCode={card.suitCode}
-                    isJoker={card.isJoker}
-                    size="hand"
-                  />
-                </Pressable>
-              );
+              return {
+                key: card.cardId,
+                rank: card.rank,
+                suitCode: card.suitCode,
+                isJoker: card.isJoker,
+                selected,
+                selectable:
+                  view.isMyTurn &&
+                  (selected || canSelectCard(selection, card.cardId, skillLegalPlays)),
+                locked: false,
+              };
             })}
-          </ScrollView>
+          />
 
           <View style={styles.actions}>
             <Button
@@ -488,11 +479,6 @@ const makeStyles = (c: ThemeColors) =>
       paddingHorizontal: spacing.xs,
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
-    handScroll: { flexGrow: 0 },
-    handRow: { gap: spacing.xs, paddingVertical: spacing.xs, alignItems: 'flex-end' },
-    handCard: { borderRadius: radius.control, borderWidth: 2, borderColor: 'transparent' },
-    handCardSelected: { borderColor: c.ink.primary },
-    handCardDim: { opacity: 0.4 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
     skillTitle: {
       fontSize: typography.size.caption,

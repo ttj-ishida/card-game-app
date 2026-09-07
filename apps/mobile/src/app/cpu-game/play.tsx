@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
@@ -11,9 +11,11 @@ import type { PlayRejectionReason } from '@ragnarok-millennium/game-core';
 import { CardFace } from '../../features/cpu-game/CardFace';
 import { buildBoardViewModel } from '../../features/cpu-game/boardViewModel';
 import { cpuGameStore } from '../../state/cpuGameStore';
+import { cpuGameSettingsStore } from '../../state/cpuGameSettingsStore';
 import { AppBackground } from '../../features/theme/AppBackground';
+import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, Chip, Panel } from '../../components';
+import { Button, Chip, HandFan, Panel } from '../../components';
 import { translate } from '../../i18n/translate';
 import { useStore } from 'zustand';
 
@@ -30,6 +32,8 @@ function reasonText(reason?: PlayRejectionReason): string {
 
 export default function CpuGamePlayScreen() {
   const styles = useThemedStyles(makeStyles);
+  const shell = useShellSize();
+  const lowMotion = useStore(cpuGameSettingsStore, (s) => s.settings.lowMotion);
   const router = useRouter();
   const state = useStore(cpuGameStore, (s) => s);
   const { driver, selection, legalPlays, cpuThinking } = state;
@@ -430,33 +434,23 @@ export default function CpuGamePlayScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <ScrollView horizontal style={styles.handScroll} contentContainerStyle={styles.handRow}>
-            {vm.hand.map((card) => (
-              <Pressable
-                key={card.cardId}
-                accessibilityRole="button"
-                accessibilityState={{ selected: card.selected, disabled: !card.selectable }}
-                disabled={!card.selectable}
-                onPress={() => {
-                  cpuGameStore.getState().selectCard(card.cardId);
-                  setInvalidReason(null);
-                }}
-                style={[
-                  styles.handCard,
-                  card.selected && styles.handCardSelected,
-                  card.selectionLocked && styles.handCardLocked,
-                  !card.selectable && !card.selectionLocked && styles.handCardDim,
-                ]}
-              >
-                <CardFace
-                  rank={card.rank}
-                  suitCode={card.suitCode}
-                  isJoker={card.isJoker}
-                  size="hand"
-                />
-              </Pressable>
-            ))}
-          </ScrollView>
+          <HandFan
+            maxWidth={Math.min(shell.width - spacing.md * 2, 720)}
+            lowMotion={lowMotion}
+            onPressCard={(cardId) => {
+              cpuGameStore.getState().selectCard(cardId);
+              setInvalidReason(null);
+            }}
+            cards={vm.hand.map((card) => ({
+              key: card.cardId,
+              rank: card.rank,
+              suitCode: card.suitCode,
+              isJoker: card.isJoker,
+              selected: card.selected,
+              selectable: card.selectable,
+              locked: card.selectionLocked ?? false,
+            }))}
+          />
 
           <View style={styles.actions}>
             <Button
@@ -577,12 +571,6 @@ const makeStyles = (c: ThemeColors) =>
       paddingHorizontal: spacing.xs,
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
-    handScroll: { flexGrow: 0 },
-    handRow: { gap: spacing.xs, paddingVertical: spacing.xs, alignItems: 'flex-end' },
-    handCard: { borderRadius: radius.control, borderWidth: 2, borderColor: 'transparent' },
-    handCardSelected: { borderColor: c.ink.primary },
-    handCardLocked: { borderColor: c.state.warning, opacity: 1 },
-    handCardDim: { opacity: 0.4 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
     skillTitle: {
       fontSize: typography.size.caption,
