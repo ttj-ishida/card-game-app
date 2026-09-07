@@ -15,7 +15,7 @@ import { cpuGameSettingsStore } from '../../state/cpuGameSettingsStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, Chip, HandFan, Panel } from '../../components';
+import { Button, Chip, FieldCardRow, HandFan, Panel } from '../../components';
 import { translate } from '../../i18n/translate';
 import { useStore } from 'zustand';
 
@@ -254,17 +254,7 @@ export default function CpuGamePlayScreen() {
           <View style={styles.field}>
             {vm.field ? (
               <>
-                <View style={styles.fieldCards}>
-                  {vm.field.cards.map((card, index) => (
-                    <CardFace
-                      key={index}
-                      rank={card.rank}
-                      suitCode={card.suitCode}
-                      isJoker={card.isJoker}
-                      size="field"
-                    />
-                  ))}
-                </View>
+                <FieldCardRow lowMotion={lowMotion} cards={vm.field.cards} />
                 {vm.field.lastPlayerNameKey ? (
                   <Text style={styles.muted}>
                     {translate('cpuGame.field.lastPlayer')}: {translate(vm.field.lastPlayerNameKey)}
@@ -554,12 +544,6 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       gap: spacing.xs,
       paddingVertical: spacing.xs,
-    },
-    fieldCards: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.xs,
-      justifyContent: 'center',
     },
     lockRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
     lockTag: {

@@ -10,7 +10,7 @@ import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, HandFan, Panel } from '../../components';
+import { Button, FieldCardRow, HandFan, Panel } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -315,17 +315,7 @@ export default function OnlineRoomPlayScreen() {
 
           <View style={styles.field}>
             {view.field ? (
-              <View style={styles.fieldCards}>
-                {view.field.cards.map((card, index) => (
-                  <CardFace
-                    key={index}
-                    rank={card.rank}
-                    suitCode={card.suitCode}
-                    isJoker={card.isJoker}
-                    size="field"
-                  />
-                ))}
-              </View>
+              <FieldCardRow cards={view.field.cards} />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
             )}
@@ -462,12 +452,6 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       gap: spacing.xs,
       paddingVertical: spacing.xs,
-    },
-    fieldCards: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.xs,
-      justifyContent: 'center',
     },
     lockRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'center' },
     lockTag: {

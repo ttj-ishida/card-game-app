@@ -5,5 +5,6 @@ export { ScreenTitle, type ScreenTitleProps } from './ScreenTitle';
 export { MenuFab } from './MenuFab';
 export { SideMenu } from './SideMenu';
 export { HandFan, type HandFanCard } from './HandFan';
+export { FieldCardRow, type FieldCard } from './FieldCardRow';
 export { NAV_ITEMS, visibleNavItems, type NavItem } from './navItems';
 export { ACCENT } from './buttonStyle';
