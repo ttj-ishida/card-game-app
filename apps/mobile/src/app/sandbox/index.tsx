@@ -35,6 +35,7 @@ import { SANDBOX_PRESETS } from '../../features/rule-sandbox/sandboxPresets';
 import { ruleSandboxStore } from '../../state/rule-sandbox-store';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useTheme, useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, Chip } from '../../components';
 import { translate } from '../../i18n/translate';
 
 const SUIT_LABEL: Record<string, string> = {
@@ -104,39 +105,28 @@ export default function SandboxScreen() {
             <Text style={styles.devLabel}> {translate('sandbox.devLabel')}</Text>
           </Text>
           <View style={styles.toolbarButtons}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translate('sandbox.button.undo')}
-              accessibilityState={{ disabled: history.length === 0 }}
+            <Button
+              variant="secondary"
+              label={translate('sandbox.button.undo')}
               disabled={history.length === 0}
               onPress={() => state.undo()}
-              style={styles.smallButton}
-            >
-              <Text style={styles.smallButtonText}>{translate('sandbox.button.undo')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translate('sandbox.button.reset')}
+            />
+            <Button
+              variant="secondary"
+              label={translate('sandbox.button.reset')}
               onPress={() => state.reset()}
-              style={styles.smallButton}
-            >
-              <Text style={styles.smallButtonText}>{translate('sandbox.button.reset')}</Text>
-            </Pressable>
+            />
           </View>
         </View>
 
         <View style={styles.presetRow}>
           <Text style={styles.label}>{translate('sandbox.preset.label')}</Text>
           {SANDBOX_PRESETS.map((preset) => (
-            <Pressable
+            <Chip
               key={preset.id}
-              accessibilityRole="button"
-              accessibilityLabel={translate(preset.titleKey)}
+              label={translate(preset.titleKey)}
               onPress={() => state.loadPreset(preset.id)}
-              style={styles.presetButton}
-            >
-              <Text style={styles.presetText}>{translate(preset.titleKey)}</Text>
-            </Pressable>
+            />
           ))}
         </View>
 
@@ -764,23 +754,7 @@ const makeStyles = (c: ThemeColors) =>
       color: c.ink.primary,
     },
     devLabel: { fontSize: typography.size.caption, color: c.state.disabled },
-    smallButton: {
-      borderWidth: 1,
-      borderColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-    },
-    smallButtonText: { fontSize: typography.size.caption, color: c.ink.primary },
     presetRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
-    presetButton: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-    },
-    presetText: { fontSize: typography.size.caption, color: c.ink.secondary },
     columns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
     panel: {
       flexGrow: 1,

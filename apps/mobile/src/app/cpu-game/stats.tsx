@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useStore } from 'zustand/react';
 
-import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
+import { spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 import { cpuGameStatsStore } from '../../state/cpuGameStatsStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Panel, ScreenTitle } from '../../components';
 import { translate } from '../../i18n/translate';
 
 function formatDate(value: string | null): string {
@@ -31,7 +32,7 @@ export default function CpuGameStatsScreen() {
   return (
     <AppBackground variant="universal">
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{translate('cpuGame.stats.title')}</Text>
+        <ScreenTitle title={translate('cpuGame.stats.title')} />
         {state.status === 'loading' ? (
           <Text style={styles.muted}>{translate('cpuGame.stats.loading')}</Text>
         ) : null}
@@ -42,7 +43,7 @@ export default function CpuGameStatsScreen() {
           <Text style={styles.muted}>{translate('cpuGame.stats.empty')}</Text>
         ) : null}
         {view.status === 'ready' ? (
-          <View style={styles.panel}>
+          <Panel>
             <Text style={styles.metric}>
               {translate('cpuGame.stats.roundsPlayed')}: {view.roundsPlayed}
             </Text>
@@ -55,7 +56,7 @@ export default function CpuGameStatsScreen() {
             <Text style={styles.metric}>
               {translate('cpuGame.stats.lastPlayedAt')}: {formatDate(view.lastPlayedAt)}
             </Text>
-          </View>
+          </Panel>
         ) : null}
       </ScrollView>
     </AppBackground>
@@ -66,19 +67,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     screen: { flex: 1 },
     content: { gap: spacing.md, padding: spacing.lg },
-    title: {
-      color: c.ink.primary,
-      fontSize: typography.size.title,
-      fontWeight: typography.weight.bold,
-    },
-    panel: {
-      gap: spacing.sm,
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      backgroundColor: c.surface.card.face,
-      padding: spacing.md,
-    },
     metric: { color: c.ink.primary, fontSize: typography.size.body },
     muted: { color: c.ink.secondary, fontSize: typography.size.caption },
     error: {

@@ -3,10 +3,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useStore } from 'zustand/react';
 
-import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
+import { spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 import { cpuGameHistoryStore } from '../../state/cpuGameHistoryStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Panel, ScreenTitle } from '../../components';
 import { translate } from '../../i18n/translate';
 
 function formatDate(value: string): string {
@@ -34,7 +35,7 @@ export default function CpuGameHistoryScreen() {
   return (
     <AppBackground variant="universal">
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{translate('cpuGame.history.title')}</Text>
+        <ScreenTitle title={translate('cpuGame.history.title')} />
         {state.status === 'loading' ? (
           <Text style={styles.muted}>{translate('cpuGame.history.loading')}</Text>
         ) : null}
@@ -46,7 +47,7 @@ export default function CpuGameHistoryScreen() {
         ) : null}
 
         {state.items.map((round) => (
-          <View key={round.roundResultId} style={styles.round}>
+          <Panel key={round.roundResultId} tone="flat">
             <View style={styles.roundHeader}>
               <Text style={styles.roundTitle}>
                 {round.localWon
@@ -76,7 +77,7 @@ export default function CpuGameHistoryScreen() {
                 </Text>
               );
             })}
-          </View>
+          </Panel>
         ))}
 
         {state.status === 'ready' && state.items.length === 0 ? (
@@ -91,19 +92,6 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     screen: { flex: 1 },
     content: { gap: spacing.md, padding: spacing.lg },
-    title: {
-      color: c.ink.primary,
-      fontSize: typography.size.title,
-      fontWeight: typography.weight.bold,
-    },
-    round: {
-      gap: spacing.xs,
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      backgroundColor: c.surface.card.face,
-      padding: spacing.md,
-    },
     roundHeader: {
       flexDirection: 'row',
       flexWrap: 'wrap',

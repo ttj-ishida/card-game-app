@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand/react';
 
-import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
+import { spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
 import { getOptionalAppConfig } from '../../config/appEnv';
 import { httpPort, makeId, storagePort } from '../../features/cpu-game/cpuGameAdapters';
@@ -17,6 +17,7 @@ import { syncDiagnosticsStore } from '../../features/diagnostics/syncDiagnostics
 import { cpuGameStore } from '../../state/cpuGameStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, Panel, ScreenTitle } from '../../components';
 import { translate } from '../../i18n/translate';
 
 export default function DiagnosticsScreen() {
@@ -110,14 +111,16 @@ export default function DiagnosticsScreen() {
   return (
     <AppBackground variant="universal">
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{translate('diagnostics.title')}</Text>
-        <Text style={styles.muted}>{translate('diagnostics.subtitle')}</Text>
+        <ScreenTitle
+          title={translate('diagnostics.title')}
+          subtitle={translate('diagnostics.subtitle')}
+        />
 
         {!view.syncConfigured ? (
           <Text style={styles.warn}>{translate('diagnostics.notConfigured')}</Text>
         ) : null}
 
-        <View style={styles.panel}>
+        <Panel>
           {view.rows.map((r) => (
             <View key={r.label} style={styles.row}>
               <Text style={styles.label}>{r.label}</Text>
@@ -126,29 +129,22 @@ export default function DiagnosticsScreen() {
               </Text>
             </View>
           ))}
-        </View>
+        </Panel>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
+          <Button
+            label={
+              busy ? translate('diagnostics.working') : translate('diagnostics.testConnection')
+            }
             disabled={busy}
             onPress={onTestConnection}
-            style={[styles.button, busy && styles.buttonDisabled]}
-          >
-            <Text style={styles.buttonText}>
-              {busy ? translate('diagnostics.working') : translate('diagnostics.testConnection')}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
+          />
+          <Button
+            label={busy ? translate('diagnostics.working') : translate('diagnostics.flushNow')}
+            variant="secondary"
             disabled={busy}
             onPress={onFlush}
-            style={[styles.button, busy && styles.buttonDisabled]}
-          >
-            <Text style={styles.buttonText}>
-              {busy ? translate('diagnostics.working') : translate('diagnostics.flushNow')}
-            </Text>
-          </Pressable>
+          />
         </View>
       </ScrollView>
     </AppBackground>
@@ -159,24 +155,10 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     screen: { flex: 1 },
     content: { gap: spacing.md, padding: spacing.lg },
-    title: {
-      color: c.ink.primary,
-      fontSize: typography.size.title,
-      fontWeight: typography.weight.bold,
-    },
-    muted: { color: c.ink.secondary, fontSize: typography.size.caption },
     warn: {
       color: c.suit.fire,
       fontSize: typography.size.body,
       fontWeight: typography.weight.bold,
-    },
-    panel: {
-      gap: spacing.sm,
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      backgroundColor: c.surface.card.face,
-      padding: spacing.md,
     },
     row: { gap: 2 },
     label: {
@@ -186,14 +168,4 @@ const makeStyles = (c: ThemeColors) =>
     },
     value: { color: c.ink.primary, fontSize: typography.size.body },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-    button: {
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    buttonDisabled: { opacity: 0.5 },
-    buttonText: { color: c.ink.primary, fontSize: typography.size.body },
   });

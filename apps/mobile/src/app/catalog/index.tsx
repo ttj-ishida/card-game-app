@@ -7,6 +7,7 @@ import { buildCatalogItems, type CatalogItem } from '../../features/catalog/card
 import { fetchCatalogMasters } from '../../features/catalog/supabaseCatalogClient';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, ScreenTitle } from '../../components';
 import { translate } from '../../i18n/translate';
 
 export default function CatalogScreen() {
@@ -62,17 +63,13 @@ export default function CatalogScreen() {
   return (
     <AppBackground variant="universal">
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>{translate('catalog.title')}</Text>
-            <Text style={styles.summary}>
-              {translate('catalog.countPrefix')} {items.length}/42
-            </Text>
-          </View>
-          <Pressable accessibilityRole="button" onPress={loadCatalog} style={styles.retryButton}>
-            <Text style={styles.retryText}>{translate('catalog.retry')}</Text>
-          </Pressable>
-        </View>
+        <ScreenTitle
+          title={translate('catalog.title')}
+          subtitle={`${translate('catalog.countPrefix')} ${items.length}/42`}
+          right={
+            <Button variant="secondary" label={translate('catalog.retry')} onPress={loadCatalog} />
+          }
+        />
 
         {status === 'loading' ? (
           <Text style={styles.message}>{translate('catalog.loading')}</Text>
@@ -134,33 +131,7 @@ const makeStyles = (c: ThemeColors) =>
     screen: {
       flex: 1,
       padding: 20,
-    },
-    header: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 14,
-    },
-    title: {
-      color: c.ink.primary,
-      fontSize: 26,
-      fontWeight: '700',
-    },
-    summary: {
-      color: c.ink.secondary,
-      fontSize: 14,
-      marginTop: 4,
-    },
-    retryButton: {
-      backgroundColor: c.ink.primary,
-      borderRadius: 6,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    retryText: {
-      color: c.ink.inverse,
-      fontSize: 14,
-      fontWeight: '700',
+      gap: 14,
     },
     message: {
       color: c.ink.secondary,
