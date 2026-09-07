@@ -13,6 +13,7 @@ import { buildBoardViewModel } from '../../features/cpu-game/boardViewModel';
 import { cpuGameStore } from '../../state/cpuGameStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, Chip, Panel } from '../../components';
 import { translate } from '../../i18n/translate';
 import { useStore } from 'zustand';
 
@@ -160,16 +161,11 @@ export default function CpuGamePlayScreen() {
             <Text style={styles.topText}>
               {translate('cpuGame.turnLabel')}: {translate(vm.activeSeatNameKey)}
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showHistory }}
+            <Button
+              variant="ghost"
+              label={`${translate('cpuGame.history')} ${showHistory ? '▲' : '▾'}`}
               onPress={() => setShowHistory((v) => !v)}
-              style={styles.historyToggle}
-            >
-              <Text style={styles.topText}>
-                {translate('cpuGame.history')} {showHistory ? '▲' : '▾'}
-              </Text>
-            </Pressable>
+            />
           </View>
 
           {showHistory ? (
@@ -309,25 +305,19 @@ export default function CpuGamePlayScreen() {
           </View>
 
           {vm.skillPanel ? (
-            <View style={styles.skillPanel}>
+            <Panel>
               <Text style={styles.skillTitle}>
                 {translate('cpuGame.skill.held')}: {translate(vm.skillPanel.heldEffectKey)}
               </Text>
               <Text style={styles.muted}>{translate(vm.skillPanel.heldEffectDescKey)}</Text>
 
               {vm.submitOptions.skills.map((opt) => (
-                <Pressable
+                <Button
                   key={opt.useSkill}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: pendingSkill?.useSkill === opt.useSkill }}
+                  label={translate(opt.labelKey)}
+                  selected={pendingSkill?.useSkill === opt.useSkill}
                   onPress={() => onSubmitSkill(opt.useSkill)}
-                  style={[
-                    styles.actionBtn,
-                    pendingSkill?.useSkill === opt.useSkill && styles.actionBtnSelected,
-                  ]}
-                >
-                  <Text style={styles.actionText}>{translate(opt.labelKey)}</Text>
-                </Pressable>
+                />
               ))}
 
               {vm.skillPanel.revolutionPreview ? (
@@ -341,19 +331,12 @@ export default function CpuGamePlayScreen() {
               ) : null}
 
               {vm.skillPanel.jokerTransformAvailable && !vm.jokerTransform.active ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: pendingSkill?.useSkill === 'JOKER_TRANSFORM' }}
+                <Button
+                  variant="ghost"
+                  label={translate('cpuGame.skill.jokerTransform.open')}
+                  selected={pendingSkill?.useSkill === 'JOKER_TRANSFORM'}
                   onPress={() => cpuGameStore.getState().openJokerTransform()}
-                  style={[
-                    styles.actionBtnGhost,
-                    pendingSkill?.useSkill === 'JOKER_TRANSFORM' && styles.actionBtnGhostSelected,
-                  ]}
-                >
-                  <Text style={styles.actionTextGhost}>
-                    {translate('cpuGame.skill.jokerTransform.open')}
-                  </Text>
-                </Pressable>
+                />
               ) : null}
 
               {vm.jokerTransform.active ? (
@@ -363,22 +346,16 @@ export default function CpuGamePlayScreen() {
                   </Text>
                   <View style={styles.pickerRow}>
                     {RANK_CODES.map((rc) => (
-                      <Pressable
+                      <Chip
                         key={rc}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: vm.jokerTransform.rankCode === rc }}
+                        label={String(rankNumber(rc))}
+                        selected={vm.jokerTransform.rankCode === rc}
                         onPress={() =>
                           cpuGameStore
                             .getState()
                             .setJokerDeclaration(rc, vm.jokerTransform.suitCode)
                         }
-                        style={[
-                          styles.pickerCell,
-                          vm.jokerTransform.rankCode === rc && styles.pickerCellOn,
-                        ]}
-                      >
-                        <Text style={styles.pickerText}>{rankNumber(rc)}</Text>
-                      </Pressable>
+                      />
                     ))}
                   </View>
                   <Text style={styles.muted}>
@@ -386,22 +363,16 @@ export default function CpuGamePlayScreen() {
                   </Text>
                   <View style={styles.pickerRow}>
                     {SUIT_CODES.map((sc) => (
-                      <Pressable
+                      <Chip
                         key={sc}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: vm.jokerTransform.suitCode === sc }}
+                        label={translate(`sandbox.suit.${sc}`)}
+                        selected={vm.jokerTransform.suitCode === sc}
                         onPress={() =>
                           cpuGameStore
                             .getState()
                             .setJokerDeclaration(vm.jokerTransform.rankCode, sc)
                         }
-                        style={[
-                          styles.pickerCell,
-                          vm.jokerTransform.suitCode === sc && styles.pickerCellOn,
-                        ]}
-                      >
-                        <Text style={styles.pickerText}>{translate(`sandbox.suit.${sc}`)}</Text>
-                      </Pressable>
+                      />
                     ))}
                   </View>
 
@@ -431,33 +402,20 @@ export default function CpuGamePlayScreen() {
                   ) : null}
 
                   <View style={styles.actions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: !vm.jokerTransform.canConfirm }}
+                    <Button
+                      label={translate('cpuGame.skill.jokerTransform.confirm')}
                       disabled={!vm.jokerTransform.canConfirm}
                       onPress={onSubmitJoker}
-                      style={[
-                        styles.actionBtn,
-                        !vm.jokerTransform.canConfirm && styles.actionDisabled,
-                      ]}
-                    >
-                      <Text style={styles.actionText}>
-                        {translate('cpuGame.skill.jokerTransform.confirm')}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
+                    />
+                    <Button
+                      variant="ghost"
+                      label={translate('cpuGame.skill.jokerTransform.cancel')}
                       onPress={() => cpuGameStore.getState().closeJokerTransform()}
-                      style={styles.actionBtnGhost}
-                    >
-                      <Text style={styles.actionTextGhost}>
-                        {translate('cpuGame.skill.jokerTransform.cancel')}
-                      </Text>
-                    </Pressable>
+                    />
                   </View>
                 </View>
               ) : null}
-            </View>
+            </Panel>
           ) : null}
         </ScrollView>
 
@@ -491,34 +449,24 @@ export default function CpuGamePlayScreen() {
           </ScrollView>
 
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !vm.submitOptions.plain }}
+            <Button
+              label={translate('cpuGame.action.submit')}
               disabled={!vm.submitOptions.plain}
               onPress={onSubmit}
-              style={[styles.actionBtn, !vm.submitOptions.plain && styles.actionDisabled]}
-            >
-              <Text style={styles.actionText}>{translate('cpuGame.action.submit')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !vm.canPass }}
+            />
+            <Button
+              label={translate('cpuGame.action.pass')}
               disabled={!vm.canPass}
               onPress={onPass}
-              style={[styles.actionBtn, !vm.canPass && styles.actionDisabled]}
-            >
-              <Text style={styles.actionText}>{translate('cpuGame.action.pass')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            />
+            <Button
+              variant="ghost"
+              label={translate('cpuGame.action.clear')}
               onPress={() => {
                 cpuGameStore.getState().clearSelection();
                 setInvalidReason(null);
               }}
-              style={styles.actionBtnGhost}
-            >
-              <Text style={styles.actionTextGhost}>{translate('cpuGame.action.clear')}</Text>
-            </Pressable>
+            />
             {invalidReason ? <Text style={styles.invalid}>{invalidReason}</Text> : null}
           </View>
           {vm.phase === 'HUMAN_TURN' ? (
@@ -555,13 +503,6 @@ const makeStyles = (c: ThemeColors) =>
       gap: spacing.sm,
     },
     topText: { fontSize: typography.size.caption, color: c.ink.primary },
-    historyToggle: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
     historyPanel: {
       maxHeight: 140,
       borderWidth: 1,
@@ -633,13 +574,6 @@ const makeStyles = (c: ThemeColors) =>
     handCardLocked: { borderColor: c.state.warning, opacity: 1 },
     handCardDim: { opacity: 0.4 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillPanel: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      padding: spacing.xs,
-      gap: spacing.xs,
-    },
     skillTitle: {
       fontSize: typography.size.caption,
       fontWeight: typography.weight.bold,
@@ -647,39 +581,8 @@ const makeStyles = (c: ThemeColors) =>
     },
     jokerPanel: { gap: spacing.xs },
     pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-    pickerCell: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    pickerCellOn: { borderColor: c.ink.primary, borderWidth: 2 },
-    pickerText: { fontSize: typography.size.caption, color: c.ink.primary },
     jokerPreview: { alignItems: 'flex-start', gap: 2 },
     hintRow: { gap: 2 },
-    actionBtn: {
-      backgroundColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    actionDisabled: { backgroundColor: c.state.disabled },
-    actionBtnSelected: { backgroundColor: c.state.warning },
-    actionText: {
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-      color: c.ink.inverse,
-    },
-    actionBtnGhost: {
-      borderWidth: 1,
-      borderColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    actionTextGhost: { fontSize: typography.size.body, color: c.ink.primary },
-    actionBtnGhostSelected: { borderColor: c.state.warning, borderWidth: 2 },
     invalid: {
       fontSize: typography.size.caption,
       color: c.suit.fire,
