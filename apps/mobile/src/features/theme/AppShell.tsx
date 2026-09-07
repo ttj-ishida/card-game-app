@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ACCENT } from '../../components';
@@ -7,16 +7,28 @@ import { resolveShellSize } from './resolveShellSize';
 /** Deep "outside the duel" backdrop shown around the framed game on web. */
 const SHELL_BACKDROP = '#07090D';
 
+export type ShellSize = { width: number; height: number };
+
+const ShellSizeContext = createContext<ShellSize>({ width: 0, height: 0 });
+
+/** The current game surface size — the web frame, or the full window otherwise. */
+export function useShellSize(): ShellSize {
+  return useContext(ShellSizeContext);
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const win = useWindowDimensions();
+  const frame = Platform.OS === 'web' ? resolveShellSize(win) : null;
+  const fw = frame?.width ?? win.width;
+  const fh = frame?.height ?? win.height;
+  const shellSize = useMemo<ShellSize>(() => ({ width: fw, height: fh }), [fw, fh]);
 
-  if (Platform.OS !== 'web') {
-    return <View style={styles.fill}>{children}</View>;
-  }
+  const content = (
+    <ShellSizeContext.Provider value={shellSize}>{children}</ShellSizeContext.Provider>
+  );
 
-  const size = resolveShellSize(win);
-  if (size == null) {
-    return <View style={styles.fill}>{children}</View>;
+  if (frame == null) {
+    return <View style={styles.fill}>{content}</View>;
   }
 
   return (
@@ -24,12 +36,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <View
         style={[
           styles.frame,
-          { width: size.width, height: size.height },
-          // RN Web accepts a CSS box-shadow string.
+          { width: frame.width, height: frame.height },
           { boxShadow: '0 24px 80px rgba(0, 0, 0, 0.55)' } as object,
         ]}
       >
-        {children}
+        {content}
       </View>
     </View>
   );
@@ -47,6 +58,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: `${ACCENT}59`, // ~35% alpha
+    borderColor: `${ACCENT}59`,
   },
 });

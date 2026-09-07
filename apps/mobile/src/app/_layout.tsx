@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AppState, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { ThemeProvider, useTheme } from '../features/theme/ThemeProvider';
 import { AppShell } from '../features/theme/AppShell';
 import { MenuFab, SideMenu } from '../components';
+import { configureFabPositionStore, fabPositionStore } from '../state/fabPositionStore';
 import {
   cpuGameDeps,
   cpuGameHistoryDeps,
@@ -30,6 +31,7 @@ try {
   configureCpuGameStore(deps);
   configureCpuGameSettingsStore({ storage: deps.storage });
   configureThemeStore({ storage: deps.storage });
+  configureFabPositionStore({ storage: deps.storage });
   configureCpuGameHistoryStore(cpuGameHistoryDeps());
   configureCpuGameStatsStore(cpuGameStatsDeps());
   configureCpuGameTutorialStore({ storage: deps.storage, now: deps.now });
@@ -45,6 +47,7 @@ export default function RootLayout() {
   // swallows its own errors, so this is safe to fire unconditionally.
   useEffect(() => {
     void themeStore.getState().load();
+    void fabPositionStore.getState().load();
     void cpuGameSettingsStore.getState().load();
     void cpuGameTutorialStore.getState().load();
     void cpuGameStore.getState().flushQueue();
@@ -66,6 +69,8 @@ export default function RootLayout() {
 function ThemedStack() {
   const { scheme, colors } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const inMatch = pathname.endsWith('/play');
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -75,7 +80,7 @@ function ThemedStack() {
           contentStyle: { backgroundColor: colors.surface.table.day },
         }}
       />
-      <MenuFab onPress={() => setMenuOpen(true)} />
+      <MenuFab onPress={() => setMenuOpen(true)} dimmed={inMatch} />
       <SideMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
