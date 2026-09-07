@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
@@ -25,6 +25,7 @@ import {
   type FieldTrailStep,
 } from '../../components';
 import { translate } from '../../i18n/translate';
+import { confirmDialog } from '../../lib/confirmDialog';
 import { useStore } from 'zustand';
 
 // Width reserved for each side column of the battle footer (skill panel on the
@@ -80,36 +81,32 @@ export default function CpuGamePlayScreen() {
     }
   }, [phase, pending]);
 
-  // Round over: persist the result, then move to the result screen.
+  // Round over: go straight to the result screen. finishRound() sets the result
+  // view synchronously; its network persistence/retry then runs in the
+  // background and the result screen reflects `saveStatus` as it lands. (Awaiting
+  // the whole save here was adding a 3–4s stall before the result appeared.)
   useEffect(() => {
     if (phase !== 'ROUND_OVER') return;
-    let cancelled = false;
-    cpuGameStore
+    void cpuGameStore
       .getState()
       .finishRound()
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) router.replace('/cpu-game/result');
-      });
-    return () => {
-      cancelled = true;
-    };
+      .catch(() => {});
+    router.replace('/cpu-game/result');
   }, [phase, router]);
 
   // Confirm, then discard the match. Shared by hardware back and the exit button
-  // (web has no hardware back and no header).
-  const confirmExit = useCallback(() => {
-    Alert.alert(translate('cpuGame.exit.confirmTitle'), undefined, [
-      { text: translate('cpuGame.exit.confirmCancel'), style: 'cancel' },
-      {
-        text: translate('cpuGame.exit.confirmOk'),
-        style: 'destructive',
-        onPress: () => {
-          cpuGameStore.getState().exit();
-          router.replace('/');
-        },
-      },
-    ]);
+  // (web has no hardware back and no header). Uses confirmDialog, not
+  // Alert.alert, which is a silent no-op on react-native-web.
+  const confirmExit = useCallback(async () => {
+    const ok = await confirmDialog({
+      title: translate('cpuGame.exit.confirmTitle'),
+      confirmText: translate('cpuGame.exit.confirmOk'),
+      cancelText: translate('cpuGame.exit.confirmCancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    cpuGameStore.getState().exit();
+    router.replace('/');
   }, [router]);
 
   useFocusEffect(
@@ -323,11 +320,18 @@ export default function CpuGamePlayScreen() {
           <View style={styles.footerRow}>
             <View style={styles.footerSide}>
               {vm.skillPanel ? (
-                <Panel>
-                  <Text style={styles.skillTitle}>
-                    {translate('cpuGame.skill.held')}: {translate(vm.skillPanel.heldEffectKey)}
-                  </Text>
-                  <Text style={styles.muted}>{translate(vm.skillPanel.heldEffectDescKey)}</Text>
+                <Panel style={styles.skillPanel}>
+                  <View style={styles.skillHeader}>
+                    <View style={styles.skillBadge}>
+                      <Text style={styles.skillBadgeGlyph}>✦</Text>
+                    </View>
+                    <View style={styles.skillHeaderText}>
+                      <Text style={styles.skillOverline}>{translate('cpuGame.skill.held')}</Text>
+                      <Text style={styles.skillName}>{translate(vm.skillPanel.heldEffectKey)}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.skillDesc}>{translate(vm.skillPanel.heldEffectDescKey)}</Text>
+                  <View style={styles.skillDivider} />
 
                   {vm.submitOptions.skills.map((opt) => (
                     <Button
@@ -582,11 +586,41 @@ const makeStyles = (c: ThemeColors) =>
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillTitle: {
-      fontSize: typography.size.caption,
-      fontWeight: typography.weight.bold,
-      color: c.ink.primary,
+    skillPanel: { gap: spacing.xs },
+    skillHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    skillBadge: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: 1,
+      borderColor: ACCENT,
+      backgroundColor: 'rgba(201, 169, 78, 0.14)',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
+    skillBadgeGlyph: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: ACCENT,
+      fontWeight: typography.weight.bold,
+    },
+    skillHeaderText: { flex: 1, gap: 1 },
+    skillOverline: {
+      fontSize: 10,
+      letterSpacing: 1,
+      color: c.ink.secondary,
+    },
+    skillName: {
+      fontSize: typography.size.body,
+      fontWeight: typography.weight.bold,
+      color: ACCENT,
+    },
+    skillDesc: {
+      fontSize: typography.size.caption,
+      lineHeight: 16,
+      color: c.ink.secondary,
+    },
+    skillDivider: { height: 1, backgroundColor: c.state.disabled, marginTop: 2 },
     jokerPanel: { gap: spacing.xs },
     pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
     jokerPreview: { alignItems: 'flex-start', gap: 2 },

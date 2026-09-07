@@ -10,7 +10,7 @@ import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { Button, FieldTrail, HandFan, Panel } from '../../components';
+import { ACCENT, Button, FieldTrail, HandFan, Panel } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -22,7 +22,7 @@ import {
   deriveSeatTakeovers,
   type OnlineRoundEventView,
 } from '../../features/online-room/onlineRoundViewModel';
-import { confirmDialog } from '../../features/online-room/confirmDialog';
+import { confirmDialog } from '../../lib/confirmDialog';
 import { onlineRoundStore, type OnlinePendingSkill } from '../../state/onlineRoundStore';
 import { onlineRoomStore } from '../../state/onlineRoomStore';
 import { translate } from '../../i18n/translate';
@@ -349,11 +349,22 @@ export default function OnlineRoomPlayScreen() {
           <View style={styles.footerRow}>
             <View style={styles.footerSide}>
               {heldSkill ? (
-                <Panel>
-                  <Text style={styles.skillTitle}>
-                    {translate('cpuGame.skill.held')}:{' '}
+                <Panel style={styles.skillPanel}>
+                  <View style={styles.skillHeader}>
+                    <View style={styles.skillBadge}>
+                      <Text style={styles.skillBadgeGlyph}>✦</Text>
+                    </View>
+                    <View style={styles.skillHeaderText}>
+                      <Text style={styles.skillOverline}>{translate('cpuGame.skill.held')}</Text>
+                      <Text style={styles.skillName}>
+                        {translate(`sandbox.skill.${heldSkill.effectCode}`)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.skillDesc}>
                     {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
                   </Text>
+                  <View style={styles.skillDivider} />
                   {skillSubmitOptions.map((opt) => (
                     <Button
                       key={opt.useSkill}
@@ -492,11 +503,33 @@ const makeStyles = (c: ThemeColors) =>
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillTitle: {
-      fontSize: typography.size.caption,
-      fontWeight: typography.weight.bold,
-      color: c.ink.primary,
+    skillPanel: { gap: spacing.xs },
+    skillHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    skillBadge: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: 1,
+      borderColor: ACCENT,
+      backgroundColor: 'rgba(201, 169, 78, 0.14)',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
+    skillBadgeGlyph: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: ACCENT,
+      fontWeight: typography.weight.bold,
+    },
+    skillHeaderText: { flex: 1, gap: 1 },
+    skillOverline: { fontSize: 10, letterSpacing: 1, color: c.ink.secondary },
+    skillName: {
+      fontSize: typography.size.body,
+      fontWeight: typography.weight.bold,
+      color: ACCENT,
+    },
+    skillDesc: { fontSize: typography.size.caption, lineHeight: 16, color: c.ink.secondary },
+    skillDivider: { height: 1, backgroundColor: c.state.disabled, marginTop: 2 },
     winnerText: {
       fontSize: typography.size.title,
       fontWeight: typography.weight.bold,
