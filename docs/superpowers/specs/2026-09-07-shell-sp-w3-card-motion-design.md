@@ -1,8 +1,9 @@
 # デザイン刷新 サブプロジェクト W3：カード演出 設計書
 
 - 文書ID：GAME-SPEC-SHELL-W3
-- 版数：0.1
+- 版数：0.2
 - 作成日：2026-09-07
+- ステータス：**実装完了**（2026-09-07、`ade0fcf`〜`9e07c12`）。W3.0 ドラッグFAB / W3.A 扇形手札（`fanLayout` 純関数＋`HandFan`）/ W3.B 場出し演出（`FieldCardRow` の slam-down 入場＋金パルス。§4 の `measureInWindow` 版ではなく堅い入場演出を採用）/ W3.C 革命の昼夜逆転（§5 の Canva 新規背景ではなく day/night ペアを流用したクロスフェード＋金フラッシュ）。mobile 381 / ui 8 / game-core 218 緑。実機ブラウザで W3.0/W3.A を確認、W3.B/C はコードレビュー＋非革命状態の目視。革命クロスフェードの実地確認は未実施。
 - 前提：SP1 / SP2 / SHELL-W1 / SHELL-W2 実装済み。
 - 実装場所：`apps/mobile/src/components/`、`apps/mobile/src/features/theme/`、`apps/mobile/src/features/cpu-game/`、対戦2画面、`assets/backgrounds/`
 
