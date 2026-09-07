@@ -80,26 +80,31 @@ export default function CpuGamePlayScreen() {
     };
   }, [phase, router]);
 
-  // Hardware back = confirm, then discard the match.
+  // Confirm, then discard the match. Shared by hardware back and the exit button
+  // (web has no hardware back and no header).
+  const confirmExit = useCallback(() => {
+    Alert.alert(translate('cpuGame.exit.confirmTitle'), undefined, [
+      { text: translate('cpuGame.exit.confirmCancel'), style: 'cancel' },
+      {
+        text: translate('cpuGame.exit.confirmOk'),
+        style: 'destructive',
+        onPress: () => {
+          cpuGameStore.getState().exit();
+          router.replace('/');
+        },
+      },
+    ]);
+  }, [router]);
+
   useFocusEffect(
     useCallback(() => {
       const onBack = () => {
-        Alert.alert(translate('cpuGame.exit.confirmTitle'), undefined, [
-          { text: translate('cpuGame.exit.confirmCancel'), style: 'cancel' },
-          {
-            text: translate('cpuGame.exit.confirmOk'),
-            style: 'destructive',
-            onPress: () => {
-              cpuGameStore.getState().exit();
-              router.replace('/');
-            },
-          },
-        ]);
+        confirmExit();
         return true;
       };
       const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
       return () => sub.remove();
-    }, [router]),
+    }, [confirmExit]),
   );
 
   const vm = useMemo(
@@ -165,6 +170,11 @@ export default function CpuGamePlayScreen() {
               variant="ghost"
               label={`${translate('cpuGame.history')} ${showHistory ? '▲' : '▾'}`}
               onPress={() => setShowHistory((v) => !v)}
+            />
+            <Button
+              variant="danger"
+              label={translate('cpuGame.exit.button')}
+              onPress={confirmExit}
             />
           </View>
 
