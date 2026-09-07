@@ -284,7 +284,7 @@ describe('onlineRoomStore', () => {
         // pollRoom: room now IN_ROUND
         { status: 200, body: inRoundRoomBody() },
         { status: 200, body: seatsBody() },
-        { status: 200, body: JSON.stringify([{ id: 'round-1' }]) },
+        { status: 200, body: JSON.stringify([{ id: 'round-1', status: 'IN_PROGRESS' }]) },
       ]),
     );
 
@@ -294,6 +294,67 @@ describe('onlineRoomStore', () => {
 
     assert.equal(onlineRoomStore.getState().status, 'started');
     assert.equal(onlineRoomStore.getState().roundId, 'round-1');
+  });
+
+  it('pollRoom stays in the lobby when the round is already finished', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-2',
+            invite_code: 'ROOM123',
+            seat_index: 1,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        // pollRoom: room IN_ROUND but the round has COMPLETED
+        { status: 200, body: inRoundRoomBody() },
+        { status: 200, body: seatsBody() },
+        { status: 200, body: JSON.stringify([{ id: 'round-1', status: 'COMPLETED' }]) },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore.getState().joinRoom();
+    await onlineRoomStore.getState().pollRoom();
+
+    assert.equal(onlineRoomStore.getState().status, 'ready');
+    assert.equal(onlineRoomStore.getState().roundId, null);
+  });
+
+  it('pollRoom does not replace the room object when nothing changed', async () => {
+    configure(
+      http([
+        {
+          status: 200,
+          body: JSON.stringify({
+            room_id: 'room-1',
+            player_id: 'player-1',
+            invite_code: 'ROOM123',
+            seat_index: 0,
+            status: 'JOINED',
+          }),
+        },
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+        // pollRoom: identical room + seats
+        { status: 200, body: roomBody() },
+        { status: 200, body: seatsBody() },
+      ]),
+    );
+
+    onlineRoomStore.getState().setInviteCode('ROOM123');
+    await onlineRoomStore
+      .getState()
+      .createRoom({ maxPlayers: 2, turnSeconds: 60, cpuTakeoverEnabled: true });
+    const before = onlineRoomStore.getState().room;
+    await onlineRoomStore.getState().pollRoom();
+
+    assert.equal(onlineRoomStore.getState().room, before);
   });
 
   it('pollRoom ignores a transient fetch failure and keeps the lobby usable', async () => {

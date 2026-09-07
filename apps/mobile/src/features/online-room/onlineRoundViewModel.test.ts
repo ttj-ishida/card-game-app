@@ -124,6 +124,28 @@ test('buildOnlineRoundViewModel converts snapshot state into display-safe online
   assert.deepEqual(vm.events[0].cards, [{ rankCode: 'RANK_5', suitCode: 'SUIT_FIRE' }]);
 });
 
+test('buildOnlineRoundViewModel sorts the hand ascending by rank then suit, ignoring deal position', () => {
+  const vm = buildOnlineRoundViewModel({
+    ...baseSnapshot,
+    hand: [
+      { card_id: 'CARD_NUMBER_RANK_7_SUIT_WATER', position: 0, card_state: 'IN_HAND' },
+      { card_id: 'CARD_NUMBER_RANK_3_SUIT_EARTH', position: 1, card_state: 'IN_HAND' },
+      { card_id: 'CARD_NUMBER_RANK_3_SUIT_FIRE', position: 2, card_state: 'IN_HAND' },
+      { card_id: 'CARD_NUMBER_RANK_1_SUIT_WIND', position: 3, card_state: 'IN_HAND' },
+    ],
+  });
+
+  assert.deepEqual(
+    vm.hand.map((card) => card.cardId),
+    [
+      'CARD_NUMBER_RANK_1_SUIT_WIND',
+      'CARD_NUMBER_RANK_3_SUIT_FIRE',
+      'CARD_NUMBER_RANK_3_SUIT_EARTH',
+      'CARD_NUMBER_RANK_7_SUIT_WATER',
+    ],
+  );
+});
+
 test('deriveSeatTakeovers maps leave events to CPU / LEFT by the leaving player', () => {
   const event = (overrides: Partial<OnlineRoundEventView>): OnlineRoundEventView => ({
     index: 0,

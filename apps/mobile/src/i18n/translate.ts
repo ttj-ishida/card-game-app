@@ -67,7 +67,7 @@ export const jaDictionary = {
     'この席をCPUに引き継いで退出します（ルーム設定でCPU引き継ぎが無効なら棄権になります）。',
   'onlineRoom.play.leaveConfirmCancel': 'キャンセル',
   'onlineRoom.play.leaveConfirmOk': '退出する',
-  'onlineRoom.play.backToLobby': 'ロビーへ戻る',
+  'onlineRoom.play.backToLobby': 'オンラインルームへ戻る',
   'onlineRoom.play.backHome': 'ホームへ',
   'onlineRoom.reason.STALE_STATE_VERSION':
     '状態が更新されたため最新の状態に同期しました。もう一度お試しください',

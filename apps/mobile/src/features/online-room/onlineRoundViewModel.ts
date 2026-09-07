@@ -191,14 +191,21 @@ function activeField(value: OnlineRoundSnapshotResponse['public_state']['active_
   };
 }
 
+const suitOrder = new Map(SUIT_CODES.map((code, index) => [code, index]));
+
+/** 手札は数字の小さい順、同数字は属性順（deal.ts の sortHand と同じ並び）。 */
+function compareHandCards(left: NumberCard, right: NumberCard): number {
+  return (
+    rankNumber(left.rankCode) - rankNumber(right.rankCode) ||
+    (suitOrder.get(left.suitCode) ?? 0) - (suitOrder.get(right.suitCode) ?? 0)
+  );
+}
+
 function buildHand(rows: OnlineSnapshotHandRow[]): HandCardView[] {
   return rows
-    .slice()
-    .sort(
-      (left, right) => left.position - right.position || left.card_id.localeCompare(right.card_id),
-    )
     .map((row) => parseNumberCardId(row.card_id))
     .filter((card): card is NumberCard => card != null)
+    .sort(compareHandCards)
     .map((card) => ({
       cardId: card.cardId,
       rank: rankNumber(card.rankCode),

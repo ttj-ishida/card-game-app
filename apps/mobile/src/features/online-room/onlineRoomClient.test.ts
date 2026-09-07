@@ -270,14 +270,53 @@ describe('online room RPC client', () => {
           { player_id: 'player-2', seat_index: 1, role: 'GUEST', status: 'JOINED' },
         ]),
       },
-      { status: 200, body: JSON.stringify([{ id: 'round-1' }]) },
+      { status: 200, body: JSON.stringify([{ id: 'round-1', status: 'IN_PROGRESS' }]) },
     ]);
 
     const view = await fetchOnlineWaitingRoom('room-1', deps(fakeHttp, fakeStorage));
 
     assert.equal(view.status, 'IN_ROUND');
     assert.equal(view.roundId, 'round-1');
-    assert.match(fakeHttp.calls[2].url, /rounds\?select=id&room_id=eq\.room-1&round_number=eq\.1/);
+    assert.match(
+      fakeHttp.calls[2].url,
+      /rounds\?select=id,status&room_id=eq\.room-1&round_number=eq\.1/,
+    );
+  });
+
+  it('fetchOnlineWaitingRoom leaves roundId null for a finished round', async () => {
+    const fakeStorage = storage({
+      'onlineRoom.authSession.v1': JSON.stringify({
+        accessToken: 'stored-access',
+        refreshToken: null,
+        expiresAtMs: 120_000,
+      }),
+    });
+    const fakeHttp = http([
+      {
+        status: 200,
+        body: JSON.stringify([
+          {
+            id: 'room-1',
+            invite_code: 'ROOM123',
+            status: 'IN_ROUND',
+            max_players: 2,
+            turn_seconds: 60,
+            cpu_takeover_enabled: true,
+          },
+        ]),
+      },
+      {
+        status: 200,
+        body: JSON.stringify([
+          { player_id: 'player-1', seat_index: 0, role: 'HOST', status: 'JOINED' },
+        ]),
+      },
+      { status: 200, body: JSON.stringify([{ id: 'round-1', status: 'COMPLETED' }]) },
+    ]);
+
+    const view = await fetchOnlineWaitingRoom('room-1', deps(fakeHttp, fakeStorage));
+
+    assert.equal(view.roundId, null);
   });
   it('fetchOnlineRoundSnapshot calls the snapshot RPC with after_state_version', async () => {
     const fakeStorage = storage({

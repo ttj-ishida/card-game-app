@@ -287,14 +287,20 @@ export async function fetchOnlineWaitingRoom(
     status: seat.status,
   }));
 
+  // 対局中のルームだけ、進行中の round id を取得する。COMPLETED / CANCELLED の
+  // ラウンドは返さない（対局終了後にロビーへ戻った人が再び対局画面へ引き戻される
+  // のを防ぐ）。
   let roundId: string | null = null;
   if (room.status === 'IN_ROUND') {
     const roundResponse = await deps.http.get(
-      tableUrl(deps, `rounds?select=id&room_id=eq.${roomId}&round_number=eq.1&limit=1`),
+      tableUrl(deps, `rounds?select=id,status&room_id=eq.${roomId}&round_number=eq.1&limit=1`),
       headers,
     );
     if (roundResponse.status >= 200 && roundResponse.status < 300) {
-      roundId = parseJson<{ id: string }[]>(roundResponse.body)[0]?.id ?? null;
+      const round = parseJson<{ id: string; status: string }[]>(roundResponse.body)[0];
+      if (round && (round.status === 'IN_PROGRESS' || round.status === 'DEALING')) {
+        roundId = round.id;
+      }
     }
   }
 

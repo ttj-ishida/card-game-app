@@ -86,6 +86,21 @@ function failureState(err?: unknown): Pick<OnlineRoomState, 'status' | 'errorMes
   return { status: 'failed', errorMessageKey: errorKeyFor(err) };
 }
 
+/** 待機室表示に効く差分だけ比較する（席の並び・役割・状態、ルーム状態）。 */
+function sameWaitingRoom(a: OnlineWaitingRoomView | null, b: OnlineWaitingRoomView): boolean {
+  if (!a) return false;
+  if (a.status !== b.status || a.seats.length !== b.seats.length) return false;
+  return a.seats.every((seat, i) => {
+    const other = b.seats[i];
+    return (
+      seat.playerId === other.playerId &&
+      seat.seatIndex === other.seatIndex &&
+      seat.role === other.role &&
+      seat.status === other.status
+    );
+  });
+}
+
 export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
   ...initialState,
 
@@ -161,15 +176,20 @@ export const onlineRoomStore = createStore<OnlineRoomState>((set, get) => ({
   },
 
   async pollRoom() {
-    const roomId = get().room?.roomId;
+    const current = get();
+    const roomId = current.room?.roomId;
     if (!roomId) return;
-    if (get().status === 'started' || get().status === 'starting') return;
+    if (current.status === 'started' || current.status === 'starting') return;
     try {
       const d = requireDeps();
       const room = await fetchOnlineWaitingRoom(roomId, d);
       if (room.roundId) {
         set({ room, inviteCode: room.inviteCode, status: 'started', roundId: room.roundId });
-      } else {
+        return;
+      }
+      // 変化がなければ set しない。毎秒の再取得でロビー全体が再描画されて
+      // 「画面が重い」と感じる原因になるため。
+      if (!sameWaitingRoom(current.room, room)) {
         set({ room, inviteCode: room.inviteCode });
       }
     } catch {

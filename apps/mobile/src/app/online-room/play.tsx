@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useStore } from 'zustand';
 
 import { radius, spacing, typography, type ThemeColors } from '@ragnarok-millennium/ui';
@@ -9,6 +9,7 @@ import { rankNumber, type SuitCode } from '@ragnarok-millennium/game-core';
 import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, Panel } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -20,10 +21,12 @@ import {
   deriveSeatTakeovers,
   type OnlineRoundEventView,
 } from '../../features/online-room/onlineRoundViewModel';
+import { confirmDialog } from '../../features/online-room/confirmDialog';
 import { onlineRoundStore, type OnlinePendingSkill } from '../../state/onlineRoundStore';
+import { onlineRoomStore } from '../../state/onlineRoomStore';
 import { translate } from '../../i18n/translate';
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 1000;
 
 function reasonText(reason: string | null): string | null {
   if (!reason) return null;
@@ -57,7 +60,9 @@ export default function OnlineRoomPlayScreen() {
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    if (!state.roundId) router.replace('/online-room/lobby');
+    // roundId が無い＝退出/終了で片付け済み。ロビーは round がまだ残っていると
+    // 対局画面へ引き戻すので、ルーム作成画面まで戻す。
+    if (!state.roundId) router.replace('/online-room');
   }, [state.roundId, router]);
 
   useEffect(() => {
@@ -68,26 +73,20 @@ export default function OnlineRoomPlayScreen() {
     return () => clearInterval(timer);
   }, [state.roundId, state.winnerPlayerId, state.connection]);
 
-  const confirmLeave = useCallback(() => {
-    Alert.alert(
-      translate('onlineRoom.play.leaveConfirmTitle'),
-      translate('onlineRoom.play.leaveConfirmMessage'),
-      [
-        { text: translate('onlineRoom.play.leaveConfirmCancel'), style: 'cancel' },
-        {
-          text: translate('onlineRoom.play.leaveConfirmOk'),
-          style: 'destructive',
-          onPress: () => {
-            // CPU引き継ぎを要求（ルーム設定で無効なら自動的に棄権になる）。
-            // 引き継ぎ後の手番は残った誰かのポーリングが advance-cpu-turn で進める。
-            onlineRoundStore
-              .getState()
-              .leaveRound(true)
-              .finally(() => router.replace('/online-room'));
-          },
-        },
-      ],
-    );
+  const confirmLeave = useCallback(async () => {
+    const ok = await confirmDialog({
+      title: translate('onlineRoom.play.leaveConfirmTitle'),
+      message: translate('onlineRoom.play.leaveConfirmMessage'),
+      confirmText: translate('onlineRoom.play.leaveConfirmOk'),
+      cancelText: translate('onlineRoom.play.leaveConfirmCancel'),
+      destructive: true,
+    });
+    if (!ok) return;
+    // CPU引き継ぎを要求（ルーム設定で無効なら自動的に棄権になる）。
+    // 引き継ぎ後の手番は残った誰かのポーリングが advance-cpu-turn で進める。
+    onlineRoomStore.getState().reset();
+    await onlineRoundStore.getState().leaveRound(true);
+    router.replace('/online-room');
   }, [router]);
 
   useFocusEffect(
@@ -162,32 +161,34 @@ export default function OnlineRoomPlayScreen() {
   };
 
   const winnerBanner = winnerPlayerId ? (
-    <View style={styles.winnerPanel}>
+    <Panel>
       <Text style={styles.winnerText}>
         {winnerPlayerId === view.playerId
           ? translate('cpuGame.result.youWin')
           : translate('cpuGame.result.youLose')}
       </Text>
       <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.replace('/online-room/lobby')}
-          style={styles.actionBtn}
-        >
-          <Text style={styles.actionText}>{translate('onlineRoom.play.backToLobby')}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={translate('onlineRoom.play.backToLobby')}
+          onPress={() => {
+            // サーバー側の再戦は未対応。対局を片付けてルーム作成画面へ戻す
+            // （ロビーへ戻すと終了済みの round が残っていて対局画面へ引き戻される）。
+            onlineRoundStore.getState().reset();
+            onlineRoomStore.getState().reset();
+            router.replace('/online-room');
+          }}
+        />
+        <Button
+          variant="ghost"
+          label={translate('onlineRoom.play.backHome')}
           onPress={() => {
             onlineRoundStore.getState().reset();
+            onlineRoomStore.getState().reset();
             router.replace('/');
           }}
-          style={styles.actionBtnGhost}
-        >
-          <Text style={styles.actionTextGhost}>{translate('onlineRoom.play.backHome')}</Text>
-        </Pressable>
+        />
       </View>
-    </View>
+    </Panel>
   ) : null;
 
   return (
@@ -213,29 +214,22 @@ export default function OnlineRoomPlayScreen() {
               <Text style={styles.reconnecting}>{translate('onlineRoom.play.reconnecting')}</Text>
             ) : null}
             {state.connection === 'offline' ? (
-              <Pressable
-                accessibilityRole="button"
+              <Button
+                variant="secondary"
+                label={`${translate('onlineRoom.play.offline')} · ${translate('onlineRoom.play.retry')}`}
                 onPress={() => void onlineRoundStore.getState().reconnect()}
-                style={styles.offlineBtn}
-              >
-                <Text style={styles.offlineText}>
-                  {translate('onlineRoom.play.offline')} · {translate('onlineRoom.play.retry')}
-                </Text>
-              </Pressable>
+              />
             ) : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showHistory }}
+            <Button
+              variant="ghost"
+              label={`${translate('cpuGame.history')} ${showHistory ? '▲' : '▾'}`}
               onPress={() => setShowHistory((v) => !v)}
-              style={styles.historyToggle}
-            >
-              <Text style={styles.topText}>
-                {translate('cpuGame.history')} {showHistory ? '▲' : '▾'}
-              </Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={confirmLeave} style={styles.leaveBtn}>
-              <Text style={styles.leaveText}>{translate('onlineRoom.play.leave')}</Text>
-            </Pressable>
+            />
+            <Button
+              variant="danger"
+              label={translate('onlineRoom.play.leave')}
+              onPress={confirmLeave}
+            />
           </View>
 
           {winnerBanner}
@@ -350,28 +344,20 @@ export default function OnlineRoomPlayScreen() {
           </View>
 
           {heldSkill ? (
-            <View style={styles.skillPanel}>
+            <Panel>
               <Text style={styles.skillTitle}>
                 {translate('cpuGame.skill.held')}:{' '}
                 {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
               </Text>
               {skillSubmitOptions.map((opt) => (
-                <Pressable
+                <Button
                   key={opt.useSkill}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: pendingSkill?.useSkill === opt.useSkill }}
+                  label={translate(`cpuGame.skill.submit.${opt.useSkill}`)}
+                  selected={pendingSkill?.useSkill === opt.useSkill}
                   onPress={() => onDeclareSkill(opt.useSkill)}
-                  style={[
-                    styles.actionBtn,
-                    pendingSkill?.useSkill === opt.useSkill && styles.actionBtnSelected,
-                  ]}
-                >
-                  <Text style={styles.actionText}>
-                    {translate(`cpuGame.skill.submit.${opt.useSkill}`)}
-                  </Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </Panel>
           ) : null}
         </ScrollView>
 
@@ -407,42 +393,21 @@ export default function OnlineRoomPlayScreen() {
           </ScrollView>
 
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{
-                disabled: !view.isMyTurn || !canSubmit(selection, skillLegalPlays),
-              }}
+            <Button
+              label={translate('cpuGame.action.submit')}
               disabled={!view.isMyTurn || !canSubmit(selection, skillLegalPlays)}
               onPress={onSubmit}
-              style={[
-                styles.actionBtn,
-                (!view.isMyTurn || !canSubmit(selection, skillLegalPlays)) && styles.actionDisabled,
-              ]}
-            >
-              <Text style={styles.actionText}>{translate('cpuGame.action.submit')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{
-                disabled: !view.isMyTurn || pendingSkill != null || !canPass(legalPlays),
-              }}
+            />
+            <Button
+              label={translate('cpuGame.action.pass')}
               disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
               onPress={onPass}
-              style={[
-                styles.actionBtn,
-                (!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)) &&
-                  styles.actionDisabled,
-              ]}
-            >
-              <Text style={styles.actionText}>{translate('cpuGame.action.pass')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            />
+            <Button
+              variant="ghost"
+              label={translate('cpuGame.action.clear')}
               onPress={() => onlineRoundStore.getState().clearSelection()}
-              style={styles.actionBtnGhost}
-            >
-              <Text style={styles.actionTextGhost}>{translate('cpuGame.action.clear')}</Text>
-            </Pressable>
+            />
           </View>
           {reasonText(state.lastReason) ? (
             <Text style={styles.invalid}>{reasonText(state.lastReason)}</Text>
@@ -469,35 +434,6 @@ const makeStyles = (c: ThemeColors) =>
       color: c.state.warning,
       fontWeight: typography.weight.bold,
     },
-    offlineBtn: {
-      borderWidth: 1,
-      borderColor: c.suit.fire,
-      borderRadius: radius.control,
-      backgroundColor: c.surface.card.face,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    offlineText: {
-      fontSize: typography.size.caption,
-      color: c.suit.fire,
-      fontWeight: typography.weight.bold,
-    },
-    historyToggle: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    leaveBtn: {
-      marginLeft: 'auto',
-      borderWidth: 1,
-      borderColor: c.suit.fire,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    leaveText: { fontSize: typography.size.caption, color: c.suit.fire },
     historyPanel: {
       maxHeight: 140,
       borderWidth: 1,
@@ -558,52 +494,17 @@ const makeStyles = (c: ThemeColors) =>
     handCardSelected: { borderColor: c.ink.primary },
     handCardDim: { opacity: 0.4 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillPanel: {
-      borderWidth: 1,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      padding: spacing.xs,
-      gap: spacing.xs,
-    },
     skillTitle: {
       fontSize: typography.size.caption,
       fontWeight: typography.weight.bold,
       color: c.ink.primary,
     },
-    winnerPanel: {
-      alignItems: 'center',
-      gap: spacing.sm,
-      borderWidth: 1,
-      borderColor: c.ink.primary,
-      borderRadius: radius.control,
-      padding: spacing.sm,
-    },
     winnerText: {
       fontSize: typography.size.title,
       fontWeight: typography.weight.bold,
       color: c.ink.primary,
+      textAlign: 'center',
     },
-    actionBtn: {
-      backgroundColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    actionDisabled: { backgroundColor: c.state.disabled },
-    actionBtnSelected: { backgroundColor: c.state.warning },
-    actionText: {
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-      color: c.ink.inverse,
-    },
-    actionBtnGhost: {
-      borderWidth: 1,
-      borderColor: c.ink.primary,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    actionTextGhost: { fontSize: typography.size.body, color: c.ink.primary },
     invalid: {
       fontSize: typography.size.caption,
       color: c.suit.fire,
