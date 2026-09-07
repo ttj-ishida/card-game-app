@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getAppConfig, getOptionalAppConfig, parseAppEnv } from './appEnv';
+import {
+  getAppConfig,
+  getOptionalAppConfig,
+  parseAppEnv,
+  rewriteAndroidLoopbackHost,
+} from './appEnv';
 
 test('parseAppEnv accepts only known app environments', () => {
   assert.equal(parseAppEnv('local'), 'local');
@@ -23,6 +28,28 @@ test('getAppConfig returns public Supabase settings for the selected environment
     supabaseUrl: 'http://127.0.0.1:54321',
     supabaseAnonKey: 'local-anon-key',
   });
+});
+
+test('rewriteAndroidLoopbackHost swaps the emulator loopback for localhost, leaving others alone', () => {
+  assert.equal(rewriteAndroidLoopbackHost('http://10.0.2.2:54321'), 'http://localhost:54321');
+  assert.equal(
+    rewriteAndroidLoopbackHost('http://10.0.2.2:54321/rest/v1/practice_round_results'),
+    'http://localhost:54321/rest/v1/practice_round_results',
+  );
+  assert.equal(rewriteAndroidLoopbackHost('http://127.0.0.1:54321'), 'http://127.0.0.1:54321');
+  assert.equal(
+    rewriteAndroidLoopbackHost('https://evzmtxwdsoebekxlqxeo.supabase.co'),
+    'https://evzmtxwdsoebekxlqxeo.supabase.co',
+  );
+});
+
+test('getAppConfig leaves the Supabase URL untouched off-web (no window.document)', () => {
+  const config = getAppConfig({
+    EXPO_PUBLIC_APP_ENV: 'local',
+    EXPO_PUBLIC_SUPABASE_URL: 'http://10.0.2.2:54321',
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: 'local-anon-key',
+  });
+  assert.equal(config.supabaseUrl, 'http://10.0.2.2:54321');
 });
 
 test('getAppConfig rejects missing public settings', () => {

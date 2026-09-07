@@ -40,6 +40,21 @@ const bundledPublicEnv: PublicEnv = {
   EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
 };
 
+/**
+ * `10.0.2.2` is the Android-emulator alias for the host machine's loopback
+ * interface. It is unreachable from a web browser (also from an iOS simulator or
+ * a physical device), where every save/sync fetch then fails with
+ * `TypeError: Failed to fetch` and results pile up in the retry queue. Rewrite it
+ * to `localhost` so one local `.env` (Android-first) also works on web.
+ */
+export function rewriteAndroidLoopbackHost(url: string): string {
+  return url.replace(/^(https?:\/\/)10\.0\.2\.2(?=[:/]|$)/, '$1localhost');
+}
+
+function isWebRuntime(): boolean {
+  return typeof window !== 'undefined' && typeof window.document !== 'undefined';
+}
+
 function requirePublicValue(env: PublicEnv, key: keyof PublicEnv): string {
   const value = env[key];
   if (!value) {
@@ -60,7 +75,8 @@ function assertPublicAnonKey(value: string): void {
 
 export function getAppConfig(env: PublicEnv = bundledPublicEnv): AppConfig {
   const appEnv = parseAppEnv(env.EXPO_PUBLIC_APP_ENV);
-  const supabaseUrl = requirePublicValue(env, 'EXPO_PUBLIC_SUPABASE_URL');
+  const rawSupabaseUrl = requirePublicValue(env, 'EXPO_PUBLIC_SUPABASE_URL');
+  const supabaseUrl = isWebRuntime() ? rewriteAndroidLoopbackHost(rawSupabaseUrl) : rawSupabaseUrl;
   const supabaseAnonKey = requirePublicValue(env, 'EXPO_PUBLIC_SUPABASE_ANON_KEY');
 
   assertPublicAnonKey(supabaseAnonKey);
