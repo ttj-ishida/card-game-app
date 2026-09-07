@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import Svg, { Ellipse } from 'react-native-svg';
 
 import type { SuitCode } from '@ragnarok-millennium/game-core';
-import { radius, spacing, typography } from '@ragnarok-millennium/ui';
+import { spacing, typography } from '@ragnarok-millennium/ui';
 
 import { CardFace } from '../features/cpu-game/CardFace';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
-import { centerLatestOffset } from './fieldTrailLayout';
+import { centerLatestOffset, ellipseSize } from './fieldTrailLayout';
+import { SkillMiniCard } from './SkillMiniCard';
 
 export type FieldTrailStep = {
   key: string;
@@ -15,6 +17,8 @@ export type FieldTrailStep = {
   /** e.g. "リード" / "2番目" / "最終出し手" */
   label: string;
   seatLabel?: string;
+  /** このプレイで使われたスキルの表示名（あれば）。捨て場にミニカードで併記する。 */
+  skillLabel?: string | null;
 };
 
 const useDriver = Platform.OS !== 'web';
@@ -25,29 +29,33 @@ const prefersReducedMotion =
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * The plays that built the current field, oldest to newest, in one horizontal
- * row. The last step (最終出し手) is kept centred; when a new play lands the row
- * slides left and the new step drops in with a gold pulse.
+ * 現在の場を作った一連のプレイを 1 行で表示する。左から古い順に「捨て場」、
+ * 右端の最終出し手だけ楕円の枠で囲んで中央に置く。新しい手が着地すると行が
+ * 左へスライドし、最終出し手の楕円が金色にパルスする。
  */
 export function FieldTrail({
-  steps,
+  past,
+  latest,
   maxWidth,
   lowMotion = false,
 }: {
-  steps: FieldTrailStep[];
+  past: FieldTrailStep[];
+  latest: FieldTrailStep | null;
   maxWidth: number;
   lowMotion?: boolean;
 }) {
   const { colors } = useTheme();
   const still = lowMotion || prefersReducedMotion;
-  const latest = steps[steps.length - 1];
+  const pastSteps = past ?? [];
+  const allSteps = latest ? [...pastSteps, latest] : pastSteps;
   const signature = latest
-    ? `${latest.key}:${latest.cards.map((c) => `${c.rank}${c.suitCode}`).join(',')}`
+    ? `${latest.key}:${latest.cards.map((c) => `${c.rank}${c.suitCode}`).join(',')}:${latest.skillLabel ?? ''}`
     : '';
   const offset = centerLatestOffset(
-    steps.map((s) => s.cards.length),
+    allSteps.map((s) => ({ cardCount: s.cards.length, hasSkill: !!s.skillLabel })),
     maxWidth,
   );
+  const ell = ellipseSize(latest?.cards.length ?? 1, !!latest?.skillLabel);
 
   const [enter] = useState(() => new Animated.Value(1));
   const [glow] = useState(() => new Animated.Value(0));
@@ -91,7 +99,7 @@ export function FieldTrail({
     if (!first) pulse(glow, 240);
   }, [signature, offset, still, enter, glow, slide, latest]);
 
-  if (steps.length === 0) return null;
+  if (allSteps.length === 0) return null;
 
   const rowTranslateX = slide.interpolate({ inputRange: [0, 1], outputRange: range });
   const enterY = enter.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] });
@@ -100,60 +108,84 @@ export function FieldTrail({
   return (
     <View style={[styles.clip, { width: maxWidth }]}>
       <Animated.View style={[styles.row, { transform: [{ translateX: rowTranslateX }] }]}>
-        {steps.map((step, i) => {
-          const isLatest = i === steps.length - 1;
-          return (
-            <View key={step.key} style={styles.step}>
-              <Text
+        {pastSteps.map((step) => (
+          <View key={step.key} style={styles.step}>
+            <Text style={[styles.label, { color: colors.ink.secondary }]}>{step.label}</Text>
+            {step.seatLabel ? (
+              <Text style={[styles.seat, { color: colors.ink.secondary }]}>{step.seatLabel}</Text>
+            ) : null}
+            <View style={[styles.cards, styles.past]}>
+              {step.cards.map((card, ci) => (
+                <CardFace
+                  key={ci}
+                  rank={card.rank}
+                  suitCode={card.suitCode}
+                  isJoker={card.isJoker}
+                  size="mini"
+                />
+              ))}
+              {step.skillLabel ? <SkillMiniCard label={step.skillLabel} size="mini" /> : null}
+            </View>
+          </View>
+        ))}
+
+        {latest ? (
+          <View style={styles.step}>
+            <Text style={[styles.label, { color: colors.ink.primary }]}>{latest.label}</Text>
+            {latest.seatLabel ? (
+              <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
+            ) : null}
+            <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
+              <Svg
+                width={ell.width}
+                height={ell.height}
+                style={[StyleSheet.absoluteFill, styles.noEvents]}
+              >
+                <Ellipse
+                  cx={ell.width / 2}
+                  cy={ell.height / 2}
+                  rx={ell.width / 2 - 2}
+                  ry={ell.height / 2 - 2}
+                  stroke={ACCENT}
+                  strokeWidth={2}
+                  fill="none"
+                />
+              </Svg>
+              <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
+                <Svg width={ell.width} height={ell.height}>
+                  <Ellipse
+                    cx={ell.width / 2}
+                    cy={ell.height / 2}
+                    rx={ell.width / 2 - 2}
+                    ry={ell.height / 2 - 2}
+                    stroke={ACCENT}
+                    strokeWidth={5}
+                    fill="none"
+                  />
+                </Svg>
+              </Animated.View>
+              <Animated.View
                 style={[
-                  styles.label,
-                  { color: isLatest ? colors.ink.primary : colors.ink.secondary },
+                  styles.cards,
+                  { transform: [{ translateY: enterY }, { scale: enterScale }] },
                 ]}
               >
-                {step.label}
-              </Text>
-              {step.seatLabel ? (
-                <Text style={[styles.seat, { color: colors.ink.secondary }]}>{step.seatLabel}</Text>
-              ) : null}
-              {isLatest ? (
-                <View style={styles.latestWrap}>
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[styles.glow, { opacity: glow, borderColor: ACCENT }]}
+                {latest.cards.map((card, ci) => (
+                  <CardFace
+                    key={ci}
+                    rank={card.rank}
+                    suitCode={card.suitCode}
+                    isJoker={card.isJoker}
+                    size="field"
                   />
-                  <Animated.View
-                    style={[
-                      styles.cards,
-                      { transform: [{ translateY: enterY }, { scale: enterScale }] },
-                    ]}
-                  >
-                    {step.cards.map((card, ci) => (
-                      <CardFace
-                        key={ci}
-                        rank={card.rank}
-                        suitCode={card.suitCode}
-                        isJoker={card.isJoker}
-                        size="field"
-                      />
-                    ))}
-                  </Animated.View>
-                </View>
-              ) : (
-                <View style={[styles.cards, styles.past]}>
-                  {step.cards.map((card, ci) => (
-                    <CardFace
-                      key={ci}
-                      rank={card.rank}
-                      suitCode={card.suitCode}
-                      isJoker={card.isJoker}
-                      size="mini"
-                    />
-                  ))}
-                </View>
-              )}
+                ))}
+                {latest.skillLabel ? (
+                  <SkillMiniCard label={latest.skillLabel} size="field" />
+                ) : null}
+              </Animated.View>
             </View>
-          );
-        })}
+          </View>
+        ) : null}
       </Animated.View>
     </View>
   );
@@ -161,8 +193,8 @@ export function FieldTrail({
 
 function pulse(value: Animated.Value, duration: number) {
   Animated.sequence([
-    Animated.timing(value, { toValue: 1, duration: duration * 0.4, useNativeDriver: useDriver }),
-    Animated.timing(value, { toValue: 0, duration: duration * 0.6, useNativeDriver: useDriver }),
+    Animated.timing(value, { toValue: 1, duration: duration * 0.4, useNativeDriver: false }),
+    Animated.timing(value, { toValue: 0, duration: duration * 0.6, useNativeDriver: false }),
   ]).start();
 }
 
@@ -173,15 +205,7 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.size.caption, fontWeight: typography.weight.bold },
   seat: { fontSize: typography.size.caption },
   latestWrap: { alignItems: 'center', justifyContent: 'center' },
-  glow: {
-    position: 'absolute',
-    left: -4,
-    right: -4,
-    top: -4,
-    bottom: -4,
-    borderRadius: radius.modal,
-    borderWidth: 3,
-  },
+  noEvents: { pointerEvents: 'none' },
   cards: { flexDirection: 'row', flexWrap: 'nowrap', gap: spacing.xs, justifyContent: 'center' },
   past: { opacity: 0.7 },
 });

@@ -96,6 +96,27 @@ export type OnlineRoundEventView = Pick<
   eventKind: string;
 };
 
+/**
+ * 現在の場を作った PLAY イベント列（古い順）。最新から遡り、LEAD で止める。
+ * 場流し（fieldCleared な PASS）より前は含めない。CPU 戦の currentFieldTrail と同じ考え方。
+ */
+export function currentFieldTrailEvents(events: OnlineRoundEventView[]): OnlineRoundEventView[] {
+  const trail: OnlineRoundEventView[] = [];
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i];
+    if (event.eventKind === 'PLAYER_LEFT_CPU_TAKEOVER' || event.eventKind === 'PLAYER_FORFEITED') {
+      continue;
+    }
+    if (event.kind === 'PLAY') {
+      trail.unshift(event);
+      if (event.actionKind === 'LEAD') break;
+    } else if (event.fieldCleared) {
+      break;
+    }
+  }
+  return trail;
+}
+
 export type SeatTakeoverStatus = 'CPU' | 'LEFT';
 
 /**

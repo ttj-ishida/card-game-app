@@ -10,7 +10,8 @@ import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { ACCENT, Button, FieldTrail, HandFan, Panel } from '../../components';
+import { ACCENT, Button, CloseButton, FieldTrail, HandFan, Panel } from '../../components';
+import type { FieldTrailStep } from '../../components';
 import {
   canPass,
   canSelectCard,
@@ -19,6 +20,7 @@ import {
 } from '../../features/cpu-game/handSelection';
 import { submitOptionsForSelection } from '../../features/cpu-game/skillPlayOptions';
 import {
+  currentFieldTrailEvents,
   deriveSeatTakeovers,
   type OnlineRoundEventView,
 } from '../../features/online-room/onlineRoundViewModel';
@@ -46,7 +48,11 @@ function reasonText(reason: string | null): string | null {
   }
 }
 
-function eventCardViews(event: OnlineRoundEventView) {
+function eventCardViews(event: OnlineRoundEventView): {
+  rank: number;
+  suitCode: SuitCode;
+  isJoker: boolean;
+}[] {
   return event.cards.map((c) => ({
     rank: rankNumber(c.rankCode),
     suitCode: c.suitCode,
@@ -56,6 +62,11 @@ function eventCardViews(event: OnlineRoundEventView) {
 
 function skillEffectLabelKey(effect: OnlineRoundEventView['skillEffect']): string | null {
   return effect ? `sandbox.play.useSkill.${effect}` : null;
+}
+
+/** イベントの skillEffect を場に併記する表示名にする（例: 革命 / 追加封印）。 */
+function skillLabelFor(effect: OnlineRoundEventView['skillEffect']): string | null {
+  return effect ? translate(`sandbox.play.useSkill.${effect}`) : null;
 }
 
 export default function OnlineRoomPlayScreen() {
@@ -127,6 +138,8 @@ export default function OnlineRoomPlayScreen() {
 
   const takeovers = useMemo(() => deriveSeatTakeovers(state.eventLog), [state.eventLog]);
 
+  const fieldTrail = useMemo(() => currentFieldTrailEvents(state.eventLog), [state.eventLog]);
+
   const skillLegalPlays = useMemo(
     () =>
       pendingSkill
@@ -149,6 +162,28 @@ export default function OnlineRoomPlayScreen() {
 
   const skillSubmitOptions = submitOptionsForSelection(legalPlays, selection);
   const heldSkill = view.skills.find((s) => !s.used) ?? null;
+
+  // 現在の場の「捨て場（過去の手）」と、楕円で囲む「最終出し手」。
+  const trailPast: FieldTrailStep[] = fieldTrail.slice(0, -1).map((event, i) => ({
+    key: String(event.eventSeq),
+    cards: eventCardViews(event),
+    label:
+      i === 0
+        ? translate('cpuGame.field.trail.lead')
+        : `${i + 1}${translate('cpuGame.field.trail.nthSuffix')}`,
+    seatLabel: actorLabel(event.seatId),
+    skillLabel: skillLabelFor(event.skillEffect),
+  }));
+  const lastTrailEvent = fieldTrail[fieldTrail.length - 1];
+  const trailLatest: FieldTrailStep | null = view.field
+    ? {
+        key: lastTrailEvent ? String(lastTrailEvent.eventSeq) : 'latest',
+        cards: view.field.cards,
+        label: translate('cpuGame.field.trail.latest'),
+        seatLabel: actorLabel(view.field.lastPlayerId),
+        skillLabel: lastTrailEvent ? skillLabelFor(lastTrailEvent.skillEffect) : null,
+      }
+    : null;
 
   const onSelectCard = (cardId: string) => {
     onlineRoundStore.getState().selectCard(cardId);
@@ -200,6 +235,11 @@ export default function OnlineRoomPlayScreen() {
   return (
     <AppBackground variant="battle" inverted={view.dayNight === 'NIGHT'}>
       <View style={styles.screen}>
+        <CloseButton
+          onPress={confirmLeave}
+          accessibilityLabel={translate('onlineRoom.play.leave')}
+          style={styles.leaveClose}
+        />
         <ScrollView
           style={styles.scrollArea}
           contentContainerStyle={styles.scrollContent}
@@ -230,11 +270,6 @@ export default function OnlineRoomPlayScreen() {
               variant="ghost"
               label={`${translate('cpuGame.history')} ${showHistory ? '▲' : '▾'}`}
               onPress={() => setShowHistory((v) => !v)}
-            />
-            <Button
-              variant="danger"
-              label={translate('onlineRoom.play.leave')}
-              onPress={confirmLeave}
             />
           </View>
 
@@ -317,13 +352,8 @@ export default function OnlineRoomPlayScreen() {
             {view.field ? (
               <FieldTrail
                 maxWidth={Math.min(shell.width - spacing.md * 2, 760)}
-                steps={[
-                  {
-                    key: 'current',
-                    cards: view.field.cards,
-                    label: translate('cpuGame.field.trail.latest'),
-                  },
-                ]}
+                past={trailPast}
+                latest={trailLatest}
               />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
@@ -431,6 +461,7 @@ export default function OnlineRoomPlayScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     screen: { flex: 1, padding: spacing.xs },
+    leaveClose: { position: 'absolute', top: spacing.xs, right: spacing.xs, zIndex: 10 },
     scrollArea: { flexShrink: 1, flexGrow: 1 },
     scrollContent: { gap: spacing.xs, paddingBottom: spacing.xs },
     footer: { gap: spacing.xs, paddingTop: spacing.xs },
@@ -441,7 +472,13 @@ const makeStyles = (c: ThemeColors) =>
       gap: spacing.sm,
     },
     footerSide: { width: FOOTER_SIDE_W },
-    topBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+    topBar: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingRight: 44,
+    },
     topText: { fontSize: typography.size.caption, color: c.ink.primary },
     reconnecting: {
       fontSize: typography.size.caption,

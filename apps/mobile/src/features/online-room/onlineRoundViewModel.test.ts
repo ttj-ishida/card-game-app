@@ -4,6 +4,7 @@ import test from 'node:test';
 import type { OnlineRoundEventView, OnlineRoundSnapshotResponse } from './onlineRoundViewModel';
 import {
   buildOnlineRoundViewModel,
+  currentFieldTrailEvents,
   deriveSeatTakeovers,
   parseNumberCardId,
   parseSkillEffectFromId,
@@ -171,6 +172,61 @@ test('deriveSeatTakeovers maps leave events to CPU / LEFT by the leaving player'
   ]);
 
   assert.deepEqual(takeovers, { p2: 'CPU', p3: 'LEFT' });
+});
+
+test('currentFieldTrailEvents returns the plays since LEAD, oldest first, skipping leave events', () => {
+  const ev = (overrides: Partial<OnlineRoundEventView>): OnlineRoundEventView => ({
+    index: 0,
+    eventSeq: 0,
+    stateVersion: 0,
+    seatId: 'p1',
+    kind: 'PLAY',
+    actionKind: 'REPLACE',
+    cards: [],
+    skillEffect: null,
+    fieldCleared: false,
+    dayNightAfter: 'DAY',
+    createdAt: '2026-09-07T00:00:00Z',
+    eventKind: 'PLAY_ACCEPTED',
+    ...overrides,
+  });
+
+  const trail = currentFieldTrailEvents([
+    ev({ eventSeq: 1, actionKind: 'REPLACE' }), // before the current field — dropped
+    ev({ eventSeq: 2, kind: 'PASS', actionKind: 'PASS', fieldCleared: true }), // field cleared here
+    ev({ eventSeq: 3, seatId: 'p1', actionKind: 'LEAD' }),
+    ev({ eventSeq: 4, seatId: 'p2', eventKind: 'PLAYER_LEFT_CPU_TAKEOVER', kind: 'PASS' }),
+    ev({ eventSeq: 5, seatId: 'p2', actionKind: 'EXTEND' }),
+  ]);
+
+  assert.deepEqual(
+    trail.map((e) => e.eventSeq),
+    [3, 5],
+  );
+});
+
+test('currentFieldTrailEvents stops at a fieldCleared pass with no preceding LEAD', () => {
+  const ev = (overrides: Partial<OnlineRoundEventView>): OnlineRoundEventView => ({
+    index: 0,
+    eventSeq: 0,
+    stateVersion: 0,
+    seatId: 'p1',
+    kind: 'PLAY',
+    actionKind: 'LEAD',
+    cards: [],
+    skillEffect: null,
+    fieldCleared: false,
+    dayNightAfter: 'DAY',
+    createdAt: '2026-09-07T00:00:00Z',
+    eventKind: 'PLAY_ACCEPTED',
+    ...overrides,
+  });
+
+  assert.deepEqual(currentFieldTrailEvents([]), []);
+  assert.deepEqual(
+    currentFieldTrailEvents([ev({ eventSeq: 1, actionKind: 'LEAD' })]).map((e) => e.eventSeq),
+    [1],
+  );
 });
 
 test('buildOnlineRoundViewModel treats empty active_field as no field and unlocked state', () => {

@@ -19,6 +19,7 @@ import {
   ACCENT,
   Button,
   Chip,
+  CloseButton,
   FieldTrail,
   HandFan,
   Panel,
@@ -142,29 +143,33 @@ export default function CpuGamePlayScreen() {
     );
   }
 
-  const fieldTrailSteps: FieldTrailStep[] = (() => {
+  const trailPast: FieldTrailStep[] = (() => {
     if (!vm.field) return [];
-    const raw =
-      vm.field.trail.length > 0
-        ? vm.field.trail
-        : [
-            {
-              index: -1,
-              seatNameKey: vm.field.lastPlayerNameKey,
-              cards: vm.field.cards,
-            },
-          ];
-    return raw.map((step, i, arr) => ({
+    return vm.field.trail.slice(0, -1).map((step, i) => ({
       key: String(step.index),
       cards: step.cards,
       label:
-        i === arr.length - 1
-          ? translate('cpuGame.field.trail.latest')
-          : i === 0
-            ? translate('cpuGame.field.trail.lead')
-            : `${i + 1}${translate('cpuGame.field.trail.nthSuffix')}`,
+        i === 0
+          ? translate('cpuGame.field.trail.lead')
+          : `${i + 1}${translate('cpuGame.field.trail.nthSuffix')}`,
       seatLabel: step.seatNameKey ? translate(step.seatNameKey) : undefined,
+      skillLabel: step.skillEffectKey ? translate(step.skillEffectKey) : null,
     }));
+  })();
+  const trailLatest: FieldTrailStep | null = (() => {
+    if (!vm.field) return null;
+    const last = vm.field.trail[vm.field.trail.length - 1];
+    return {
+      key: last ? String(last.index) : 'latest',
+      cards: vm.field.cards,
+      label: translate('cpuGame.field.trail.latest'),
+      seatLabel: last?.seatNameKey
+        ? translate(last.seatNameKey)
+        : vm.field.lastPlayerNameKey
+          ? translate(vm.field.lastPlayerNameKey)
+          : undefined,
+      skillLabel: last?.skillEffectKey ? translate(last.skillEffectKey) : null,
+    };
   })();
 
   const onSubmit = () => {
@@ -187,6 +192,11 @@ export default function CpuGamePlayScreen() {
   return (
     <AppBackground variant="battle" inverted={vm.dayNight === 'NIGHT'}>
       <View style={styles.screen}>
+        <CloseButton
+          onPress={confirmExit}
+          accessibilityLabel={translate('cpuGame.exit.button')}
+          style={styles.exitClose}
+        />
         <ScrollView
           style={styles.scrollArea}
           contentContainerStyle={styles.scrollContent}
@@ -208,11 +218,6 @@ export default function CpuGamePlayScreen() {
               variant="ghost"
               label={`${translate('cpuGame.history')} ${showHistory ? '▲' : '▾'}`}
               onPress={() => setShowHistory((v) => !v)}
-            />
-            <Button
-              variant="danger"
-              label={translate('cpuGame.exit.button')}
-              onPress={confirmExit}
             />
           </View>
 
@@ -291,7 +296,8 @@ export default function CpuGamePlayScreen() {
               <FieldTrail
                 lowMotion={lowMotion}
                 maxWidth={Math.min(shell.width - spacing.md * 2, 760)}
-                steps={fieldTrailSteps}
+                past={trailPast}
+                latest={trailLatest}
               />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
@@ -517,11 +523,13 @@ const makeStyles = (c: ThemeColors) =>
       gap: spacing.sm,
     },
     footerSide: { width: FOOTER_SIDE_W },
+    exitClose: { position: 'absolute', top: spacing.xs, right: spacing.xs, zIndex: 10 },
     topBar: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: spacing.sm,
+      paddingRight: 44,
     },
     topText: { fontSize: typography.size.caption, color: c.ink.primary },
     historyPanel: {

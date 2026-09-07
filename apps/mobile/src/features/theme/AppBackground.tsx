@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, ImageBackground, Platform, StyleSheet, View } from 'react-native';
+import { Animated, Image, Platform, StyleSheet, View } from 'react-native';
 
 import { ACCENT } from '../../components';
+import { useShellSize } from './AppShell';
 import { backgroundAssets } from './backgroundAssets';
 import { resolveBattleLayers } from './battleLayers';
 import { resolveBackgroundSource, type BackgroundVariant } from './resolveBackgroundSource';
@@ -24,6 +25,21 @@ const SCRIM: Record<'light' | 'dark', Record<BackgroundVariant, [string, string]
 
 const useDriver = Platform.OS !== 'web';
 
+/**
+ * Explicit pixel size for the background image layers. react-native-web sizes an
+ * `ImageBackground`/`Image` with `flex:1` or `absoluteFill` to the source's
+ * *natural* pixels and pins it top-left — the "background not centred on web"
+ * bug. Feeding the shell size as concrete width/height avoids that entirely
+ * (on native the shell size is just the window).
+ */
+function useBackdropSize(): { width: number; height: number } {
+  const shell = useShellSize();
+  return {
+    width: shell.width > 0 ? shell.width : 0,
+    height: shell.height > 0 ? shell.height : 0,
+  };
+}
+
 export function AppBackground({
   variant,
   children,
@@ -40,10 +56,11 @@ export function AppBackground({
   if (variant !== 'battle') {
     const source = resolveBackgroundSource(backgroundAssets, scheme, variant);
     return (
-      <ImageBackground source={source} resizeMode="cover" style={styles.fill}>
+      <View style={styles.fill}>
+        <BackdropImage source={source} />
         <Scrims top={top} bottom={bottom} />
         <View style={styles.fill}>{children}</View>
-      </ImageBackground>
+      </View>
     );
   }
 
@@ -51,6 +68,18 @@ export function AppBackground({
     <BattleBackground scheme={scheme} inverted={inverted} top={top} bottom={bottom}>
       {children}
     </BattleBackground>
+  );
+}
+
+/** A single full-bleed, centre-cropped background image. */
+function BackdropImage({ source }: { source: number }) {
+  const { width, height } = useBackdropSize();
+  return (
+    <Image
+      source={source}
+      resizeMode="cover"
+      style={[styles.backdrop, width > 0 ? { width, height } : styles.fillAbsolute]}
+    />
   );
 }
 
@@ -89,17 +118,17 @@ function BattleBackground({
 
   return (
     <View style={styles.fill}>
-      <ImageBackground source={base} resizeMode="cover" style={StyleSheet.absoluteFill}>
-        <Animated.Image
-          source={flip}
-          resizeMode="cover"
-          style={[StyleSheet.absoluteFill, { opacity: fade }]}
-        />
-      </ImageBackground>
+      <BackdropImage source={base} />
+      <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: fade }]}>
+        <BackdropImage source={flip} />
+      </Animated.View>
       <Scrims top={top} bottom={bottom} />
       <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: ACCENT, opacity: flash }]}
+        style={[
+          StyleSheet.absoluteFill,
+          styles.noEvents,
+          { backgroundColor: ACCENT, opacity: flash },
+        ]}
       />
       <View style={styles.fill}>{children}</View>
     </View>
@@ -109,13 +138,16 @@ function BattleBackground({
 function Scrims({ top, bottom }: { top: string; bottom: string }) {
   return (
     <>
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: top }]} />
-      <View pointerEvents="none" style={[styles.bottomHalf, { backgroundColor: bottom }]} />
+      <View style={[StyleSheet.absoluteFill, styles.noEvents, { backgroundColor: top }]} />
+      <View style={[styles.bottomHalf, styles.noEvents, { backgroundColor: bottom }]} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  noEvents: { pointerEvents: 'none' },
+  backdrop: { position: 'absolute', top: 0, left: 0, pointerEvents: 'none' },
+  fillAbsolute: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   bottomHalf: { position: 'absolute', left: 0, right: 0, bottom: 0, top: '45%' },
 });
