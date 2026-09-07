@@ -1,15 +1,15 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
+
+import { spacing } from '@ragnarok-millennium/ui';
 
 import { getOptionalAppConfig } from '../config/appEnv';
 import { translate } from '../i18n/translate';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { type ThemeColors } from '@ragnarok-millennium/ui';
-
 import { AppBackground } from '../features/theme/AppBackground';
-import { useThemedStyles } from '../features/theme/ThemeProvider';
+import { Button, ScreenTitle } from '../components';
 
 export default function HomeScreen() {
-  const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   // Show the sync-diagnostics link in every build except a real production release
   // (also when the public env is missing — that is itself what it diagnoses).
   const showDiagnostics = getOptionalAppConfig()?.appEnv !== 'production';
@@ -21,37 +21,37 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>{translate('app.title')}</Text>
-        <Text style={styles.subtitle}>{translate('home.subtitle')}</Text>
+        <ScreenTitle title={translate('app.title')} subtitle={translate('home.subtitle')} />
         <View style={styles.buttons}>
-          <Link href="/cpu-game/setup" asChild>
-            <Pressable accessibilityRole="button" style={styles.button}>
-              <Text style={styles.buttonText}>{translate('home.cpuGame')}</Text>
-            </Pressable>
-          </Link>
-          <Link href="/online-room" asChild>
-            <Pressable accessibilityRole="button" style={styles.button}>
-              <Text style={styles.buttonText}>{translate('home.onlineRoom')}</Text>
-            </Pressable>
-          </Link>
-          <Link href="/catalog" asChild>
-            <Pressable accessibilityRole="button" style={styles.button}>
-              <Text style={styles.buttonText}>{translate('home.openCatalog')}</Text>
-            </Pressable>
-          </Link>
-          <Link href="/sandbox" asChild>
-            <Pressable accessibilityRole="button" style={styles.button}>
-              <Text style={styles.buttonText}>
-                {translate('sandbox.title')} ({translate('sandbox.devLabel')})
-              </Text>
-            </Pressable>
-          </Link>
+          <Button
+            label={translate('home.cpuGame')}
+            onPress={() => router.push('/cpu-game/setup')}
+            minWidth={160}
+          />
+          <Button
+            label={translate('home.onlineRoom')}
+            onPress={() => router.push('/online-room')}
+            minWidth={160}
+          />
+          <Button
+            label={translate('home.openCatalog')}
+            variant="secondary"
+            onPress={() => router.push('/catalog')}
+            minWidth={160}
+          />
+          <Button
+            label={`${translate('sandbox.title')} (${translate('sandbox.devLabel')})`}
+            variant="secondary"
+            onPress={() => router.push('/sandbox')}
+            minWidth={160}
+          />
           {showDiagnostics ? (
-            <Link href="/diagnostics" asChild>
-              <Pressable accessibilityRole="button" style={styles.button}>
-                <Text style={styles.buttonText}>{translate('home.diagnostics')}</Text>
-              </Pressable>
-            </Link>
+            <Button
+              label={translate('home.diagnostics')}
+              variant="ghost"
+              onPress={() => router.push('/diagnostics')}
+              minWidth={160}
+            />
           ) : null}
         </View>
       </ScrollView>
@@ -59,44 +59,20 @@ export default function HomeScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) =>
-  StyleSheet.create({
-    screen: { flex: 1 },
-    content: {
-      flexGrow: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      paddingHorizontal: 24,
-      paddingVertical: 20,
-    },
-    title: {
-      color: c.ink.primary,
-      fontSize: 28,
-      fontWeight: '700',
-    },
-    subtitle: {
-      color: c.ink.secondary,
-      fontSize: 14,
-      marginBottom: 8,
-    },
-    buttons: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      gap: 12,
-    },
-    button: {
-      backgroundColor: c.suit.wind,
-      borderRadius: 8,
-      minWidth: 160,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-    },
-    buttonText: {
-      color: c.ink.inverse,
-      fontSize: 15,
-      fontWeight: '700',
-      textAlign: 'center',
-    },
-  });
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  content: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+  },
+  buttons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+});

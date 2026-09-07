@@ -10,6 +10,7 @@ import { parseInviteFromLink } from '../../features/online-room/inviteLink';
 import { onlineRoomStore } from '../../state/onlineRoomStore';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
+import { Button, Chip, ScreenTitle } from '../../components';
 
 const PLAYER_COUNTS = [2, 3, 4, 5, 6];
 const TURN_SECONDS = [30, 60, 90];
@@ -54,8 +55,10 @@ export default function OnlineRoomScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>{translate('onlineRoom.title')}</Text>
-        <Text style={styles.muted}>{translate('onlineRoom.subtitle')}</Text>
+        <ScreenTitle
+          title={translate('onlineRoom.title')}
+          subtitle={translate('onlineRoom.subtitle')}
+        />
 
         <View style={styles.section}>
           <Text style={styles.label}>{translate('onlineRoom.inviteCode')}</Text>
@@ -77,18 +80,13 @@ export default function OnlineRoomScreen() {
           <Text style={styles.label}>{translate('onlineRoom.players')}</Text>
           <View style={styles.row}>
             {PLAYER_COUNTS.map((value) => (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: maxPlayers === value }}
-                disabled={busy}
+              <Chip
                 key={value}
+                label={String(value)}
+                selected={maxPlayers === value}
+                disabled={busy}
                 onPress={() => setMaxPlayers(value)}
-                style={[styles.chip, maxPlayers === value && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, maxPlayers === value && styles.chipTextSelected]}>
-                  {value}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -97,18 +95,13 @@ export default function OnlineRoomScreen() {
           <Text style={styles.label}>{translate('onlineRoom.turnSeconds')}</Text>
           <View style={styles.row}>
             {TURN_SECONDS.map((value) => (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: turnSeconds === value }}
-                disabled={busy}
+              <Chip
                 key={value}
+                label={String(value)}
+                selected={turnSeconds === value}
+                disabled={busy}
                 onPress={() => setTurnSeconds(value)}
-                style={[styles.chip, turnSeconds === value && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, turnSeconds === value && styles.chipTextSelected]}>
-                  {value}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -127,22 +120,13 @@ export default function OnlineRoomScreen() {
         </Pressable>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={busy}
-            onPress={create}
-            style={[styles.primaryButton, busy && styles.disabled]}
-          >
-            <Text style={styles.primaryText}>{translate('onlineRoom.create')}</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            disabled={busy}
+          <Button label={translate('onlineRoom.create')} onPress={create} disabled={busy} />
+          <Button
+            label={translate('onlineRoom.join')}
+            variant="secondary"
             onPress={join}
-            style={[styles.secondaryButton, busy && styles.disabled]}
-          >
-            <Text style={styles.secondaryText}>{translate('onlineRoom.join')}</Text>
-          </Pressable>
+            disabled={busy}
+          />
         </View>
 
         {busy ? <Text style={styles.muted}>{translate('onlineRoom.loading')}</Text> : null}
@@ -163,11 +147,6 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       padding: spacing.xl,
     },
-    title: {
-      color: c.ink.primary,
-      fontSize: typography.size.title,
-      fontWeight: typography.weight.bold,
-    },
     muted: { color: c.ink.secondary, fontSize: typography.size.caption },
     section: { gap: spacing.xs },
     label: { color: c.ink.secondary, fontSize: typography.size.body },
@@ -183,22 +162,6 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: spacing.sm,
     },
     row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    chip: {
-      backgroundColor: c.surface.card.face,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      minWidth: 48,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-    },
-    chipSelected: {
-      backgroundColor: c.surface.card.face,
-      borderColor: c.suit.wind,
-      borderWidth: 2,
-    },
-    chipText: { color: c.ink.secondary, fontSize: typography.size.body, textAlign: 'center' },
-    chipTextSelected: { color: c.ink.primary, fontWeight: typography.weight.bold },
     switchRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
     switchTrack: {
       backgroundColor: c.state.disabled,
@@ -217,30 +180,5 @@ const makeStyles = (c: ThemeColors) =>
     },
     switchThumbOn: { alignSelf: 'flex-end' },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    primaryButton: {
-      backgroundColor: c.suit.wind,
-      borderRadius: radius.control,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    primaryText: {
-      color: c.ink.inverse,
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-    },
-    secondaryButton: {
-      backgroundColor: c.surface.card.face,
-      borderColor: c.state.disabled,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.md,
-    },
-    secondaryText: {
-      color: c.ink.primary,
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-    },
-    disabled: { opacity: 0.5 },
     error: { color: c.suit.fire, fontSize: typography.size.caption },
   });
