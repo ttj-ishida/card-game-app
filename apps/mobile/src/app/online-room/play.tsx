@@ -194,7 +194,7 @@ export default function OnlineRoomPlayScreen() {
   ) : null;
 
   return (
-    <AppBackground variant="battle">
+    <AppBackground variant="battle" inverted={view.dayNight === 'NIGHT'}>
       <View style={styles.screen}>
         <ScrollView
           style={styles.scrollArea}

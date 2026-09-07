@@ -151,7 +151,7 @@ export default function CpuGamePlayScreen() {
   };
 
   return (
-    <AppBackground variant="battle">
+    <AppBackground variant="battle" inverted={vm.dayNight === 'NIGHT'}>
       <View style={styles.screen}>
         <ScrollView
           style={styles.scrollArea}
