@@ -12,8 +12,27 @@ const MINI_SKILL_W = 52;
 const FIELD_CARD_H = 46;
 
 /** Padding between the latest play's cards and the surrounding ellipse. */
-const ELLIPSE_PAD_X = 26;
-const ELLIPSE_PAD_Y = 20;
+const ELLIPSE_PAD_X = 24;
+const ELLIPSE_PAD_Y = 18;
+
+/** Largest combination in the game (four same-rank cards) plus a skill card. */
+const ELLIPSE_MAX_CARDS = 4;
+
+/**
+ * Fixed size of the ellipse around the latest play (最終出し手). It does NOT
+ * resize per play — always big enough for the largest combination (4 cards)
+ * plus a skill mini-card, so a single-card play and a four-card play share the
+ * same frame.
+ */
+export const ELLIPSE_SIZE: { width: number; height: number } = {
+  width:
+    ELLIPSE_MAX_CARDS * FIELD_CARD_W +
+    (ELLIPSE_MAX_CARDS - 1) * CARD_GAP +
+    CARD_GAP +
+    FIELD_SKILL_W +
+    ELLIPSE_PAD_X * 2,
+  height: FIELD_CARD_H + ELLIPSE_PAD_Y * 2,
+};
 
 export type TrailStepShape = { cardCount: number; hasSkill: boolean };
 
@@ -27,28 +46,15 @@ export function stepWidth(cardCount: number, isLatest: boolean, hasSkill = false
 }
 
 /**
- * Size of the ellipse drawn around the latest play (最終出し手). Grows with the
- * number of cards — and the skill mini-card, when present — so an EXTEND
- * (e.g. 6→66→666) or a skill play stays fully enclosed.
- */
-export function ellipseSize(
-  latestCardCount: number,
-  hasSkill = false,
-): { width: number; height: number } {
-  const cards = Math.max(1, latestCardCount);
-  return {
-    width: stepWidth(cards, true, hasSkill) + ELLIPSE_PAD_X * 2,
-    height: FIELD_CARD_H + ELLIPSE_PAD_Y * 2,
-  };
-}
-
-/**
- * Horizontal shift for the trail row so the last step (最終出し手) sits centred
- * in `containerWidth`; earlier steps trail off to the left.
+ * Horizontal shift for the trail row so the last step (最終出し手) — i.e. the
+ * fixed ellipse — sits centred in `containerWidth`; earlier steps trail off to
+ * the left.
  */
 export function centerLatestOffset(steps: TrailStepShape[], containerWidth: number): number {
   if (steps.length === 0) return 0;
-  const widths = steps.map((s, i) => stepWidth(s.cardCount, i === steps.length - 1, s.hasSkill));
+  const widths = steps.map((s, i) =>
+    i === steps.length - 1 ? ELLIPSE_SIZE.width : stepWidth(s.cardCount, false, s.hasSkill),
+  );
   const rowWidth = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * STEP_GAP;
   const lastCentre = rowWidth - widths[widths.length - 1] / 2;
   return Math.round(containerWidth / 2 - lastCentre);

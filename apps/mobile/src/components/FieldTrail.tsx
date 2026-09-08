@@ -8,7 +8,7 @@ import { spacing, typography } from '@ragnarok-millennium/ui';
 import { CardFace } from '../features/cpu-game/CardFace';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
-import { centerLatestOffset, ellipseSize } from './fieldTrailLayout';
+import { centerLatestOffset, ELLIPSE_SIZE } from './fieldTrailLayout';
 import { SkillMiniCard } from './SkillMiniCard';
 
 export type FieldTrailStep = {
@@ -55,7 +55,7 @@ export function FieldTrail({
     allSteps.map((s) => ({ cardCount: s.cards.length, hasSkill: !!s.skillLabel })),
     maxWidth,
   );
-  const ell = ellipseSize(latest?.cards.length ?? 1, !!latest?.skillLabel);
+  const ell = ELLIPSE_SIZE;
 
   const [enter] = useState(() => new Animated.Value(1));
   const [glow] = useState(() => new Animated.Value(0));

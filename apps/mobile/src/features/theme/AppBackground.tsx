@@ -139,7 +139,12 @@ function Scrims({ top, bottom }: { top: string; bottom: string }) {
   return (
     <>
       <View style={[StyleSheet.absoluteFill, styles.noEvents, { backgroundColor: top }]} />
-      <View style={[styles.bottomHalf, styles.noEvents, { backgroundColor: bottom }]} />
+      {/* Only the home gradient needs a second, stronger band at the bottom.
+          For battle/universal top === bottom, so a second band would just
+          double the veil over the hand area (the "white filter" bug). */}
+      {bottom !== top ? (
+        <View style={[styles.bottomHalf, styles.noEvents, { backgroundColor: bottom }]} />
+      ) : null}
     </>
   );
 }
