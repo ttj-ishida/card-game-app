@@ -8,7 +8,7 @@ import { spacing, typography } from '@ragnarok-millennium/ui';
 import { CardFace } from '../features/cpu-game/CardFace';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
-import { centerLatestOffset, ELLIPSE_SIZE } from './fieldTrailLayout';
+import { ELLIPSE_SIZE } from './fieldTrailLayout';
 import { SkillMiniCard } from './SkillMiniCard';
 
 export type FieldTrailStep = {
@@ -17,7 +17,7 @@ export type FieldTrailStep = {
   /** e.g. "リード" / "2番目" / "最終出し手" */
   label: string;
   seatLabel?: string;
-  /** このプレイで使われたスキルの表示名（あれば）。捨て場にミニカードで併記する。 */
+  /** このプレイで使われたスキルの表示名（あれば）。数字カードの左に併記する。 */
   skillLabel?: string | null;
 };
 
@@ -28,10 +28,13 @@ const prefersReducedMotion =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const CLIP_HEIGHT = 40 + ELLIPSE_SIZE.height + 6;
+const STEP_GAP = 14;
+
 /**
- * 現在の場を作った一連のプレイを 1 行で表示する。左から古い順に「捨て場」、
- * 右端の最終出し手だけ楕円の枠で囲んで中央に置く。新しい手が着地すると行が
- * 左へスライドし、最終出し手の楕円が金色にパルスする。
+ * 現在の場を作った一連のプレイ。最終出し手は画面中央に固定した楕円の枠で囲み、
+ * **枠は絶対に動かさない**。過去の手（捨て場）は楕円の左側に右詰めで並び、新しい
+ * 手が着地すると楕円の枠が金色にパルスする。スキルカードは各手の数字カードの左。
  */
 export function FieldTrail({
   past,
@@ -47,146 +50,128 @@ export function FieldTrail({
   const { colors } = useTheme();
   const still = lowMotion || prefersReducedMotion;
   const pastSteps = past ?? [];
-  const allSteps = latest ? [...pastSteps, latest] : pastSteps;
+  const ell = ELLIPSE_SIZE;
+
   const signature = latest
     ? `${latest.key}:${latest.cards.map((c) => `${c.rank}${c.suitCode}`).join(',')}:${latest.skillLabel ?? ''}`
     : '';
-  const offset = centerLatestOffset(
-    allSteps.map((s) => ({ cardCount: s.cards.length, hasSkill: !!s.skillLabel })),
-    maxWidth,
-  );
-  const ell = ELLIPSE_SIZE;
 
   const [enter] = useState(() => new Animated.Value(1));
   const [glow] = useState(() => new Animated.Value(0));
-  const [slide] = useState(() => new Animated.Value(1));
-  const [range, setRange] = useState<[number, number]>([offset, offset]);
   const prev = useRef<string | null>(null);
-  const prevOffset = useRef(offset);
 
   useEffect(() => {
     if (prev.current === signature || !latest) {
       prev.current = signature;
-      prevOffset.current = offset;
       return;
     }
     const first = prev.current === null;
     prev.current = signature;
 
-    setRange([prevOffset.current, offset]);
-    prevOffset.current = offset;
-
     if (still) {
-      slide.setValue(1);
       enter.setValue(1);
       if (!first) pulse(glow, 120);
       return;
     }
-    slide.setValue(0);
-    Animated.timing(slide, {
-      toValue: 1,
-      duration: 260,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
     enter.setValue(0);
     Animated.timing(enter, {
       toValue: 1,
-      duration: 260,
+      duration: 240,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: useDriver,
     }).start();
     if (!first) pulse(glow, 240);
-  }, [signature, offset, still, enter, glow, slide, latest]);
+  }, [signature, still, enter, glow, latest]);
 
-  if (allSteps.length === 0) return null;
+  if (pastSteps.length === 0 && !latest) return null;
 
-  const rowTranslateX = slide.interpolate({ inputRange: [0, 1], outputRange: range });
-  const enterY = enter.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] });
-  const enterScale = enter.interpolate({ inputRange: [0, 1], outputRange: [1.12, 1] });
+  const enterY = enter.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] });
+  const enterScale = enter.interpolate({ inputRange: [0, 1], outputRange: [1.1, 1] });
+
+  // The stationary ellipse sits dead centre; the past row is pinned so its right
+  // edge lands just left of it.
+  const ellipseLeft = Math.round(maxWidth / 2 - ell.width / 2);
+  const pastRightInset = Math.round(maxWidth / 2 + ell.width / 2 + STEP_GAP);
 
   return (
-    <View style={[styles.clip, { width: maxWidth }]}>
-      <Animated.View style={[styles.row, { transform: [{ translateX: rowTranslateX }] }]}>
-        {pastSteps.map((step) => (
-          <View key={step.key} style={styles.step}>
-            <Text style={[styles.label, { color: colors.ink.secondary }]}>{step.label}</Text>
-            {step.seatLabel ? (
-              <Text style={[styles.seat, { color: colors.ink.secondary }]}>{step.seatLabel}</Text>
-            ) : null}
-            <View style={[styles.cards, styles.past]}>
-              {step.cards.map((card, ci) => (
-                <CardFace
-                  key={ci}
-                  rank={card.rank}
-                  suitCode={card.suitCode}
-                  isJoker={card.isJoker}
-                  size="mini"
-                />
-              ))}
-              {step.skillLabel ? <SkillMiniCard label={step.skillLabel} size="mini" /> : null}
+    <View style={[styles.clip, { width: maxWidth, height: CLIP_HEIGHT }]}>
+      {pastSteps.length > 0 ? (
+        <View style={[styles.pastRow, { right: pastRightInset }]}>
+          {pastSteps.map((step) => (
+            <View key={step.key} style={styles.step}>
+              <Text style={[styles.label, { color: colors.ink.secondary }]}>{step.label}</Text>
+              {step.seatLabel ? (
+                <Text style={[styles.seat, { color: colors.ink.secondary }]}>{step.seatLabel}</Text>
+              ) : null}
+              <View style={[styles.cards, styles.past]}>
+                {step.skillLabel ? <SkillMiniCard label={step.skillLabel} size="mini" /> : null}
+                {step.cards.map((card, ci) => (
+                  <CardFace
+                    key={ci}
+                    rank={card.rank}
+                    suitCode={card.suitCode}
+                    isJoker={card.isJoker}
+                    size="mini"
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
+      ) : null}
 
-        {latest ? (
-          <View style={styles.step}>
-            <Text style={[styles.label, { color: colors.ink.primary }]}>{latest.label}</Text>
-            {latest.seatLabel ? (
-              <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
-            ) : null}
-            <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
-              <Svg
-                width={ell.width}
-                height={ell.height}
-                style={[StyleSheet.absoluteFill, styles.noEvents]}
-              >
+      {latest ? (
+        <View style={[styles.latestBox, { left: ellipseLeft, width: ell.width }]}>
+          <Text style={[styles.label, { color: colors.ink.primary }]}>{latest.label}</Text>
+          {latest.seatLabel ? (
+            <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
+          ) : null}
+          <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
+            <Svg
+              width={ell.width}
+              height={ell.height}
+              style={[StyleSheet.absoluteFill, styles.noEvents]}
+            >
+              <Ellipse
+                cx={ell.width / 2}
+                cy={ell.height / 2}
+                rx={ell.width / 2 - 2}
+                ry={ell.height / 2 - 2}
+                stroke={ACCENT}
+                strokeWidth={2}
+                fill="none"
+              />
+            </Svg>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
+              <Svg width={ell.width} height={ell.height}>
                 <Ellipse
                   cx={ell.width / 2}
                   cy={ell.height / 2}
                   rx={ell.width / 2 - 2}
                   ry={ell.height / 2 - 2}
                   stroke={ACCENT}
-                  strokeWidth={2}
+                  strokeWidth={5}
                   fill="none"
                 />
               </Svg>
-              <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
-                <Svg width={ell.width} height={ell.height}>
-                  <Ellipse
-                    cx={ell.width / 2}
-                    cy={ell.height / 2}
-                    rx={ell.width / 2 - 2}
-                    ry={ell.height / 2 - 2}
-                    stroke={ACCENT}
-                    strokeWidth={5}
-                    fill="none"
-                  />
-                </Svg>
-              </Animated.View>
-              <Animated.View
-                style={[
-                  styles.cards,
-                  { transform: [{ translateY: enterY }, { scale: enterScale }] },
-                ]}
-              >
-                {latest.cards.map((card, ci) => (
-                  <CardFace
-                    key={ci}
-                    rank={card.rank}
-                    suitCode={card.suitCode}
-                    isJoker={card.isJoker}
-                    size="field"
-                  />
-                ))}
-                {latest.skillLabel ? (
-                  <SkillMiniCard label={latest.skillLabel} size="field" />
-                ) : null}
-              </Animated.View>
-            </View>
+            </Animated.View>
+            <Animated.View
+              style={[styles.cards, { transform: [{ translateY: enterY }, { scale: enterScale }] }]}
+            >
+              {latest.skillLabel ? <SkillMiniCard label={latest.skillLabel} size="field" /> : null}
+              {latest.cards.map((card, ci) => (
+                <CardFace
+                  key={ci}
+                  rank={card.rank}
+                  suitCode={card.suitCode}
+                  isJoker={card.isJoker}
+                  size="field"
+                />
+              ))}
+            </Animated.View>
           </View>
-        ) : null}
-      </Animated.View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -199,8 +184,15 @@ function pulse(value: Animated.Value, duration: number) {
 }
 
 const styles = StyleSheet.create({
-  clip: { overflow: 'hidden', alignSelf: 'center', paddingTop: 40, paddingBottom: 6 },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.lg },
+  clip: { overflow: 'hidden', alignSelf: 'center' },
+  pastRow: {
+    position: 'absolute',
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: STEP_GAP,
+  },
+  latestBox: { position: 'absolute', bottom: 0, alignItems: 'center', gap: 2 },
   step: { alignItems: 'center', gap: 2 },
   label: { fontSize: typography.size.caption, fontWeight: typography.weight.bold },
   seat: { fontSize: typography.size.caption },
