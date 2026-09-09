@@ -1,14 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { radius, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
 import type { SuitCode } from '@ragnarok-millennium/game-core';
 
 import { translate } from '../../i18n/translate';
-import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import { ACCENT } from '../../components';
+import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
+import { CARD_METRICS, cardHeight, SUIT_SYMBOL, type CardFaceSize } from './cardMetrics';
+import { cardFaceLayers } from './cardFaceLayers';
+import { resolveCardArt } from './cardArt';
 
-export type CardFaceSize = 'hand' | 'field' | 'mini';
+export type { CardFaceSize } from './cardMetrics';
 
 export type CardFaceProps = {
   rank: number;
@@ -30,43 +33,67 @@ function suitColor(c: ThemeColors, suitCode: SuitCode): string {
   }
 }
 
-// UI-A11Y-002: identify suits by shape/symbol, not colour alone.
-const SUIT_SYMBOL: Record<SuitCode, string> = {
-  SUIT_FIRE: '▲',
-  SUIT_WATER: '●',
-  SUIT_WIND: '✦',
-  SUIT_EARTH: '■',
-};
-
-const SIZE: Record<CardFaceSize, { box: number; rank: number; suit: number; badge: number }> = {
-  hand: { box: 46, rank: 22, suit: 11, badge: 10 },
-  field: { box: 40, rank: 19, suit: 10, badge: 9 },
-  mini: { box: 30, rank: 14, suit: 9, badge: 8 },
-};
+/** Card-name line for the vector fallback at catalog size. */
+function cardName(rank: number): string {
+  return translate(`catalog.numberCard.name.${rank}`);
+}
 
 /**
- * パック非依存のカード表示。M2 は「デフォルトパック」＝数字大＋属性色ボーダー＋
- * 日本語ラベル＋属性記号＋変化Joker「J」バッジ のプレースホルダ。
- * 純表示コンポーネント（ロジック・ストア参照なし）。将来のデザインカード／複数パックは
- * `packId + rank + suitCode` でアセットを引く描画レイヤの仕事（§6・§10）。
+ * Number-card face. Renders the baked full-art PNG when the app has it
+ * (`resolveCardArt`), otherwise a themed vector card. Below a width threshold a
+ * rank badge + suit emblem are drawn over the art for battle legibility. Pure
+ * presentational component — no store access.
  */
 export function CardFace({ rank, suitCode, isJoker, size }: CardFaceProps) {
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
-  const dims = SIZE[size];
+
+  const width = CARD_METRICS[size].width;
+  const height = cardHeight(width);
+  const art = resolveCardArt(rank, suitCode);
+  const layers = cardFaceLayers(size, art != null);
+  const tint = suitColor(colors, suitCode);
   const suitLabel = translate(`sandbox.suit.${suitCode}`);
   const label = `${rank} ${suitLabel}${isJoker ? ` ${translate('sandbox.card.joker')}` : ''}`;
+
+  const px = (frac: number) => Math.max(8, Math.round(width * frac));
+
   return (
     <View
       accessibilityRole="text"
       accessibilityLabel={label}
-      style={[styles.card, { minWidth: dims.box, borderColor: suitColor(colors, suitCode) }]}
+      style={[styles.card, { width, height, borderColor: tint }]}
     >
-      {isJoker ? <Text style={[styles.badge, { fontSize: dims.badge }]}>J</Text> : null}
-      <Text style={[styles.rank, { fontSize: dims.rank }]}>{rank}</Text>
-      <Text style={[styles.suit, { fontSize: dims.suit }]}>
-        {SUIT_SYMBOL[suitCode]} {suitLabel}
-      </Text>
+      {layers.base === 'image' && art != null ? (
+        <Image source={art} resizeMode="cover" style={{ width, height }} />
+      ) : (
+        <View style={styles.vector}>
+          {layers.showName ? (
+            <Text style={[styles.name, { color: tint }]} numberOfLines={1}>
+              {suitLabel}／{cardName(rank)}
+            </Text>
+          ) : null}
+          <Text style={[styles.vectorRank, { fontSize: px(0.5), color: colors.ink.primary }]}>
+            {rank}
+          </Text>
+          <Text style={[styles.vectorSuit, { fontSize: px(0.16), color: colors.ink.secondary }]}>
+            {SUIT_SYMBOL[suitCode]} {suitLabel}
+          </Text>
+        </View>
+      )}
+
+      {layers.overlay ? (
+        <>
+          <Text style={[styles.emblem, { fontSize: px(0.24), color: '#FFFFFF' }]}>
+            {SUIT_SYMBOL[suitCode]}
+          </Text>
+          <View style={[styles.rankBadge, { backgroundColor: tint }]}>
+            <Text style={[styles.rankBadgeText, { fontSize: px(0.3) }]}>{rank}</Text>
+          </View>
+        </>
+      ) : null}
+
+      {isJoker ? <Text style={[styles.joker, { fontSize: px(0.22) }]}>J</Text> : null}
     </View>
   );
 }
@@ -74,24 +101,47 @@ export function CardFace({ rank, suitCode, isJoker, size }: CardFaceProps) {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     card: {
-      alignItems: 'center',
       borderWidth: 2,
       borderRadius: radius.control,
-      paddingHorizontal: 4,
-      paddingVertical: 2,
+      overflow: 'hidden',
       backgroundColor: c.surface.card.face,
     },
-    rank: {
+    vector: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      gap: 2,
+    },
+    name: {
+      fontSize: typography.size.caption,
       fontWeight: typography.weight.bold,
-      color: c.ink.primary,
     },
-    suit: {
-      color: c.ink.secondary,
-    },
-    badge: {
+    vectorRank: { fontWeight: typography.weight.bold },
+    vectorSuit: {},
+    emblem: {
       position: 'absolute',
-      top: -6,
-      right: -6,
+      top: 2,
+      left: 3,
+      fontWeight: typography.weight.bold,
+      textShadowColor: 'rgba(0,0,0,0.6)',
+      textShadowRadius: 2,
+    },
+    rankBadge: {
+      position: 'absolute',
+      bottom: 2,
+      left: 2,
+      minWidth: 16,
+      paddingHorizontal: 3,
+      borderRadius: 4,
+      alignItems: 'center',
+    },
+    rankBadgeText: { color: '#FFFFFF', fontWeight: typography.weight.bold },
+    joker: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
       fontWeight: typography.weight.bold,
       color: '#1B1D24',
       backgroundColor: ACCENT,
