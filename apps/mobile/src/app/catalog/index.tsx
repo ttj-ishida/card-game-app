@@ -5,6 +5,7 @@ import { type ThemeColors } from '@ragnarok-millennium/ui';
 
 import { buildCatalogItems, type CatalogItem } from '../../features/catalog/cardCatalog';
 import { fetchCatalogMasters } from '../../features/catalog/supabaseCatalogClient';
+import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
 import { Button, ScreenTitle } from '../../components';
@@ -87,19 +88,30 @@ export default function CatalogScreen() {
           contentContainerStyle={styles.grid}
           data={items}
           keyExtractor={(item) => item.id}
-          numColumns={6}
+          numColumns={3}
           renderItem={({ item }) => (
             <Pressable
               accessibilityRole="button"
               onPress={() => setSelectedItemId(item.id)}
               style={styles.card}
             >
-              <Text style={styles.cardKind}>{item.kind.toUpperCase()}</Text>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-              <Text numberOfLines={1} style={styles.assetId}>
-                {item.assetId}
-              </Text>
+              {item.kind === 'number' && item.rank != null && item.suitCode != null ? (
+                <CardFace
+                  rank={item.rank}
+                  suitCode={item.suitCode}
+                  isJoker={false}
+                  size="catalog"
+                />
+              ) : (
+                <>
+                  <Text style={styles.cardKind}>{item.kind.toUpperCase()}</Text>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+                  <Text numberOfLines={1} style={styles.assetId}>
+                    {item.assetId}
+                  </Text>
+                </>
+              )}
             </Pressable>
           )}
         />
@@ -113,10 +125,32 @@ export default function CatalogScreen() {
           <Pressable style={styles.modalBackdrop} onPress={() => setSelectedItemId(undefined)}>
             {selectedItem ? (
               <View style={styles.detailCard}>
-                <Text style={styles.cardKind}>{selectedItem.kind.toUpperCase()}</Text>
-                <Text style={styles.detailTitle}>{selectedItem.title}</Text>
-                <Text style={styles.detailSubtitle}>{selectedItem.subtitle}</Text>
-                <Text style={styles.detailPath}>{selectedItem.runtimePath}</Text>
+                {selectedItem.kind === 'number' &&
+                selectedItem.rank != null &&
+                selectedItem.suitCode != null ? (
+                  <>
+                    <CardFace
+                      rank={selectedItem.rank}
+                      suitCode={selectedItem.suitCode}
+                      isJoker={false}
+                      size="catalog"
+                    />
+                    <Text style={styles.detailTitle}>
+                      {translate(`catalog.numberCard.name.${selectedItem.rank}`)}
+                    </Text>
+                    <Text style={styles.detailSubtitle}>
+                      {selectedItem.subtitle} ・ {translate('catalog.numberCard.rankLabel')}{' '}
+                      {selectedItem.rank}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.cardKind}>{selectedItem.kind.toUpperCase()}</Text>
+                    <Text style={styles.detailTitle}>{selectedItem.title}</Text>
+                    <Text style={styles.detailSubtitle}>{selectedItem.subtitle}</Text>
+                    <Text style={styles.detailPath}>{selectedItem.runtimePath}</Text>
+                  </>
+                )}
               </View>
             ) : null}
           </Pressable>
@@ -148,17 +182,10 @@ const makeStyles = (c: ThemeColors) =>
       paddingBottom: 24,
     },
     card: {
-      aspectRatio: 5 / 7,
-      backgroundColor: c.surface.card.face,
-      borderColor: c.ink.primary,
-      borderRadius: 8,
-      borderWidth: 2,
+      alignItems: 'center',
       justifyContent: 'center',
       margin: 5,
-      maxWidth: 126,
-      minWidth: 96,
-      padding: 8,
-      width: '15%',
+      padding: 4,
     },
     cardKind: {
       color: c.state.disabled,
@@ -193,14 +220,13 @@ const makeStyles = (c: ThemeColors) =>
       padding: 24,
     },
     detailCard: {
-      aspectRatio: 5 / 7,
+      alignItems: 'center',
       backgroundColor: c.surface.card.face,
       borderColor: c.ink.inverse,
       borderRadius: 12,
       borderWidth: 3,
       justifyContent: 'center',
       padding: 18,
-      width: 260,
     },
     detailTitle: {
       color: c.ink.primary,

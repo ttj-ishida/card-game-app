@@ -13,7 +13,7 @@ export const CARD_ASPECT = 7 / 5;
  * frame during implementation and ship the tuned numbers.
  */
 export const CARD_METRICS: Record<CardFaceSize, { width: number }> = {
-  catalog: { width: 280 },
+  catalog: { width: 240 },
   hand: { width: 68 },
   field: { width: 80 },
   mini: { width: 46 },
