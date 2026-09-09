@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const PNG_SIGNATURE = "\x89PNG\r\n\x1a\n";
 
@@ -68,9 +69,10 @@ export function checkCardsFull({
         `${c.path} is ${size.width}x${size.height}, must be ${manifest.size.width}x${manifest.size.height}`,
       );
     }
-    if (statSync(abs).size > manifest.maxBytes) {
+    const bytes = statSync(abs).size;
+    if (bytes > manifest.maxBytes) {
       push(
-        `${c.path} is ${statSync(abs).size} bytes, over ${manifest.maxBytes}`,
+        `${c.path} is ${bytes} bytes, over ${manifest.maxBytes}`,
       );
     }
   }
@@ -85,7 +87,7 @@ export function checkCardsFull({
 }
 
 // CLI
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { present, missing, errors } = checkCardsFull({
     requireAll: process.argv.includes("--require-all"),
   });
