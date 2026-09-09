@@ -1,14 +1,16 @@
-/** Rough rendered widths (CardFace box + padding + border). */
-const FIELD_CARD_W = 52;
-const MINI_CARD_W = 42;
+import { CARD_METRICS, cardHeight } from '../features/cpu-game/cardMetrics';
+
+/** Rendered card-box widths — the single source of truth is `cardMetrics`. */
+const FIELD_CARD_W = CARD_METRICS.field.width;
+const MINI_CARD_W = CARD_METRICS.mini.width;
 const CARD_GAP = 4;
 
-/** A skill mini-card rendered alongside a step's number cards. */
-const FIELD_SKILL_W = 64;
-const MINI_SKILL_W = 52;
+/** A skill mini-card rendered alongside a step's number cards — same box as a number card. */
+const FIELD_SKILL_W = CARD_METRICS.field.width;
+const MINI_SKILL_W = CARD_METRICS.mini.width;
 
 /** Card box height, used to size the ellipse around the latest play. */
-const FIELD_CARD_H = 46;
+const FIELD_CARD_H = cardHeight(CARD_METRICS.field.width);
 
 /** Padding between the latest play's cards and the surrounding ellipse. */
 const ELLIPSE_PAD_X = 24;

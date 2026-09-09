@@ -5,6 +5,7 @@ import type { SuitCode } from '@ragnarok-millennium/game-core';
 import { radius } from '@ragnarok-millennium/ui';
 
 import { CardFace } from '../features/cpu-game/CardFace';
+import { CARD_METRICS, cardHeight } from '../features/cpu-game/cardMetrics';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
 import { fanLayout } from './fanLayout';
@@ -19,9 +20,9 @@ export type HandFanCard = {
   locked: boolean;
 };
 
-const CARD_WIDTH = 46;
-const CARD_HEIGHT = 66;
-const LIFT = 22;
+const CARD_WIDTH = CARD_METRICS.hand.width;
+const CARD_HEIGHT = cardHeight(CARD_WIDTH);
+const LIFT = 26;
 const ARC = 18;
 
 const prefersReducedMotion =

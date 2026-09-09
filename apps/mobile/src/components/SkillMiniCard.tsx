@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { radius, typography, type ThemeColors } from '@ragnarok-millennium/ui';
 
+import { CARD_METRICS } from '../features/cpu-game/cardMetrics';
 import { useThemedStyles } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
 
@@ -13,8 +14,8 @@ export type SkillMiniCardProps = {
 };
 
 const BOX: Record<'mini' | 'field', { minWidth: number; glyph: number; text: number }> = {
-  mini: { minWidth: 30, glyph: 11, text: 8 },
-  field: { minWidth: 40, glyph: 13, text: 9 },
+  mini: { minWidth: CARD_METRICS.mini.width, glyph: 13, text: 9 },
+  field: { minWidth: CARD_METRICS.field.width, glyph: 16, text: 10 },
 };
 
 /**
