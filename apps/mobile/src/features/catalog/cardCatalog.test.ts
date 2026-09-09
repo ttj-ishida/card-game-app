@@ -56,6 +56,11 @@ test('buildCatalogItems expands M0 masters to 42 display items with assets', () 
   assertCompleteM0Catalog(items);
   assert.equal(items[0].id, 'CARD_NUMBER_RANK_1_SUIT_FIRE');
   assert.equal(items.at(-1)?.id, 'SKILL_CARD_REVOLUTION#2');
+  const firstNumber = items.find((i) => i.kind === 'number');
+  assert.equal(firstNumber?.rank, 1);
+  assert.equal(firstNumber?.suitCode, 'SUIT_FIRE');
+  assert.equal(firstNumber?.fullArtPath, 'assets/cards/full/card-1-fire.png');
+  assert.ok(items.filter((i) => i.kind === 'number').every((i) => i.fullArtPath?.endsWith('.png')));
 });
 
 test('buildCatalogItems fails when a master row has no placeholder asset', () => {

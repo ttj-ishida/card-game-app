@@ -1,3 +1,5 @@
+import type { SuitCode } from '@ragnarok-millennium/game-core';
+
 import { m0CardPlaceholderManifest as placeholderManifest } from './m0CardPlaceholderManifest';
 
 export type NumberCardMaster = {
@@ -31,6 +33,10 @@ export type CatalogItem = {
   sortOrder: number;
   copyIndex: number;
   copyCount: number;
+  /** number cards only */
+  rank?: number;
+  suitCode?: SuitCode;
+  fullArtPath?: string;
 };
 
 const numberAssetByCardId = new Map<string, NumberAsset>(
@@ -48,6 +54,13 @@ function suitLabel(suitCode: string): string {
   return suitCode.replace('SUIT_', '');
 }
 
+const SUIT_SLUG: Record<string, string> = {
+  SUIT_FIRE: 'fire',
+  SUIT_WATER: 'water',
+  SUIT_WIND: 'wind',
+  SUIT_EARTH: 'earth',
+};
+
 export function buildCatalogItems(
   numberCards: NumberCardMaster[],
   skillCards: SkillCardMaster[],
@@ -55,6 +68,7 @@ export function buildCatalogItems(
   const numbers = numberCards.map((card) => {
     const asset = numberAssetByCardId.get(card.card_id);
     if (!asset) throw new Error('Missing number asset for ' + card.card_id);
+    const rank = Number(rankLabel(card.rank_code));
     return {
       id: card.card_id,
       masterId: card.card_id,
@@ -66,6 +80,9 @@ export function buildCatalogItems(
       sortOrder: card.sort_order,
       copyIndex: 1,
       copyCount: 1,
+      rank,
+      suitCode: card.suit_code as SuitCode,
+      fullArtPath: `assets/cards/full/card-${rank}-${SUIT_SLUG[card.suit_code]}.png`,
     };
   });
 
@@ -95,9 +112,13 @@ export function assertCompleteM0Catalog(items: CatalogItem[]) {
       `Expected ${placeholderManifest.physicalDeckCount} catalog items but received ${items.length}`,
     );
   }
-  const missingAssets = items.filter((item) => !item.runtimePath.endsWith('.svg'));
-  if (missingAssets.length > 0) {
-    throw new Error('Catalog contains items without SVG runtime assets');
+  const numberCards = items.filter((item) => item.kind === 'number');
+  if (numberCards.some((item) => !item.fullArtPath?.endsWith('.png'))) {
+    throw new Error('Number cards must declare a full-art PNG path');
+  }
+  const skillCards = items.filter((item) => item.kind === 'skill');
+  if (skillCards.some((item) => !item.runtimePath.endsWith('.svg'))) {
+    throw new Error('Skill cards must have SVG runtime assets');
   }
 }
 
