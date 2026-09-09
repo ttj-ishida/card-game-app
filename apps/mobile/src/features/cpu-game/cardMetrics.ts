@@ -34,3 +34,11 @@ export const SUIT_SYMBOL: Record<SuitCode, string> = {
   SUIT_WIND: '✦',
   SUIT_EARTH: '■',
 };
+
+/** Lowercase slug per suit, for asset filenames (card-<rank>-<slug>.png). */
+export const SUIT_SLUG: Record<SuitCode, string> = {
+  SUIT_FIRE: 'fire',
+  SUIT_WATER: 'water',
+  SUIT_WIND: 'wind',
+  SUIT_EARTH: 'earth',
+};

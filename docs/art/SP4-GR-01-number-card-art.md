@@ -42,6 +42,10 @@ Suits are the element the being is bound to: 火 fire, 水 water, 風 wind, 土 
   a fixed-position suit emblem. Gold accents = `#C9A94E`.
 - Safe area: keep name, numeral and emblem within the inner 80%; leave the four
   corners clear (the app draws the selection frame / lock ring there).
+- Baked suit emblem and rank pennant must sit on the **right half** of the card:
+  below 120px rendered width the app draws its OWN suit emblem at the top-left
+  and its OWN rank badge at the bottom-left, so a bottom-left / top-left bake
+  makes every battle card show a doubled numeral and emblem.
 - Readable as a catalog thumbnail and as a battle card behind a code overlay.
 
 ## Palette
@@ -96,9 +100,14 @@ Then in Canva: place the frame template, set the name plate to
 
 1. Drop all 36 PNGs into `assets/cards/full/`.
 2. `node scripts/generate-card-art-manifest.mjs` — regenerates
-   `apps/mobile/src/features/cpu-game/cardArtAssets.generated.ts` with 36 requires.
+   `apps/mobile/src/features/cpu-game/cardArtAssets.generated.ts` with 36 lazy
+   require() thunks. Then run `npm test` (from `apps/mobile`) to confirm the 36
+   thunks didn't break the suite.
 3. `node scripts/check-cards-full-assets.mjs --require-all` — must pass.
-4. Flip the SP4a lenient check: make `--require-all` the default (or add the
-   flag wherever `assets:check:cards` is invoked in CI/preflight).
+4. Change the `assets:check:cards` script in the root `package.json` from
+   `node scripts/check-cards-full-assets.mjs` to
+   `node scripts/check-cards-full-assets.mjs --require-all` so a missing artwork
+   fails the check. The check is manual-only (no CI); consider also adding
+   `assets:check:cards` to the `qa:m3:preflight` script.
 5. Manual: catalog + CPU battle now show real art; the small-size overlay sits
    clear of the baked numeral.

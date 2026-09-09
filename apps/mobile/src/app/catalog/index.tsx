@@ -6,6 +6,7 @@ import { type ThemeColors } from '@ragnarok-millennium/ui';
 import { buildCatalogItems, type CatalogItem } from '../../features/catalog/cardCatalog';
 import { fetchCatalogMasters } from '../../features/catalog/supabaseCatalogClient';
 import { CardFace } from '../../features/cpu-game/CardFace';
+import { CARD_METRICS } from '../../features/cpu-game/cardMetrics';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
 import { Button, ScreenTitle } from '../../components';
@@ -103,14 +104,14 @@ export default function CatalogScreen() {
                   size="catalog"
                 />
               ) : (
-                <>
+                <View style={styles.skillCard}>
                   <Text style={styles.cardKind}>{item.kind.toUpperCase()}</Text>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                   <Text numberOfLines={1} style={styles.assetId}>
                     {item.assetId}
                   </Text>
-                </>
+                </View>
               )}
             </Pressable>
           )}
@@ -139,8 +140,8 @@ export default function CatalogScreen() {
                       {translate(`catalog.numberCard.name.${selectedItem.rank}`)}
                     </Text>
                     <Text style={styles.detailSubtitle}>
-                      {selectedItem.subtitle} ・ {translate('catalog.numberCard.rankLabel')}{' '}
-                      {selectedItem.rank}
+                      {translate(`sandbox.suit.${selectedItem.suitCode}`)} ・{' '}
+                      {translate('catalog.numberCard.rankLabel')} {selectedItem.rank}
                     </Text>
                   </>
                 ) : (
@@ -186,6 +187,18 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
       margin: 5,
       padding: 4,
+      width: CARD_METRICS.catalog.width,
+    },
+    skillCard: {
+      width: '100%',
+      aspectRatio: 5 / 7,
+      backgroundColor: c.surface.card.face,
+      borderColor: c.ink.primary,
+      borderWidth: 2,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 8,
     },
     cardKind: {
       color: c.state.disabled,

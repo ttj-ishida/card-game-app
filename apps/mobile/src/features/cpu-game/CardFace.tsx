@@ -35,7 +35,11 @@ function suitColor(c: ThemeColors, suitCode: SuitCode): string {
 
 /** Card-name line for the vector fallback at catalog size. */
 function cardName(rank: number): string {
-  return translate(`catalog.numberCard.name.${rank}`);
+  try {
+    return translate(`catalog.numberCard.name.${rank}`);
+  } catch {
+    return String(rank);
+  }
 }
 
 /**
@@ -65,7 +69,7 @@ export function CardFace({ rank, suitCode, isJoker, size }: CardFaceProps) {
       style={[styles.card, { width, height, borderColor: tint }]}
     >
       {layers.base === 'image' && art != null ? (
-        <Image source={art} resizeMode="cover" style={{ width, height }} />
+        <Image source={art} resizeMode="cover" style={StyleSheet.absoluteFill} />
       ) : (
         <View style={styles.vector}>
           {layers.showName ? (
@@ -76,7 +80,7 @@ export function CardFace({ rank, suitCode, isJoker, size }: CardFaceProps) {
           <Text style={[styles.vectorRank, { fontSize: px(0.5), color: colors.ink.primary }]}>
             {rank}
           </Text>
-          <Text style={[styles.vectorSuit, { fontSize: px(0.16), color: colors.ink.secondary }]}>
+          <Text style={{ fontSize: px(0.16), color: colors.ink.secondary }}>
             {SUIT_SYMBOL[suitCode]} {suitLabel}
           </Text>
         </View>
@@ -119,7 +123,6 @@ const makeStyles = (c: ThemeColors) =>
       fontWeight: typography.weight.bold,
     },
     vectorRank: { fontWeight: typography.weight.bold },
-    vectorSuit: {},
     emblem: {
       position: 'absolute',
       top: 2,

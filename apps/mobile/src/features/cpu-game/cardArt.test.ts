@@ -20,7 +20,7 @@ test('cardArtKey covers all 36 number cards with distinct keys', () => {
 
 test('resolveCardArt returns the mapped require id, or null when absent', () => {
   assert.equal(resolveCardArt(3, 'SUIT_FIRE', {}), null);
-  assert.equal(resolveCardArt(3, 'SUIT_FIRE', { 'card-3-fire': 4242 }), 4242);
+  assert.equal(resolveCardArt(3, 'SUIT_FIRE', { 'card-3-fire': () => 4242 }), 4242);
 });
 
 test('resolveCardArt defaults to the generated map (empty in SP4a)', () => {

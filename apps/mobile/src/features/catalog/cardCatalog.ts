@@ -1,5 +1,7 @@
 import type { SuitCode } from '@ragnarok-millennium/game-core';
 
+import { SUIT_SLUG } from '../cpu-game/cardMetrics';
+
 import { m0CardPlaceholderManifest as placeholderManifest } from './m0CardPlaceholderManifest';
 
 export type NumberCardMaster = {
@@ -54,13 +56,6 @@ function suitLabel(suitCode: string): string {
   return suitCode.replace('SUIT_', '');
 }
 
-const SUIT_SLUG: Record<string, string> = {
-  SUIT_FIRE: 'fire',
-  SUIT_WATER: 'water',
-  SUIT_WIND: 'wind',
-  SUIT_EARTH: 'earth',
-};
-
 export function buildCatalogItems(
   numberCards: NumberCardMaster[],
   skillCards: SkillCardMaster[],
@@ -82,7 +77,7 @@ export function buildCatalogItems(
       copyCount: 1,
       rank,
       suitCode: card.suit_code as SuitCode,
-      fullArtPath: `assets/cards/full/card-${rank}-${SUIT_SLUG[card.suit_code]}.png`,
+      fullArtPath: `assets/cards/full/card-${rank}-${SUIT_SLUG[card.suit_code as SuitCode]}.png`,
     };
   });
 
@@ -113,8 +108,12 @@ export function assertCompleteM0Catalog(items: CatalogItem[]) {
     );
   }
   const numberCards = items.filter((item) => item.kind === 'number');
-  if (numberCards.some((item) => !item.fullArtPath?.endsWith('.png'))) {
-    throw new Error('Number cards must declare a full-art PNG path');
+  const artPathRe = /^assets\/cards\/full\/card-[1-9]-(fire|water|wind|earth)\.png$/;
+  if (numberCards.some((item) => !artPathRe.test(item.fullArtPath ?? ''))) {
+    throw new Error('Number cards must declare a valid full-art PNG path');
+  }
+  if (numberCards.some((item) => !item.runtimePath.endsWith('.svg'))) {
+    throw new Error('Number cards must keep their placeholder SVG runtime asset');
   }
   const skillCards = items.filter((item) => item.kind === 'skill');
   if (skillCards.some((item) => !item.runtimePath.endsWith('.svg'))) {
