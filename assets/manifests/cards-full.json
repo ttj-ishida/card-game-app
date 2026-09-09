@@ -1,0 +1,263 @@
+{
+  "todoId": "SP4-GR-02",
+  "version": "0.1.0",
+  "size": {
+    "width": 832,
+    "height": 1164
+  },
+  "maxBytes": 204800,
+  "cards": [
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_FIRE",
+      "rank": 1,
+      "suit": "fire",
+      "assetId": "card-1-fire",
+      "path": "assets/cards/full/card-1-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_WATER",
+      "rank": 1,
+      "suit": "water",
+      "assetId": "card-1-water",
+      "path": "assets/cards/full/card-1-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_WIND",
+      "rank": 1,
+      "suit": "wind",
+      "assetId": "card-1-wind",
+      "path": "assets/cards/full/card-1-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_1_SUIT_EARTH",
+      "rank": 1,
+      "suit": "earth",
+      "assetId": "card-1-earth",
+      "path": "assets/cards/full/card-1-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_FIRE",
+      "rank": 2,
+      "suit": "fire",
+      "assetId": "card-2-fire",
+      "path": "assets/cards/full/card-2-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_WATER",
+      "rank": 2,
+      "suit": "water",
+      "assetId": "card-2-water",
+      "path": "assets/cards/full/card-2-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_WIND",
+      "rank": 2,
+      "suit": "wind",
+      "assetId": "card-2-wind",
+      "path": "assets/cards/full/card-2-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_2_SUIT_EARTH",
+      "rank": 2,
+      "suit": "earth",
+      "assetId": "card-2-earth",
+      "path": "assets/cards/full/card-2-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_FIRE",
+      "rank": 3,
+      "suit": "fire",
+      "assetId": "card-3-fire",
+      "path": "assets/cards/full/card-3-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_WATER",
+      "rank": 3,
+      "suit": "water",
+      "assetId": "card-3-water",
+      "path": "assets/cards/full/card-3-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_WIND",
+      "rank": 3,
+      "suit": "wind",
+      "assetId": "card-3-wind",
+      "path": "assets/cards/full/card-3-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_3_SUIT_EARTH",
+      "rank": 3,
+      "suit": "earth",
+      "assetId": "card-3-earth",
+      "path": "assets/cards/full/card-3-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_FIRE",
+      "rank": 4,
+      "suit": "fire",
+      "assetId": "card-4-fire",
+      "path": "assets/cards/full/card-4-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_WATER",
+      "rank": 4,
+      "suit": "water",
+      "assetId": "card-4-water",
+      "path": "assets/cards/full/card-4-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_WIND",
+      "rank": 4,
+      "suit": "wind",
+      "assetId": "card-4-wind",
+      "path": "assets/cards/full/card-4-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_4_SUIT_EARTH",
+      "rank": 4,
+      "suit": "earth",
+      "assetId": "card-4-earth",
+      "path": "assets/cards/full/card-4-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_FIRE",
+      "rank": 5,
+      "suit": "fire",
+      "assetId": "card-5-fire",
+      "path": "assets/cards/full/card-5-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_WATER",
+      "rank": 5,
+      "suit": "water",
+      "assetId": "card-5-water",
+      "path": "assets/cards/full/card-5-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_WIND",
+      "rank": 5,
+      "suit": "wind",
+      "assetId": "card-5-wind",
+      "path": "assets/cards/full/card-5-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_5_SUIT_EARTH",
+      "rank": 5,
+      "suit": "earth",
+      "assetId": "card-5-earth",
+      "path": "assets/cards/full/card-5-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_FIRE",
+      "rank": 6,
+      "suit": "fire",
+      "assetId": "card-6-fire",
+      "path": "assets/cards/full/card-6-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_WATER",
+      "rank": 6,
+      "suit": "water",
+      "assetId": "card-6-water",
+      "path": "assets/cards/full/card-6-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_WIND",
+      "rank": 6,
+      "suit": "wind",
+      "assetId": "card-6-wind",
+      "path": "assets/cards/full/card-6-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_6_SUIT_EARTH",
+      "rank": 6,
+      "suit": "earth",
+      "assetId": "card-6-earth",
+      "path": "assets/cards/full/card-6-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_FIRE",
+      "rank": 7,
+      "suit": "fire",
+      "assetId": "card-7-fire",
+      "path": "assets/cards/full/card-7-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_WATER",
+      "rank": 7,
+      "suit": "water",
+      "assetId": "card-7-water",
+      "path": "assets/cards/full/card-7-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_WIND",
+      "rank": 7,
+      "suit": "wind",
+      "assetId": "card-7-wind",
+      "path": "assets/cards/full/card-7-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_7_SUIT_EARTH",
+      "rank": 7,
+      "suit": "earth",
+      "assetId": "card-7-earth",
+      "path": "assets/cards/full/card-7-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_FIRE",
+      "rank": 8,
+      "suit": "fire",
+      "assetId": "card-8-fire",
+      "path": "assets/cards/full/card-8-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_WATER",
+      "rank": 8,
+      "suit": "water",
+      "assetId": "card-8-water",
+      "path": "assets/cards/full/card-8-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_WIND",
+      "rank": 8,
+      "suit": "wind",
+      "assetId": "card-8-wind",
+      "path": "assets/cards/full/card-8-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_8_SUIT_EARTH",
+      "rank": 8,
+      "suit": "earth",
+      "assetId": "card-8-earth",
+      "path": "assets/cards/full/card-8-earth.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_FIRE",
+      "rank": 9,
+      "suit": "fire",
+      "assetId": "card-9-fire",
+      "path": "assets/cards/full/card-9-fire.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_WATER",
+      "rank": 9,
+      "suit": "water",
+      "assetId": "card-9-water",
+      "path": "assets/cards/full/card-9-water.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_WIND",
+      "rank": 9,
+      "suit": "wind",
+      "assetId": "card-9-wind",
+      "path": "assets/cards/full/card-9-wind.png"
+    },
+    {
+      "cardId": "CARD_NUMBER_RANK_9_SUIT_EARTH",
+      "rank": 9,
+      "suit": "earth",
+      "assetId": "card-9-earth",
+      "path": "assets/cards/full/card-9-earth.png"
+    }
+  ]
+}
