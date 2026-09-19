@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { Ellipse } from 'react-native-svg';
 
 import type { SuitCode } from '@ragnarok-millennium/game-core';
 import { spacing, typography } from '@ragnarok-millennium/ui';
 
 import { CardFace } from '../features/cpu-game/CardFace';
+import { resolveFieldStageLayers } from '../features/theme/fieldStageArt';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
 import { ELLIPSE_SIZE } from './fieldTrailLayout';
@@ -41,16 +42,31 @@ export function FieldTrail({
   latest,
   maxWidth,
   lowMotion = false,
+  dayNight = 'DAY',
 }: {
   past: FieldTrailStep[];
   latest: FieldTrailStep | null;
   maxWidth: number;
   lowMotion?: boolean;
+  /** Revolution: cross-fades the stage backdrop to the opposite scheme's art. */
+  dayNight?: 'DAY' | 'NIGHT';
 }) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const still = lowMotion || prefersReducedMotion;
   const pastSteps = past ?? [];
   const ell = ELLIPSE_SIZE;
+  const stage = resolveFieldStageLayers(scheme);
+  const inverted = dayNight === 'NIGHT';
+
+  const [stageFade] = useState(() => new Animated.Value(inverted ? 1 : 0));
+  useEffect(() => {
+    Animated.timing(stageFade, {
+      toValue: inverted ? 1 : 0,
+      duration: 220,
+      easing: Easing.linear,
+      useNativeDriver: useDriver,
+    }).start();
+  }, [inverted, stageFade]);
 
   const signature = latest
     ? `${latest.key}:${latest.cards.map((c) => `${c.rank}${c.suitCode}`).join(',')}:${latest.skillLabel ?? ''}`
@@ -127,6 +143,16 @@ export function FieldTrail({
             <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
           ) : null}
           <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
+            {stage.base ? (
+              <Image source={stage.base} resizeMode="cover" style={StyleSheet.absoluteFill} />
+            ) : null}
+            {stage.flip ? (
+              <Animated.View
+                style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: stageFade }]}
+              >
+                <Image source={stage.flip} resizeMode="cover" style={StyleSheet.absoluteFill} />
+              </Animated.View>
+            ) : null}
             <Svg
               width={ell.width}
               height={ell.height}

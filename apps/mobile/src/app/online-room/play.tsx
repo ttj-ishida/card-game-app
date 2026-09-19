@@ -354,6 +354,7 @@ export default function OnlineRoomPlayScreen() {
                 maxWidth={Math.min(shell.width - spacing.md * 2, 760)}
                 past={trailPast}
                 latest={trailLatest}
+                dayNight={view.dayNight}
               />
             ) : (
               <Text style={styles.muted}>{translate('cpuGame.field.empty')}</Text>
