@@ -111,3 +111,55 @@ Then in Canva: place the frame template, set the name plate to
    `assets:check:cards` to the `qa:m3:preflight` script.
 5. Manual: catalog + CPU battle now show real art; the small-size overlay sits
    clear of the baked numeral.
+
+## Field stage backdrop (bundled into this same SP4b batch)
+
+Two extra PNGs, produced and wired alongside the 36 cards — a stage/altar
+illustration that sits behind the latest play on the battle field, replacing
+the plain gold ellipse outline (the outline + landing pulse stay, drawn on
+top of the image; see `apps/mobile/src/components/FieldTrail.tsx`).
+
+| file | scheme | notes |
+| --- | --- | --- |
+| `assets/backgrounds/field-stage-dark.png` | dark (night) | night/dark-theme battle stage |
+| `assets/backgrounds/field-stage-light.png` | light (day) | day/light-theme battle stage |
+
+- **Aspect ratio: 3.14:1** (≈ 464×148 at 1×) — a wide, short oval/altar shape.
+  Export at a higher multiple of that ratio for retina, e.g. **1856×592**.
+- **Transparent background outside the stage shape** — the art should read as
+  an oval platform/altar floating on the battle backdrop, not a rectangle; the
+  gold outline is drawn on top and expects the stage edge to roughly follow
+  the ellipse.
+- Style: same dark-temple painting language as `assets/backgrounds/*.png` and
+  the 36 card arts above — a stone/gold altar or dais, no readable text, no
+  characters standing on it (cards render on top). `dark` variant = night
+  mood (cool rim light, deep shadow); `light` variant = day mood (warm sun,
+  the existing `-day` backgrounds' palette).
+- Cross-fades with the existing revolution flip (`AppBackground`'s 220ms
+  timing) — doesn't need its own transition design.
+
+Canva prompt (append the scheme's mood to the card base style above):
+
+> Subject: a circular stone-and-gold altar/dais viewed at a slight downward
+> angle, empty (no figures, no cards, no text), floating alone on a
+> transparent background, wide oval footprint, <mood: "lit by cold moonlight,
+> deep blue-black shadow" for dark / "lit by warm sunlight, soft golden haze"
+> for light>. Matches the temple-ruin architecture of the existing battle
+> backdrop.
+
+### Wiring
+
+1. Drop both PNGs into `assets/backgrounds/`.
+2. Hand-edit `apps/mobile/src/features/theme/fieldStageAssets.generated.ts` to
+   add the two lazy require() thunks (small enough not to need a generator
+   script):
+   ```ts
+   export const fieldStageAssets: Partial<Record<string, () => number>> = {
+     'field-stage-dark': () => require('../../../../../assets/backgrounds/field-stage-dark.png'),
+     'field-stage-light': () => require('../../../../../assets/backgrounds/field-stage-light.png'),
+   };
+   ```
+3. Run `npm test` (from `apps/mobile`) — `fieldStageArt.test.ts` should still
+   pass (it injects its own fixture maps, unaffected by the generated map).
+4. Manual: CPU battle + online battle field ellipse now shows the stage art
+   behind the latest play, in both themes, and cross-fades on revolution.

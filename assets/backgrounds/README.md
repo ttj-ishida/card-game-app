@@ -18,6 +18,14 @@ Canva AI で生成 → 図形レイヤーで微調整 → PNG書き出し、と�
 
 - 再書き出し: Canva MCP `export-design` に上記デザインIDと `{type:"png", width:1920, height:1080, lossless:true}`。
 
+## 場の楕円ステージ背景(SP4b、未生成)
+
+`field-stage-dark.png` / `field-stage-light.png` — 対局画面の最終出し手を囲む
+楕円の中に敷く台座/祭壇イラスト（透過背景、比率3.14:1）。仕様・Canvaプロンプトは
+`docs/art/SP4-GR-01-number-card-art.md` の「Field stage backdrop」節を参照。
+2026-09-19時点で未生成（`fieldStageAssets.generated.ts` は空、ベクター楕円のみで
+フォールバック動作）。
+
 ## アプリ組み込み
 
 `docs/superpowers/specs/2026-09-07-theme-sp1-dark-theme-foundation-design.md`（THEME-SP1）を参照。
