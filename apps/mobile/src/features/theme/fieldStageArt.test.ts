@@ -13,9 +13,9 @@ test('resolveFieldStageArt returns the mapped require id, or null when absent', 
   assert.equal(resolveFieldStageArt('dark', { 'field-stage-dark': () => 4242 }), 4242);
 });
 
-test('resolveFieldStageArt defaults to the generated map (empty until SP4b)', () => {
-  assert.equal(resolveFieldStageArt('dark'), null);
-  assert.equal(resolveFieldStageArt('light'), null);
+test('resolveFieldStageArt defaults to the generated map (filled after SP4b)', () => {
+  assert.equal(resolveFieldStageArt('dark'), 0);
+  assert.equal(resolveFieldStageArt('light'), 0);
 });
 
 test('resolveFieldStageLayers: dark scheme bases on dark, flips to light', () => {

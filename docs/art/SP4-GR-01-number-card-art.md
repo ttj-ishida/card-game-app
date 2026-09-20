@@ -165,6 +165,15 @@ and `check-cards-full-assets.mjs` enforces the exact pixel size).
 
 ## Field stage backdrop (bundled into this same SP4b batch)
 
+**Status: DONE (2026-09-20).** Both PNGs generated and wired in.
+Canva's AI image generation has no direct alpha-transparency output, so the
+actual process was: generate the altar on a flat magenta (~#FF00FF)
+background → local colour-distance chroma-key + de-spill → crop to content →
+fit into the 1856×592 canvas. De-spill (edge colour-bleed removal) blew out
+the light variant when the correction was too aggressive (the altar's own
+warm tones sit close to magenta in RGB space) — fixed by using a much gentler
+correction for that image, plain hard-alpha thresholding for the rest.
+
 Two extra PNGs, produced and wired alongside the 36 cards — a stage/altar
 illustration that sits behind the latest play on the battle field, replacing
 the plain gold ellipse outline (the outline + landing pulse stay, drawn on
@@ -210,7 +219,12 @@ Canva prompt (append the scheme's mood to the card base style above):
      'field-stage-light': () => require('../../../../../assets/backgrounds/field-stage-light.png'),
    };
    ```
-3. Run `npm test` (from `apps/mobile`) — `fieldStageArt.test.ts` should still
-   pass (it injects its own fixture maps, unaffected by the generated map).
-4. Manual: CPU battle + online battle field ellipse now shows the stage art
-   behind the latest play, in both themes, and cross-fades on revolution.
+3. Run `npm test` (from `apps/mobile`) — update the one assertion in
+   `fieldStageArt.test.ts` that expected the default map to resolve `null`
+   (it now resolves the real thunks); the rest inject their own fixture maps
+   and are unaffected.
+4. Manual: CPU battle field ellipse now shows the stage art behind the
+   latest play, in both themes — confirmed 2026-09-20 in the web preview, no
+   console errors. Revolution cross-fade not separately verified (relies on
+   the same `AppBackground` timing/mechanism already proven for the main
+   backdrop).

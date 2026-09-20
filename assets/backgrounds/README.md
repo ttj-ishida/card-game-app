@@ -18,13 +18,19 @@ Canva AI で生成 → 図形レイヤーで微調整 → PNG書き出し、と�
 
 - 再書き出し: Canva MCP `export-design` に上記デザインIDと `{type:"png", width:1920, height:1080, lossless:true}`。
 
-## 場の楕円ステージ背景(SP4b、未生成)
+## 場の楕円ステージ背景(SP4b, 2026-09-20 完了)
 
 `field-stage-dark.png` / `field-stage-light.png` — 対局画面の最終出し手を囲む
-楕円の中に敷く台座/祭壇イラスト（透過背景、比率3.14:1）。仕様・Canvaプロンプトは
-`docs/art/SP4-GR-01-number-card-art.md` の「Field stage backdrop」節を参照。
-2026-09-19時点で未生成（`fieldStageAssets.generated.ts` は空、ベクター楕円のみで
-フォールバック動作）。
+楕円の中に敷く台座/祭壇イラスト(透過背景、1856×592、収める枠の比率3.14:1)。
+仕様・Canvaプロンプトは `docs/art/SP4-GR-01-number-card-art.md` の
+「Field stage backdrop」節を参照。
+
+**生成方法(実施記録)**: CanvaのAI画像生成はアルファ透過を直接出力できないため、
+フラットなマゼンタ背景(#FF00FF付近)で祭壇を生成 → ローカルで色距離ベースの
+クロマキー処理 → 透過PNG化、という手順で作成。スクリプトは使い捨てのため
+リポジトリには残していない(手順は上記ドキュメントに記載)。デスピル(縁の色被り
+除去)はオブジェクト自体の色がキー色に近いと破綻する場合があるため、素材ごとに
+補正の強さを調整した。
 
 ## アプリ組み込み
 
