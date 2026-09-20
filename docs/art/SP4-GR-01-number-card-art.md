@@ -1,5 +1,7 @@
 # SP4-GR-01 — Number card full art (1–9 × 4 suits)
 
+**Status: DONE (2026-09-19/20) — all 36/36 cards generated, composited, and checked in.**
+
 - Sub-project: SP4b (art production for SP4 カード枠)
 - Date: 2026-09-09
 - Extends: `docs/art/M0-GR-01-art-direction.md` (M0 flat placeholders — superseded for number cards)
@@ -140,7 +142,10 @@ and `check-cards-full-assets.mjs` enforces the exact pixel size).
 | card-8-water | DAHVsr0WW0E       | 2026-09-19 | 173540 | poster candidate 1 |
 | card-8-wind  | DAHVsgMqp-w       | 2026-09-19 | 123345 | poster candidate 1 |
 | card-8-earth | DAHVst7cjiU       | 2026-09-19 | 137810 | poster candidate 1 |
-| … (4 rows)   |                   |            |        |                   |
+| card-9-fire  | DAHVsnxYYec       | 2026-09-19 | 139440 | poster candidate 1 |
+| card-9-water | DAHVsqnCFzE       | 2026-09-19 | 148258 | poster candidate 2 (candidate 1 was an event-flyer template, discarded) |
+| card-9-wind  | DAHVsh75QY0       | 2026-09-19 | 122366 | poster candidate 1 |
+| card-9-earth | DAHVskHdFLc       | 2026-09-19 | 129106 | poster candidate 1 (final card — transaction expired once mid-composite, redone) |
 
 ## Wiring (SP4b close-out)
 

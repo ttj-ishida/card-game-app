@@ -23,8 +23,8 @@ test('resolveCardArt returns the mapped require id, or null when absent', () => 
   assert.equal(resolveCardArt(3, 'SUIT_FIRE', { 'card-3-fire': () => 4242 }), 4242);
 });
 
-test('resolveCardArt defaults to the generated map (partially filled during SP4b)', () => {
-  assert.equal(resolveCardArt(1, 'SUIT_FIRE'), 0);
-  assert.equal(resolveCardArt(1, 'SUIT_WATER'), 0);
-  assert.equal(resolveCardArt(9, 'SUIT_EARTH'), null);
+test('resolveCardArt defaults to the generated map (all 36 filled after SP4b)', () => {
+  for (let rank = 1; rank <= 9; rank += 1) {
+    for (const s of SUITS) assert.equal(resolveCardArt(rank, s), 0);
+  }
 });
