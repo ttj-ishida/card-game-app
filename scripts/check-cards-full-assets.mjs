@@ -11,6 +11,33 @@ export function pngSize(buf) {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
+/** Width/height from a JPEG's SOF0/SOF2 segment, or null if `buf` is not a JPEG. */
+export function jpegSize(buf) {
+  if (!buf || buf.length < 4) return null;
+  if (buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 4 <= buf.length) {
+    if (buf[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    const marker = buf[offset + 1];
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      offset += 2;
+      continue;
+    }
+    if (marker === 0xd9) return null; // EOI reached without finding a SOF
+    const isSof = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    if (isSof) {
+      if (offset + 9 > buf.length) return null;
+      return { height: buf.readUInt16BE(offset + 5), width: buf.readUInt16BE(offset + 7) };
+    }
+    const segLength = buf.readUInt16BE(offset + 2);
+    offset += 2 + segLength;
+  }
+  return null;
+}
+
 const SUITS = ["fire", "water", "wind", "earth"];
 
 /** Validate the manifest and any present PNGs. Pure-ish: returns a report. */
@@ -45,7 +72,7 @@ export function checkCardsFull({
         `${c.cardId}: assetId must be card-${c.rank}-${c.suit}, is ${c.assetId}`,
       );
     }
-    if (c.path !== `assets/cards/full/${c.assetId}.png`)
+    if (c.path !== `assets/cards/full/${c.assetId}.jpg`)
       push(`${c.cardId}: path mismatch (${c.path})`);
 
     const abs = resolve(root, c.path);
@@ -56,9 +83,9 @@ export function checkCardsFull({
     }
     present += 1;
     const buf = readFileSync(abs);
-    const size = pngSize(buf);
+    const size = jpegSize(buf);
     if (!size) {
-      push(`${c.path} is not a PNG`);
+      push(`${c.path} is not a JPEG`);
       continue;
     }
     if (

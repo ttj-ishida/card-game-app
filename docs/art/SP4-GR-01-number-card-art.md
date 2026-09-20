@@ -8,9 +8,17 @@
 
 ## What SP4b delivers
 
-36 finished card PNGs — one per (rank 1–9 × suit 火/水/風/土) — at
-`assets/cards/full/card-<rank>-<suit>.png`, each **832 × 1164**, ≤ 200 KB,
+36 finished card JPEGs — one per (rank 1–9 × suit 火/水/風/土) — at
+`assets/cards/full/card-<rank>-<suit>.jpg`, each **832 × 1164**, ≤ 200 KB,
 art + frame + name plate + rank pennant + suit emblem **all baked in**.
+
+**Format note (added during SP4b execution):** the design calls for
+detailed AI-painted full-bleed art, which a *lossless* PNG cannot fit under
+200 KB without severe palette-reduction banding (tested: 16-colour PNG barely
+fits at ~166 KB and is visibly posterized). **JPEG at quality 85 fits
+comfortably (~130–175 KB per card) with no visible quality loss** — confirmed
+by side-by-side comparison. The manifest, check script, and generator all
+expect `.jpg`.
 
 ## World
 
@@ -87,18 +95,26 @@ Per card, append:
 
 Then in Canva: place the frame template, set the name plate to
 「<suit kanji> ／ <name>」, set the pennant numeral to `<rank>`, position the
-`<element>` emblem, export PNG at 832 × 1164.
+`<element>` emblem, export **JPEG, quality 85, requested at 832 × 1164**.
+
+**Canva's export preserves the source page's aspect ratio**, so a
+1587×2245-ish `poster` source lands at 823×1164 instead of 832×1164 even when
+832×1164 is requested. Always hard-resize the downloaded JPEG to exactly
+832×1164 locally before checking it in (e.g. Pillow `Image.resize((832,1164),
+Image.LANCZOS)` then re-save at quality 85 — the ~1% stretch is imperceptible
+and `check-cards-full-assets.mjs` enforces the exact pixel size).
 
 ## Records (fill during SP4b)
 
-| card        | Canva design ID | exported | bytes | notes |
-| ----------- | --------------- | -------: | ----: | ----- |
-| card-1-fire |                 |          |       |       |
-| … (36 rows) |                 |          |       |       |
+| card         | Canva design ID | exported   | bytes  | notes            |
+| ------------ | ---------------- | ---------- | -----: | ---------------- |
+| card-1-fire  | DAHVpQSBFGA       | 2026-09-19 | 134213 | poster candidate 3 (dg-7479afda) |
+| card-1-water | DAHVrq_37q0       | 2026-09-19 | 154198 | poster candidate 1 (dg-074eb5ef) |
+| … (34 rows)  |                   |            |        |                   |
 
 ## Wiring (SP4b close-out)
 
-1. Drop all 36 PNGs into `assets/cards/full/`.
+1. Drop all 36 JPEGs into `assets/cards/full/`.
 2. `node scripts/generate-card-art-manifest.mjs` — regenerates
    `apps/mobile/src/features/cpu-game/cardArtAssets.generated.ts` with 36 lazy
    require() thunks. Then run `npm test` (from `apps/mobile`) to confirm the 36

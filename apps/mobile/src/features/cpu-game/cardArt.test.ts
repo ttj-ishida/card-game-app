@@ -23,6 +23,8 @@ test('resolveCardArt returns the mapped require id, or null when absent', () => 
   assert.equal(resolveCardArt(3, 'SUIT_FIRE', { 'card-3-fire': () => 4242 }), 4242);
 });
 
-test('resolveCardArt defaults to the generated map (empty in SP4a)', () => {
-  assert.equal(resolveCardArt(1, 'SUIT_FIRE'), null);
+test('resolveCardArt defaults to the generated map (partially filled during SP4b)', () => {
+  assert.equal(resolveCardArt(1, 'SUIT_FIRE'), 0);
+  assert.equal(resolveCardArt(1, 'SUIT_WATER'), 0);
+  assert.equal(resolveCardArt(9, 'SUIT_EARTH'), null);
 });

@@ -38,7 +38,7 @@
     "web": "expo start --web",
     "export:android": "expo export --platform android",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test --require ./scripts/test-asset-stub.cjs src/**/*.test.ts",
     "qa:m4:selfplay": "tsx scripts/online-self-play.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
