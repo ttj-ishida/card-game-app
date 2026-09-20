@@ -128,7 +128,11 @@ and `check-cards-full-assets.mjs` enforces the exact pixel size).
 | card-5-water | DAHVsamVeKE       | 2026-09-19 | 134292 | poster candidate 1 |
 | card-5-wind  | DAHVsVXm7E8       | 2026-09-19 | 101706 | poster candidate 1 |
 | card-5-earth | DAHVsWt7mTo       | 2026-09-19 | 122117 | poster candidate 1 |
-| … (16 rows)  |                   |            |        |                   |
+| card-6-fire  | DAHVsS9zqiI       | 2026-09-19 | 122644 | poster candidate 2 (candidate 1 was an event-flyer template, discarded) |
+| card-6-water | DAHVsSoB-nQ       | 2026-09-19 | 141765 | poster candidate 1 (removed a stray watermark) |
+| card-6-wind  | DAHVsZHv25E       | 2026-09-19 | 120389 | poster candidate 2 (candidate 1 was an event-flyer template, discarded) |
+| card-6-earth | DAHVsYBJz2c       | 2026-09-19 | 134700 | poster candidate 1 |
+| … (12 rows)  |                   |            |        |                   |
 
 ## Wiring (SP4b close-out)
 

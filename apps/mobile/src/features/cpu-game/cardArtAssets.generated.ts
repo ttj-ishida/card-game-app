@@ -22,4 +22,8 @@ export const cardArtAssets: Partial<Record<string, () => number>> = {
   'card-5-fire': () => require('../../../../../assets/cards/full/card-5-fire.jpg'),
   'card-5-water': () => require('../../../../../assets/cards/full/card-5-water.jpg'),
   'card-5-wind': () => require('../../../../../assets/cards/full/card-5-wind.jpg'),
+  'card-6-earth': () => require('../../../../../assets/cards/full/card-6-earth.jpg'),
+  'card-6-fire': () => require('../../../../../assets/cards/full/card-6-fire.jpg'),
+  'card-6-water': () => require('../../../../../assets/cards/full/card-6-water.jpg'),
+  'card-6-wind': () => require('../../../../../assets/cards/full/card-6-wind.jpg'),
 };
