@@ -2,6 +2,8 @@
 // Maps a card-art key (see cardArt.ts `cardArtKey`) to a lazy require() thunk
 // for a bundled JPEG (thunks keep this module import-safe under `node --test`).
 export const cardArtAssets: Partial<Record<string, () => number>> = {
+  'card-1-earth': () => require('../../../../../assets/cards/full/card-1-earth.jpg'),
   'card-1-fire': () => require('../../../../../assets/cards/full/card-1-fire.jpg'),
   'card-1-water': () => require('../../../../../assets/cards/full/card-1-water.jpg'),
+  'card-1-wind': () => require('../../../../../assets/cards/full/card-1-wind.jpg'),
 };

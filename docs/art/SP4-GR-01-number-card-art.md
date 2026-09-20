@@ -110,7 +110,9 @@ and `check-cards-full-assets.mjs` enforces the exact pixel size).
 | ------------ | ---------------- | ---------- | -----: | ---------------- |
 | card-1-fire  | DAHVpQSBFGA       | 2026-09-19 | 134213 | poster candidate 3 (dg-7479afda) |
 | card-1-water | DAHVrq_37q0       | 2026-09-19 | 154198 | poster candidate 1 (dg-074eb5ef) |
-| … (34 rows)  |                   |            |        |                   |
+| card-1-wind  | DAHVsSzV3HA       | 2026-09-19 | 135013 | poster candidate 2 (dg-b9a54c3f); candidate 1 was a text-template misfire, discarded |
+| card-1-earth | DAHVsVgK5uI       | 2026-09-19 | 143016 | poster candidate 1 (dg-39f906bc) |
+| … (32 rows)  |                   |            |        |                   |
 
 ## Wiring (SP4b close-out)
 
