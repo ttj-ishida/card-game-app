@@ -182,6 +182,7 @@ export default function OnlineRoomPlayScreen() {
         label: translate('cpuGame.field.trail.latest'),
         seatLabel: actorLabel(view.field.lastPlayerId),
         skillLabel: lastTrailEvent ? skillLabelFor(lastTrailEvent.skillEffect) : null,
+        isSelf: view.field.lastPlayerId === view.playerId,
       }
     : null;
 

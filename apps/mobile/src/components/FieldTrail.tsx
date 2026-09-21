@@ -9,7 +9,7 @@ import { CardFace } from '../features/cpu-game/CardFace';
 import { resolveFieldStageLayers } from '../features/theme/fieldStageArt';
 import { useTheme } from '../features/theme/ThemeProvider';
 import { ACCENT } from './buttonStyle';
-import { ELLIPSE_SIZE } from './fieldTrailLayout';
+import { ELLIPSE_SIZE, fieldTrailScale, selfPlayPopScale } from './fieldTrailLayout';
 import { SkillMiniCard } from './SkillMiniCard';
 
 export type FieldTrailStep = {
@@ -20,6 +20,8 @@ export type FieldTrailStep = {
   seatLabel?: string;
   /** このプレイで使われたスキルの表示名（あれば）。数字カードの左に併記する。 */
   skillLabel?: string | null;
+  /** 自分（人間プレイヤー）の手かどうか。着地時の拡大演出を出すかを決める。 */
+  isSelf?: boolean;
 };
 
 const useDriver = Platform.OS !== 'web';
@@ -31,6 +33,8 @@ const prefersReducedMotion =
 
 const CLIP_HEIGHT = 40 + ELLIPSE_SIZE.height + 6;
 const STEP_GAP = 14;
+/** Entrance duration for a self-played card's pop, vs. the normal 240ms. */
+const SELF_POP_DURATION = 450;
 
 /**
  * 現在の場を作った一連のプレイ。最終出し手は画面中央に固定した楕円の枠で囲み、
@@ -57,6 +61,7 @@ export function FieldTrail({
   const ell = ELLIPSE_SIZE;
   const stage = resolveFieldStageLayers(scheme);
   const inverted = dayNight === 'NIGHT';
+  const { layoutWidth, scale } = fieldTrailScale(maxWidth);
 
   const [stageFade] = useState(() => new Animated.Value(inverted ? 1 : 0));
   useEffect(() => {
@@ -83,6 +88,7 @@ export function FieldTrail({
     }
     const first = prev.current === null;
     prev.current = signature;
+    const duration = latest.isSelf ? SELF_POP_DURATION : 240;
 
     if (still) {
       enter.setValue(1);
@@ -92,112 +98,128 @@ export function FieldTrail({
     enter.setValue(0);
     Animated.timing(enter, {
       toValue: 1,
-      duration: 240,
+      duration,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: useDriver,
     }).start();
-    if (!first) pulse(glow, 240);
+    if (!first) pulse(glow, duration);
   }, [signature, still, enter, glow, latest]);
 
   if (pastSteps.length === 0 && !latest) return null;
 
+  // Self-played cards briefly pop to a legible on-screen size, then settle to
+  // the normal field size; other plays keep the original subtle slam-down.
+  const popScale = latest?.isSelf ? selfPlayPopScale(scale) : 1.1;
   const enterY = enter.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] });
-  const enterScale = enter.interpolate({ inputRange: [0, 1], outputRange: [1.1, 1] });
+  const enterScale = enter.interpolate({ inputRange: [0, 1], outputRange: [popScale, 1] });
 
   // The stationary ellipse sits dead centre; the past row is pinned so its right
-  // edge lands just left of it.
-  const ellipseLeft = Math.round(maxWidth / 2 - ell.width / 2);
-  const pastRightInset = Math.round(maxWidth / 2 + ell.width / 2 + STEP_GAP);
+  // edge lands just left of it. Positioning always uses `layoutWidth` (the
+  // fixed width this math is authored for), never the real `maxWidth` — the
+  // whole thing is scaled down afterwards to actually fit a narrow phone.
+  const ellipseLeft = Math.round(layoutWidth / 2 - ell.width / 2);
+  const pastRightInset = Math.round(layoutWidth / 2 + ell.width / 2 + STEP_GAP);
 
   return (
-    <View style={[styles.clip, { width: maxWidth, height: CLIP_HEIGHT }]}>
-      {pastSteps.length > 0 ? (
-        <View style={[styles.pastRow, { right: pastRightInset }]}>
-          {pastSteps.map((step) => (
-            <View key={step.key} style={styles.step}>
-              <Text style={[styles.label, { color: colors.ink.secondary }]}>{step.label}</Text>
-              {step.seatLabel ? (
-                <Text style={[styles.seat, { color: colors.ink.secondary }]}>{step.seatLabel}</Text>
-              ) : null}
-              <View style={[styles.cards, styles.past]}>
-                {step.skillLabel ? <SkillMiniCard label={step.skillLabel} size="mini" /> : null}
-                {step.cards.map((card, ci) => (
-                  <CardFace
-                    key={ci}
-                    rank={card.rank}
-                    suitCode={card.suitCode}
-                    isJoker={card.isJoker}
-                    size="mini"
-                  />
-                ))}
+    <View style={[styles.scaleOuter, { width: maxWidth, height: Math.round(CLIP_HEIGHT * scale) }]}>
+      <View
+        style={[styles.clip, { width: layoutWidth, height: CLIP_HEIGHT, transform: [{ scale }] }]}
+      >
+        {pastSteps.length > 0 ? (
+          <View style={[styles.pastRow, { right: pastRightInset }]}>
+            {pastSteps.map((step) => (
+              <View key={step.key} style={styles.step}>
+                <Text style={[styles.label, { color: colors.ink.secondary }]}>{step.label}</Text>
+                {step.seatLabel ? (
+                  <Text style={[styles.seat, { color: colors.ink.secondary }]}>
+                    {step.seatLabel}
+                  </Text>
+                ) : null}
+                <View style={[styles.cards, styles.past]}>
+                  {step.skillLabel ? <SkillMiniCard label={step.skillLabel} size="mini" /> : null}
+                  {step.cards.map((card, ci) => (
+                    <CardFace
+                      key={ci}
+                      rank={card.rank}
+                      suitCode={card.suitCode}
+                      isJoker={card.isJoker}
+                      size="mini"
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
-      ) : null}
+            ))}
+          </View>
+        ) : null}
 
-      {latest ? (
-        <View style={[styles.latestBox, { left: ellipseLeft, width: ell.width }]}>
-          <Text style={[styles.label, { color: colors.ink.primary }]}>{latest.label}</Text>
-          {latest.seatLabel ? (
-            <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
-          ) : null}
-          <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
-            {stage.base ? (
-              <Image source={stage.base} resizeMode="cover" style={StyleSheet.absoluteFill} />
+        {latest ? (
+          <View style={[styles.latestBox, { left: ellipseLeft, width: ell.width }]}>
+            <Text style={[styles.label, { color: colors.ink.primary }]}>{latest.label}</Text>
+            {latest.seatLabel ? (
+              <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
             ) : null}
-            {stage.flip ? (
-              <Animated.View
-                style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: stageFade }]}
+            <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
+              {stage.base ? (
+                <Image source={stage.base} resizeMode="cover" style={StyleSheet.absoluteFill} />
+              ) : null}
+              {stage.flip ? (
+                <Animated.View
+                  style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: stageFade }]}
+                >
+                  <Image source={stage.flip} resizeMode="cover" style={StyleSheet.absoluteFill} />
+                </Animated.View>
+              ) : null}
+              <Svg
+                width={ell.width}
+                height={ell.height}
+                style={[StyleSheet.absoluteFill, styles.noEvents]}
               >
-                <Image source={stage.flip} resizeMode="cover" style={StyleSheet.absoluteFill} />
-              </Animated.View>
-            ) : null}
-            <Svg
-              width={ell.width}
-              height={ell.height}
-              style={[StyleSheet.absoluteFill, styles.noEvents]}
-            >
-              <Ellipse
-                cx={ell.width / 2}
-                cy={ell.height / 2}
-                rx={ell.width / 2 - 2}
-                ry={ell.height / 2 - 2}
-                stroke={ACCENT}
-                strokeWidth={2}
-                fill="none"
-              />
-            </Svg>
-            <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
-              <Svg width={ell.width} height={ell.height}>
                 <Ellipse
                   cx={ell.width / 2}
                   cy={ell.height / 2}
                   rx={ell.width / 2 - 2}
                   ry={ell.height / 2 - 2}
                   stroke={ACCENT}
-                  strokeWidth={5}
+                  strokeWidth={2}
                   fill="none"
                 />
               </Svg>
-            </Animated.View>
-            <Animated.View
-              style={[styles.cards, { transform: [{ translateY: enterY }, { scale: enterScale }] }]}
-            >
-              {latest.skillLabel ? <SkillMiniCard label={latest.skillLabel} size="field" /> : null}
-              {latest.cards.map((card, ci) => (
-                <CardFace
-                  key={ci}
-                  rank={card.rank}
-                  suitCode={card.suitCode}
-                  isJoker={card.isJoker}
-                  size="field"
-                />
-              ))}
-            </Animated.View>
+              <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
+                <Svg width={ell.width} height={ell.height}>
+                  <Ellipse
+                    cx={ell.width / 2}
+                    cy={ell.height / 2}
+                    rx={ell.width / 2 - 2}
+                    ry={ell.height / 2 - 2}
+                    stroke={ACCENT}
+                    strokeWidth={5}
+                    fill="none"
+                  />
+                </Svg>
+              </Animated.View>
+              <Animated.View
+                style={[
+                  styles.cards,
+                  { transform: [{ translateY: enterY }, { scale: enterScale }] },
+                ]}
+              >
+                {latest.skillLabel ? (
+                  <SkillMiniCard label={latest.skillLabel} size="field" />
+                ) : null}
+                {latest.cards.map((card, ci) => (
+                  <CardFace
+                    key={ci}
+                    rank={card.rank}
+                    suitCode={card.suitCode}
+                    isJoker={card.isJoker}
+                    size="field"
+                  />
+                ))}
+              </Animated.View>
+            </View>
           </View>
-        </View>
-      ) : null}
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -210,6 +232,7 @@ function pulse(value: Animated.Value, duration: number) {
 }
 
 const styles = StyleSheet.create({
+  scaleOuter: { overflow: 'hidden', alignSelf: 'center', alignItems: 'center' },
   clip: { overflow: 'hidden', alignSelf: 'center' },
   pastRow: {
     position: 'absolute',

@@ -44,3 +44,42 @@ export function stepWidth(cardCount: number, isLatest: boolean, hasSkill = false
   const skill = hasSkill ? (cardCount > 0 ? CARD_GAP : 0) + sw : 0;
   return cards + skill;
 }
+
+/** Breathing room either side of the ellipse the internal layout is authored for. */
+const LAYOUT_MARGIN = 28;
+
+/**
+ * The width `FieldTrail`'s internal positioning math is authored for — always
+ * big enough for the stationary ellipse plus a little past-row space. On a
+ * narrow phone the real container is smaller than this, so the whole trail
+ * must be rendered at this width and scaled down to fit (see `fieldTrailScale`)
+ * rather than reflowed, or the ellipse math (centred on this width) breaks.
+ */
+export const MIN_LAYOUT_WIDTH = ELLIPSE_SIZE.width + LAYOUT_MARGIN * 2;
+
+/**
+ * How to fit the fixed-size field trail into a container of `maxWidth`.
+ * `layoutWidth` is what the internal ellipse/past-row math should use instead
+ * of the real container width; `scale` is applied via `transform` to shrink
+ * that layout down to actually fit. When `maxWidth` is already roomy enough,
+ * this is a no-op (`layoutWidth === maxWidth`, `scale === 1`).
+ */
+export function fieldTrailScale(maxWidth: number): { layoutWidth: number; scale: number } {
+  const layoutWidth = Math.max(maxWidth, MIN_LAYOUT_WIDTH);
+  const scale = maxWidth > 0 ? Math.min(1, maxWidth / layoutWidth) : 1;
+  return { layoutWidth, scale };
+}
+
+/** On-screen px width the self-play "pop" enlarge should read at. */
+const SELF_POP_TARGET_W = 140;
+
+/**
+ * Scale factor for a `field`-size card so a self-played card's entrance pop
+ * reads at a fixed, legible `SELF_POP_TARGET_W` on screen, regardless of how
+ * much `fieldTrailScale`'s `scale` has already shrunk the whole trail down to
+ * fit a narrow phone. Never shrinks below the card's normal size.
+ */
+export function selfPlayPopScale(outerScale: number): number {
+  if (outerScale <= 0) return 1;
+  return Math.max(1, SELF_POP_TARGET_W / (FIELD_CARD_W * outerScale));
+}

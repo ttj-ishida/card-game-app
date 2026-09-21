@@ -57,6 +57,8 @@ export type FieldView = {
   cards: FieldCardView[];
   kind: 'SINGLE' | 'RANK_SET' | 'SEQUENCE';
   lastPlayerNameKey: string;
+  /** 最終出し手が人間プレイヤー自身かどうか。着地時の拡大演出を出すかを決める。 */
+  lastPlayerIsSelf: boolean;
   /** リードから現在までに場へ出た各プレイ（古い順）。捨てられた更新前のカードも辿れる。 */
   trail: FieldTrailEntry[];
 };
@@ -260,6 +262,7 @@ export function buildBoardViewModel(
           cards: round.activeField.combination.cards.map(cardFace),
           kind: round.activeField.combination.kind,
           lastPlayerNameKey: seatNameKey(config, round.activeField.lastPlayerId) ?? '',
+          lastPlayerIsSelf: round.activeField.lastPlayerId === humanSeatId,
           trail: currentFieldTrail(state.publicEvents, config),
         };
 

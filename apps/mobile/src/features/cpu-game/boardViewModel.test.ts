@@ -117,6 +117,14 @@ test('field is null before any lead, populated after', () => {
   assert.equal(typeof vm.field!.lastPlayerNameKey, 'string');
 });
 
+test('field.lastPlayerIsSelf reflects whether the human made the latest play', () => {
+  const s0 = start(2, 2001);
+  const humanLed = isHumanTurn(s0);
+  const s1 = advance(s0, 1);
+  const vm = buildBoardViewModel(s1, [], []);
+  assert.equal(vm.field!.lastPlayerIsSelf, humanLed);
+});
+
 test('strengthOrder is [1..9] by day', () => {
   const vm = buildBoardViewModel(start(2), [], []);
   assert.equal(vm.dayNight, 'DAY');

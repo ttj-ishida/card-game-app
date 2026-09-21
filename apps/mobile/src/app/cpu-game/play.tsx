@@ -169,6 +169,7 @@ export default function CpuGamePlayScreen() {
           ? translate(vm.field.lastPlayerNameKey)
           : undefined,
       skillLabel: last?.skillEffectKey ? translate(last.skillEffectKey) : null,
+      isSelf: vm.field.lastPlayerIsSelf,
     };
   })();
 
