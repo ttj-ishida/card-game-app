@@ -26,6 +26,7 @@ const REASON_CODES = {
   FIELD_EMPTY: true,
   MUST_LEAD: true,
   NO_FIELD_TO_CLEAR: true,
+  JOKER_CLEAR_REQUIRES_SINGLE_CARD: true,
   TRANSFORM_JOKER_GO_OUT: true,
   INVALID_JOKER_DECLARATION: true,
 } satisfies Record<PlayRejectionReason, true>;

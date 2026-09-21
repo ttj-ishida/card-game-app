@@ -318,7 +318,10 @@ export function buildBoardViewModel(
       ? {
           heldEffectKey: `sandbox.skill.${heldEffect}`,
           heldEffectDescKey: `cpuGame.skill.effect.${heldEffect}`,
-          jokerClearAvailable: isJoker && round.activeField != null,
+          jokerClearAvailable:
+            isJoker &&
+            round.activeField != null &&
+            round.activeField.combination.cards.length === 1,
           jokerTransformAvailable: isJoker,
           sealAvailable: heldEffect === 'SKILL_EXTENSION_SEAL',
           revolutionAvailable: heldEffect === 'SKILL_REVOLUTION',

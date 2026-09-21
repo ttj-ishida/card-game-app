@@ -131,20 +131,41 @@ test("evaluateJokerClear requires a field and returns continued-play constraints
 
   assert.deepEqual(
     evaluateJokerClear({
-      currentField: createActiveField(
-        combo([c(6, "FIRE"), c(6, "WATER")]),
-        "player-2",
-      ),
+      currentField: createActiveField(combo([c(6, "FIRE")]), "player-2"),
       dayNight: "NIGHT",
     }),
     {
       legal: true,
-      clearedCards: [c(6, "FIRE"), c(6, "WATER")],
+      clearedCards: [c(6, "FIRE")],
       extensionSealed: false,
       dayNightAfter: "NIGHT",
       mustLead: true,
       canPass: false,
       canUseSecondSkill: false,
     },
+  );
+});
+
+test("evaluateJokerClear only clears a single-card field (1枚縛りのみ流せる); pairs and larger are rejected", () => {
+  assert.deepEqual(
+    evaluateJokerClear({
+      currentField: createActiveField(
+        combo([c(6, "FIRE"), c(6, "WATER")]),
+        "player-2",
+      ),
+      dayNight: "NIGHT",
+    }),
+    { legal: false, reason: "JOKER_CLEAR_REQUIRES_SINGLE_CARD" },
+  );
+
+  assert.deepEqual(
+    evaluateJokerClear({
+      currentField: createActiveField(
+        combo([c(5, "FIRE"), c(5, "WATER"), c(5, "WIND")]),
+        "player-2",
+      ),
+      dayNight: "DAY",
+    }),
+    { legal: false, reason: "JOKER_CLEAR_REQUIRES_SINGLE_CARD" },
   );
 });

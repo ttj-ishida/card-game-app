@@ -378,13 +378,17 @@ export type JokerClearResult =
       canPass: false;
       canUseSecondSkill: false;
     }
-  | { legal: false; reason: "NO_FIELD_TO_CLEAR" };
+  | { legal: false; reason: "NO_FIELD_TO_CLEAR" }
+  | { legal: false; reason: "JOKER_CLEAR_REQUIRES_SINGLE_CARD" };
 
 export function evaluateJokerClear(input: {
   currentField: ActiveField | null;
   dayNight: DayNight;
 }): JokerClearResult {
   if (!input.currentField) return { legal: false, reason: "NO_FIELD_TO_CLEAR" };
+  if (input.currentField.combination.cards.length !== 1) {
+    return { legal: false, reason: "JOKER_CLEAR_REQUIRES_SINGLE_CARD" };
+  }
 
   return {
     legal: true,
@@ -799,6 +803,7 @@ export type PlayRejectionReason =
   | "FIELD_EMPTY"
   | "MUST_LEAD"
   | "NO_FIELD_TO_CLEAR"
+  | "JOKER_CLEAR_REQUIRES_SINGLE_CARD"
   | "TRANSFORM_JOKER_GO_OUT"
   | "INVALID_JOKER_DECLARATION";
 

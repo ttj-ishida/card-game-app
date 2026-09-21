@@ -75,10 +75,17 @@ function makeFakeDeps(overrides: Partial<CpuGameDeps> = {}): CpuGameDeps & {
   };
 }
 
+// Real cards only: a transformed Joker (createTransformedJokerCard) is a
+// NumberCard carrying `transformedFromSkillId` and is NOT one of the 36 —
+// counting it would make the conservation invariant fail whenever a
+// JOKER_TRANSFORM reaches the field/discard/a hand.
+const isReal = (card: { transformedFromSkillId?: string }): boolean =>
+  card.transformedFromSkillId === undefined;
+
 function cardTotal(round: RoundState): number {
-  const inHands = round.players.reduce((sum, p) => sum + p.hand.length, 0);
-  const field = round.activeField ? round.activeField.combination.cards.length : 0;
-  return inHands + round.discardPile.length + field;
+  const inHands = round.players.reduce((sum, p) => sum + p.hand.filter(isReal).length, 0);
+  const field = round.activeField ? round.activeField.combination.cards.filter(isReal).length : 0;
+  return inHands + round.discardPile.filter(isReal).length + field;
 }
 
 const PAYLOAD_COLUMNS = [
@@ -242,16 +249,8 @@ describe('M2-QA-02: every player count completes a full round', () => {
 });
 
 describe('M3-QA-01: CPU skill usage keeps card conservation', () => {
-  // Real cards only: a transformed Joker (createTransformedJokerCard) is a
-  // NumberCard carrying `transformedFromSkillId` and is NOT one of the 36.
-  const isReal = (card: { transformedFromSkillId?: string }): boolean =>
-    card.transformedFromSkillId === undefined;
-
-  function realCardTotal(round: RoundState): number {
-    const inHands = round.players.reduce((sum, p) => sum + p.hand.filter(isReal).length, 0);
-    const field = round.activeField ? round.activeField.combination.cards.filter(isReal).length : 0;
-    return inHands + round.discardPile.filter(isReal).length + field;
-  }
+  // cardTotal() already filters transformed Jokers out (see its definition above).
+  const realCardTotal = cardTotal;
 
   function anyTransformedJokerCard(round: RoundState): boolean {
     const onField = round.activeField

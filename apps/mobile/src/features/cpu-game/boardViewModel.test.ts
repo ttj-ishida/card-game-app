@@ -389,12 +389,53 @@ test('skillPanel reports the held revolution skill with a preview', () => {
   assert.equal(vm.skillPanel!.jokerTransformAvailable, false);
 });
 
-test('skillPanel jokerClearAvailable follows field presence for a Joker holder', () => {
-  const g = humanSkillState('SKILL_JOKER_HERO');
-  const vm = buildBoardViewModel(g, [], legalPlaysForHuman(g));
-  assert.ok(vm.skillPanel);
-  assert.equal(vm.skillPanel!.jokerTransformAvailable, true);
-  assert.equal(vm.skillPanel!.jokerClearAvailable, g.round.activeField != null);
+function jokerHolderState(fieldCards: ReturnType<typeof createNumberCard>[] | null): DriverState {
+  const activeField = fieldCards
+    ? createActiveField(parseNumberCombination(fieldCards)!, 'seat-1')
+    : null;
+  const round = createRoundState({
+    rulesetCode: 'INITIAL',
+    rulesetVersion: INITIAL_RULESET_VERSION,
+    dayNight: 'DAY',
+    players: [
+      createPlayerState('seat-0', [createNumberCard('h0', 'RANK_3', 'SUIT_FIRE')], {
+        skillId: 'sk-0',
+        effectCode: 'SKILL_JOKER_HERO',
+        used: false,
+      }),
+      createPlayerState('seat-1', [createNumberCard('s9', 'RANK_9', 'SUIT_WATER')]),
+    ],
+    activePlayerId: 'seat-0',
+    activeField,
+  });
+  return {
+    config: buildMatchConfig(2),
+    seed: 0,
+    rematchIndex: 0,
+    baselineFirstSeatId: 'seat-0',
+    round,
+    phase: 'HUMAN_TURN',
+    turnLog: [],
+    publicEvents: [],
+    winnerSeatId: null,
+  };
+}
+
+test('skillPanel jokerClearAvailable requires a single-card field (1枚縛りのみ流せる)', () => {
+  const noField = buildBoardViewModel(jokerHolderState(null), [], []);
+  assert.equal(noField.skillPanel!.jokerClearAvailable, false);
+
+  const oneCard = jokerHolderState([createNumberCard('f7', 'RANK_7', 'SUIT_EARTH')]);
+  const oneCardVm = buildBoardViewModel(oneCard, [], legalPlaysForHuman(oneCard));
+  assert.equal(oneCardVm.skillPanel!.jokerTransformAvailable, true);
+  assert.equal(oneCardVm.skillPanel!.jokerClearAvailable, true);
+
+  const pair = jokerHolderState([
+    createNumberCard('f6a', 'RANK_6', 'SUIT_EARTH'),
+    createNumberCard('f6b', 'RANK_6', 'SUIT_FIRE'),
+  ]);
+  const pairVm = buildBoardViewModel(pair, [], legalPlaysForHuman(pair));
+  assert.equal(pairVm.skillPanel!.jokerClearAvailable, false);
 });
 
 test('submitOptions.plain mirrors canSubmitPlain and skills mirrors submitOptionsForSelection', () => {

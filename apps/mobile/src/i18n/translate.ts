@@ -172,6 +172,7 @@ export const jaDictionary = {
   'sandbox.reason.FIELD_EMPTY': '場が空のときはパスできません',
   'sandbox.reason.MUST_LEAD': '続けてリードする必要があります',
   'sandbox.reason.NO_FIELD_TO_CLEAR': '流す場がありません',
+  'sandbox.reason.JOKER_CLEAR_REQUIRES_SINGLE_CARD': '場が1枚のときしか流せません',
   'sandbox.reason.TRANSFORM_JOKER_GO_OUT': '変化Jokerを含む手では上がれません',
   'sandbox.reason.INVALID_JOKER_DECLARATION': 'Joker宣言が不正です',
   'sandbox.history.empty': '履歴はまだありません',
@@ -254,8 +255,10 @@ export const jaDictionary = {
   'nav.diagnostics': '同期診断',
   'cpuGame.history': '履歴',
   'cpuGame.skill.held': '保有スキル',
-  'cpuGame.skill.effect.SKILL_JOKER_HERO': '場を流す、または数字と属性を宣言して変化させる',
-  'cpuGame.skill.effect.SKILL_JOKER_SAINT': '場を流す、または数字と属性を宣言して変化させる',
+  'cpuGame.skill.effect.SKILL_JOKER_HERO':
+    '場が1枚のときのみ流す、または数字と属性を宣言して変化させる',
+  'cpuGame.skill.effect.SKILL_JOKER_SAINT':
+    '場が1枚のときのみ流す、または数字と属性を宣言して変化させる',
   'cpuGame.skill.effect.SKILL_EXTENSION_SEAL':
     '数字カードと同時に使用。以後、同数字追加と連番拡張を禁止',
   'cpuGame.skill.effect.SKILL_REVOLUTION': '数字カードと同時に使用。先に昼夜を反転してから判定',
