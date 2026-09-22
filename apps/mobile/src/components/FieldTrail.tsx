@@ -160,13 +160,21 @@ export function FieldTrail({
             ) : null}
             <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
               {stage.base ? (
-                <Image source={stage.base} resizeMode="cover" style={StyleSheet.absoluteFill} />
+                <Image
+                  source={stage.base}
+                  resizeMode="cover"
+                  style={[styles.stageImage, { width: ell.width, height: ell.height }]}
+                />
               ) : null}
               {stage.flip ? (
                 <Animated.View
                   style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: stageFade }]}
                 >
-                  <Image source={stage.flip} resizeMode="cover" style={StyleSheet.absoluteFill} />
+                  <Image
+                    source={stage.flip}
+                    resizeMode="cover"
+                    style={[styles.stageImage, { width: ell.width, height: ell.height }]}
+                  />
                 </Animated.View>
               ) : null}
               <Svg
@@ -246,6 +254,11 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.size.caption, fontWeight: typography.weight.bold },
   seat: { fontSize: typography.size.caption },
   latestWrap: { alignItems: 'center', justifyContent: 'center' },
+  // react-native-web sizes an <Image> to its source's natural pixels and pins
+  // it top-left when only StyleSheet.absoluteFill is given (no explicit
+  // width/height) — explicit pixel dims are required here, mirroring
+  // AppBackground's BackdropImage fix for the same web-only bug.
+  stageImage: { position: 'absolute', top: 0, left: 0 },
   noEvents: { pointerEvents: 'none' },
   cards: { flexDirection: 'row', flexWrap: 'nowrap', gap: spacing.xs, justifyContent: 'center' },
   past: { opacity: 0.7 },
