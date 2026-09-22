@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
-import Svg, { Ellipse } from 'react-native-svg';
 
 import type { SuitCode } from '@ragnarok-millennium/game-core';
 import { spacing, typography } from '@ragnarok-millennium/ui';
@@ -8,7 +7,6 @@ import { spacing, typography } from '@ragnarok-millennium/ui';
 import { CardFace } from '../features/cpu-game/CardFace';
 import { resolveFieldStageLayers } from '../features/theme/fieldStageArt';
 import { useTheme } from '../features/theme/ThemeProvider';
-import { ACCENT } from './buttonStyle';
 import { ELLIPSE_SIZE, fieldTrailScale, selfPlayPopScale } from './fieldTrailLayout';
 import { SkillMiniCard } from './SkillMiniCard';
 
@@ -44,12 +42,12 @@ const SELF_POP_DURATION = 450;
  * so the flat top surface sits under the cards instead. Fraction of
  * ELLIPSE_SIZE.height, tuned by eye against the actual artwork.
  */
-const STAGE_ART_OFFSET_FRACTION = 0.24;
+const STAGE_ART_OFFSET_FRACTION = 0.32;
 
 /**
- * 現在の場を作った一連のプレイ。最終出し手は画面中央に固定した楕円の枠で囲み、
- * **枠は絶対に動かさない**。過去の手（捨て場）は楕円の左側に右詰めで並び、新しい
- * 手が着地すると楕円の枠が金色にパルスする。スキルカードは各手の数字カードの左。
+ * 現在の場を作った一連のプレイ。最終出し手は画面中央に固定した楕円の枠（ステージ
+ * 台座アートの天面）の位置に置かれ、**その位置は絶対に動かさない**。過去の手
+ * （捨て場）は楕円の左側に右詰めで並ぶ。スキルカードは各手の数字カードの左。
  */
 export function FieldTrail({
   past,
@@ -89,7 +87,6 @@ export function FieldTrail({
     : '';
 
   const [enter] = useState(() => new Animated.Value(1));
-  const [glow] = useState(() => new Animated.Value(0));
   const prev = useRef<string | null>(null);
 
   useEffect(() => {
@@ -97,13 +94,11 @@ export function FieldTrail({
       prev.current = signature;
       return;
     }
-    const first = prev.current === null;
     prev.current = signature;
     const duration = latest.isSelf ? SELF_POP_DURATION : 240;
 
     if (still) {
       enter.setValue(1);
-      if (!first) pulse(glow, 120);
       return;
     }
     enter.setValue(0);
@@ -113,8 +108,7 @@ export function FieldTrail({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: useDriver,
     }).start();
-    if (!first) pulse(glow, duration);
-  }, [signature, still, enter, glow, latest]);
+  }, [signature, still, enter, latest]);
 
   if (pastSteps.length === 0 && !latest) return null;
 
@@ -199,34 +193,6 @@ export function FieldTrail({
                   />
                 </Animated.View>
               ) : null}
-              <Svg
-                width={ell.width}
-                height={ell.height}
-                style={[StyleSheet.absoluteFill, styles.noEvents]}
-              >
-                <Ellipse
-                  cx={ell.width / 2}
-                  cy={ell.height / 2}
-                  rx={ell.width / 2 - 2}
-                  ry={ell.height / 2 - 2}
-                  stroke={ACCENT}
-                  strokeWidth={2}
-                  fill="none"
-                />
-              </Svg>
-              <Animated.View style={[StyleSheet.absoluteFill, styles.noEvents, { opacity: glow }]}>
-                <Svg width={ell.width} height={ell.height}>
-                  <Ellipse
-                    cx={ell.width / 2}
-                    cy={ell.height / 2}
-                    rx={ell.width / 2 - 2}
-                    ry={ell.height / 2 - 2}
-                    stroke={ACCENT}
-                    strokeWidth={5}
-                    fill="none"
-                  />
-                </Svg>
-              </Animated.View>
               <Animated.View
                 style={[
                   styles.cards,
@@ -252,13 +218,6 @@ export function FieldTrail({
       </View>
     </View>
   );
-}
-
-function pulse(value: Animated.Value, duration: number) {
-  Animated.sequence([
-    Animated.timing(value, { toValue: 1, duration: duration * 0.4, useNativeDriver: false }),
-    Animated.timing(value, { toValue: 0, duration: duration * 0.6, useNativeDriver: false }),
-  ]).start();
 }
 
 const styles = StyleSheet.create({
