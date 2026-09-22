@@ -37,6 +37,16 @@ const STEP_GAP = 14;
 const SELF_POP_DURATION = 450;
 
 /**
+ * The stage art (field-stage-dark/light.png) is a disc viewed at an angle: a
+ * flat top surface in the upper ~40% and a decorative rim/base band below
+ * it. Cards render at the box's vertical centre (fixed, per the "frame never
+ * moves" rule), which lands on that rim band unless the art is shifted down
+ * so the flat top surface sits under the cards instead. Fraction of
+ * ELLIPSE_SIZE.height, tuned by eye against the actual artwork.
+ */
+const STAGE_ART_OFFSET_FRACTION = 0.24;
+
+/**
  * 現在の場を作った一連のプレイ。最終出し手は画面中央に固定した楕円の枠で囲み、
  * **枠は絶対に動かさない**。過去の手（捨て場）は楕円の左側に右詰めで並び、新しい
  * 手が着地すると楕円の枠が金色にパルスする。スキルカードは各手の数字カードの左。
@@ -59,6 +69,7 @@ export function FieldTrail({
   const still = lowMotion || prefersReducedMotion;
   const pastSteps = past ?? [];
   const ell = ELLIPSE_SIZE;
+  const stageArtOffsetY = Math.round(ell.height * STAGE_ART_OFFSET_FRACTION);
   const stage = resolveFieldStageLayers(scheme);
   const inverted = dayNight === 'NIGHT';
   const { layoutWidth, scale } = fieldTrailScale(maxWidth);
@@ -158,12 +169,20 @@ export function FieldTrail({
             {latest.seatLabel ? (
               <Text style={[styles.seat, { color: colors.ink.secondary }]}>{latest.seatLabel}</Text>
             ) : null}
-            <View style={[styles.latestWrap, { width: ell.width, height: ell.height }]}>
+            <View
+              style={[
+                styles.latestWrap,
+                { width: ell.width, height: ell.height, overflow: 'hidden' },
+              ]}
+            >
               {stage.base ? (
                 <Image
                   source={stage.base}
                   resizeMode="cover"
-                  style={[styles.stageImage, { width: ell.width, height: ell.height }]}
+                  style={[
+                    styles.stageImage,
+                    { width: ell.width, height: ell.height, top: stageArtOffsetY },
+                  ]}
                 />
               ) : null}
               {stage.flip ? (
@@ -173,7 +192,10 @@ export function FieldTrail({
                   <Image
                     source={stage.flip}
                     resizeMode="cover"
-                    style={[styles.stageImage, { width: ell.width, height: ell.height }]}
+                    style={[
+                      styles.stageImage,
+                      { width: ell.width, height: ell.height, top: stageArtOffsetY },
+                    ]}
                   />
                 </Animated.View>
               ) : null}
