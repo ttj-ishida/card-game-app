@@ -8,5 +8,13 @@ export { SideMenu } from './SideMenu';
 export { HandFan, type HandFanCard } from './HandFan';
 export { FieldTrail, type FieldTrailStep } from './FieldTrail';
 export { SkillMiniCard, type SkillMiniCardProps } from './SkillMiniCard';
+export {
+  SkillCard,
+  FlipReveal,
+  SKILL_CARD_WIDTH,
+  type SkillActionKind,
+  type SkillCardProps,
+} from './SkillCard';
+export { SkillPanel, type SkillPanelProps } from './SkillPanel';
 export { NAV_ITEMS, visibleNavItems, type NavItem } from './navItems';
 export { ACCENT } from './buttonStyle';

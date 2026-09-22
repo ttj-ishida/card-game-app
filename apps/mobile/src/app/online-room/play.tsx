@@ -10,7 +10,15 @@ import { CardFace } from '../../features/cpu-game/CardFace';
 import { AppBackground } from '../../features/theme/AppBackground';
 import { useShellSize } from '../../features/theme/AppShell';
 import { useThemedStyles } from '../../features/theme/ThemeProvider';
-import { ACCENT, Button, CloseButton, FieldTrail, HandFan, Panel } from '../../components';
+import {
+  Button,
+  CloseButton,
+  FieldTrail,
+  HandFan,
+  Panel,
+  SkillCard,
+  SkillPanel,
+} from '../../components';
 import type { FieldTrailStep } from '../../components';
 import {
   canPass,
@@ -381,31 +389,26 @@ export default function OnlineRoomPlayScreen() {
           <View style={styles.footerRow}>
             <View style={styles.footerSide}>
               {heldSkill ? (
-                <Panel style={styles.skillPanel}>
-                  <View style={styles.skillHeader}>
-                    <View style={styles.skillBadge}>
-                      <Text style={styles.skillBadgeGlyph}>✦</Text>
-                    </View>
-                    <View style={styles.skillHeaderText}>
-                      <Text style={styles.skillOverline}>{translate('cpuGame.skill.held')}</Text>
-                      <Text style={styles.skillName}>
-                        {translate(`sandbox.skill.${heldSkill.effectCode}`)}
-                      </Text>
-                    </View>
+                <SkillPanel
+                  heldLabel={translate('cpuGame.skill.held')}
+                  name={translate(`sandbox.skill.${heldSkill.effectCode}`)}
+                  description={translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
+                  pending={pendingSkill != null}
+                  onCancelPending={() => onlineRoundStore.getState().cancelSkill()}
+                  cancelLabel={translate('cpuGame.skill.cancelPending')}
+                >
+                  <View style={styles.skillCardRow}>
+                    {skillSubmitOptions.map((opt) => (
+                      <SkillCard
+                        key={opt.useSkill}
+                        kind={opt.useSkill}
+                        label={translate(`sandbox.play.useSkill.${opt.useSkill}`)}
+                        selected={pendingSkill?.useSkill === opt.useSkill}
+                        onPress={() => onDeclareSkill(opt.useSkill)}
+                      />
+                    ))}
                   </View>
-                  <Text style={styles.skillDesc}>
-                    {translate(`cpuGame.skill.effect.${heldSkill.effectCode}`)}
-                  </Text>
-                  <View style={styles.skillDivider} />
-                  {skillSubmitOptions.map((opt) => (
-                    <Button
-                      key={opt.useSkill}
-                      label={translate(`cpuGame.skill.submit.${opt.useSkill}`)}
-                      selected={pendingSkill?.useSkill === opt.useSkill}
-                      onPress={() => onDeclareSkill(opt.useSkill)}
-                    />
-                  ))}
-                </Panel>
+                </SkillPanel>
               ) : null}
             </View>
 
@@ -436,6 +439,7 @@ export default function OnlineRoomPlayScreen() {
                   onPress={onSubmit}
                 />
                 <Button
+                  variant="secondary"
                   label={translate('cpuGame.action.pass')}
                   disabled={!view.isMyTurn || pendingSkill != null || !canPass(legalPlays)}
                   onPress={onPass}
@@ -542,33 +546,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillPanel: { gap: spacing.xs },
-    skillHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    skillBadge: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      borderWidth: 1,
-      borderColor: ACCENT,
-      backgroundColor: 'rgba(201, 169, 78, 0.14)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    skillBadgeGlyph: {
-      fontSize: 13,
-      lineHeight: 15,
-      color: ACCENT,
-      fontWeight: typography.weight.bold,
-    },
-    skillHeaderText: { flex: 1, gap: 1 },
-    skillOverline: { fontSize: 10, letterSpacing: 1, color: c.ink.secondary },
-    skillName: {
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-      color: ACCENT,
-    },
-    skillDesc: { fontSize: typography.size.caption, lineHeight: 16, color: c.ink.secondary },
-    skillDivider: { height: 1, backgroundColor: c.state.disabled, marginTop: 2 },
+    skillCardRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
     winnerText: {
       fontSize: typography.size.title,
       fontWeight: typography.weight.bold,

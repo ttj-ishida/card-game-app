@@ -9,6 +9,7 @@ import { RANK_CODES, SUIT_CODES, rankNumber } from '@ragnarok-millennium/game-co
 import type { PlayRejectionReason } from '@ragnarok-millennium/game-core';
 
 import { CardFace } from '../../features/cpu-game/CardFace';
+import { CARD_METRICS, cardHeight } from '../../features/cpu-game/cardMetrics';
 import { buildBoardViewModel } from '../../features/cpu-game/boardViewModel';
 import { cpuGameStore } from '../../state/cpuGameStore';
 import { cpuGameSettingsStore } from '../../state/cpuGameSettingsStore';
@@ -22,7 +23,9 @@ import {
   CloseButton,
   FieldTrail,
   HandFan,
-  Panel,
+  FlipReveal,
+  SkillCard,
+  SkillPanel,
   type FieldTrailStep,
 } from '../../components';
 import { translate } from '../../i18n/translate';
@@ -190,6 +193,9 @@ export default function CpuGamePlayScreen() {
     setInvalidReason(res.ok ? null : reasonText(res.reason));
   };
 
+  // Local binding so TS narrows this to non-null inside the .map() closure below.
+  const skillPanel = vm.skillPanel;
+
   return (
     <AppBackground variant="battle" inverted={vm.dayNight === 'NIGHT'}>
       <View style={styles.screen}>
@@ -327,46 +333,46 @@ export default function CpuGamePlayScreen() {
         <View style={styles.footer}>
           <View style={styles.footerRow}>
             <View style={styles.footerSide}>
-              {vm.skillPanel ? (
-                <Panel style={styles.skillPanel}>
-                  <View style={styles.skillHeader}>
-                    <View style={styles.skillBadge}>
-                      <Text style={styles.skillBadgeGlyph}>✦</Text>
-                    </View>
-                    <View style={styles.skillHeaderText}>
-                      <Text style={styles.skillOverline}>{translate('cpuGame.skill.held')}</Text>
-                      <Text style={styles.skillName}>{translate(vm.skillPanel.heldEffectKey)}</Text>
-                    </View>
+              {skillPanel ? (
+                <SkillPanel
+                  heldLabel={translate('cpuGame.skill.held')}
+                  name={translate(skillPanel.heldEffectKey)}
+                  description={translate(skillPanel.heldEffectDescKey)}
+                  pending={pendingSkill != null}
+                  onCancelPending={() => cpuGameStore.getState().clearSelection()}
+                  cancelLabel={translate('cpuGame.skill.cancelPending')}
+                >
+                  <View style={styles.skillCardRow}>
+                    {vm.submitOptions.skills.map((opt) => (
+                      <SkillCard
+                        key={opt.useSkill}
+                        kind={opt.useSkill}
+                        label={translate(`sandbox.play.useSkill.${opt.useSkill}`)}
+                        selected={pendingSkill?.useSkill === opt.useSkill}
+                        onPress={() => onSubmitSkill(opt.useSkill)}
+                        dayNightAfter={skillPanel.revolutionPreview?.dayNightAfter}
+                        lowMotion={lowMotion}
+                      />
+                    ))}
+                    {skillPanel.jokerTransformAvailable && !vm.jokerTransform.active ? (
+                      <SkillCard
+                        kind="JOKER_TRANSFORM"
+                        label={translate('sandbox.play.useSkill.JOKER_TRANSFORM')}
+                        selected={false}
+                        onPress={() => cpuGameStore.getState().openJokerTransform()}
+                        lowMotion={lowMotion}
+                      />
+                    ) : null}
                   </View>
-                  <Text style={styles.skillDesc}>{translate(vm.skillPanel.heldEffectDescKey)}</Text>
-                  <View style={styles.skillDivider} />
 
-                  {vm.submitOptions.skills.map((opt) => (
-                    <Button
-                      key={opt.useSkill}
-                      label={translate(opt.labelKey)}
-                      selected={pendingSkill?.useSkill === opt.useSkill}
-                      onPress={() => onSubmitSkill(opt.useSkill)}
-                    />
-                  ))}
-
-                  {vm.skillPanel.revolutionPreview ? (
+                  {skillPanel.revolutionPreview ? (
                     <Text style={styles.muted}>
                       {translate('cpuGame.skill.revolutionPreviewLabel')}:{' '}
-                      {vm.skillPanel.revolutionPreview.dayNightAfter === 'DAY'
+                      {skillPanel.revolutionPreview.dayNightAfter === 'DAY'
                         ? translate('cpuGame.dayNight.day')
                         : translate('cpuGame.dayNight.night')}{' '}
-                      / {vm.skillPanel.revolutionPreview.strengthOrderAfter.join('→')}
+                      / {skillPanel.revolutionPreview.strengthOrderAfter.join('→')}
                     </Text>
-                  ) : null}
-
-                  {vm.skillPanel.jokerTransformAvailable && !vm.jokerTransform.active ? (
-                    <Button
-                      variant="ghost"
-                      label={translate('cpuGame.skill.jokerTransform.open')}
-                      selected={pendingSkill?.useSkill === 'JOKER_TRANSFORM'}
-                      onPress={() => cpuGameStore.getState().openJokerTransform()}
-                    />
                   ) : null}
 
                   {vm.jokerTransform.active ? (
@@ -411,12 +417,18 @@ export default function CpuGamePlayScreen() {
                           <Text style={styles.muted}>
                             {translate('cpuGame.skill.jokerTransform.preview')}
                           </Text>
-                          <CardFace
-                            rank={vm.jokerTransform.previewCard.rank}
-                            suitCode={vm.jokerTransform.previewCard.suitCode}
-                            isJoker
-                            size="hand"
-                          />
+                          <FlipReveal
+                            revealKey={`${vm.jokerTransform.previewCard.rank}-${vm.jokerTransform.previewCard.suitCode}`}
+                            lowMotion={lowMotion}
+                            placeholder={<View style={styles.previewPlaceholder} />}
+                          >
+                            <CardFace
+                              rank={vm.jokerTransform.previewCard.rank}
+                              suitCode={vm.jokerTransform.previewCard.suitCode}
+                              isJoker
+                              size="hand"
+                            />
+                          </FlipReveal>
                         </View>
                       ) : null}
 
@@ -445,7 +457,7 @@ export default function CpuGamePlayScreen() {
                       </View>
                     </View>
                   ) : null}
-                </Panel>
+                </SkillPanel>
               ) : null}
             </View>
 
@@ -475,6 +487,7 @@ export default function CpuGamePlayScreen() {
                   onPress={onSubmit}
                 />
                 <Button
+                  variant="secondary"
                   label={translate('cpuGame.action.pass')}
                   disabled={!vm.canPass}
                   onPress={onPass}
@@ -596,44 +609,18 @@ const makeStyles = (c: ThemeColors) =>
     },
     muted: { fontSize: typography.size.caption, color: c.ink.secondary },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-    skillPanel: { gap: spacing.xs },
-    skillHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    skillBadge: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      borderWidth: 1,
-      borderColor: ACCENT,
-      backgroundColor: 'rgba(201, 169, 78, 0.14)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    skillBadgeGlyph: {
-      fontSize: 13,
-      lineHeight: 15,
-      color: ACCENT,
-      fontWeight: typography.weight.bold,
-    },
-    skillHeaderText: { flex: 1, gap: 1 },
-    skillOverline: {
-      fontSize: 10,
-      letterSpacing: 1,
-      color: c.ink.secondary,
-    },
-    skillName: {
-      fontSize: typography.size.body,
-      fontWeight: typography.weight.bold,
-      color: ACCENT,
-    },
-    skillDesc: {
-      fontSize: typography.size.caption,
-      lineHeight: 16,
-      color: c.ink.secondary,
-    },
-    skillDivider: { height: 1, backgroundColor: c.state.disabled, marginTop: 2 },
+    skillCardRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
     jokerPanel: { gap: spacing.xs },
     pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
     jokerPreview: { alignItems: 'flex-start', gap: 2 },
+    previewPlaceholder: {
+      width: CARD_METRICS.hand.width,
+      height: cardHeight(CARD_METRICS.hand.width),
+      borderRadius: radius.control,
+      borderWidth: 2,
+      borderColor: c.state.disabled,
+      backgroundColor: c.surface.card.face,
+    },
     hintRow: { gap: 2 },
     invalid: {
       fontSize: typography.size.caption,

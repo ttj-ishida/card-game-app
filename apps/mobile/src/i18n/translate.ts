@@ -255,6 +255,7 @@ export const jaDictionary = {
   'nav.diagnostics': '同期診断',
   'cpuGame.history': '履歴',
   'cpuGame.skill.held': '保有スキル',
+  'cpuGame.skill.cancelPending': 'キャンセル',
   'cpuGame.skill.effect.SKILL_JOKER_HERO':
     '場が1枚のときのみ流す、または数字と属性を宣言して変化させる',
   'cpuGame.skill.effect.SKILL_JOKER_SAINT':
