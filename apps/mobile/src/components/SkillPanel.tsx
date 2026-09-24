@@ -135,7 +135,7 @@ function corners(width: number, height: number) {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     wrap: { position: 'relative' },
-    content: { gap: spacing.xs, padding: spacing.md },
+    content: { gap: spacing.xs, padding: spacing.sm },
     header: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
     badge: {
       width: 26,

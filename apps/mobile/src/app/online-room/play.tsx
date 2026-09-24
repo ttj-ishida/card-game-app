@@ -42,6 +42,11 @@ const POLL_INTERVAL_MS = 1000;
 // Width reserved for each side column of the battle footer (held-skill panel on
 // the left, action buttons on the right); the fan sits centred between them.
 const FOOTER_SIDE_W = 220;
+// Below this shell width the 3-column footer (2x FOOTER_SIDE_W + hand fan)
+// can't fit at all -- real phones (~360-412dp) are always under this, and so
+// is any web window narrower than AppShell's 760 letterbox threshold. Stack
+// the footer vertically instead of clipping it off-screen.
+const NARROW_FOOTER_BREAKPOINT = 620;
 
 function reasonText(reason: string | null): string | null {
   if (!reason) return null;
@@ -170,6 +175,12 @@ export default function OnlineRoomPlayScreen() {
 
   const skillSubmitOptions = submitOptionsForSelection(legalPlays, selection);
   const heldSkill = view.skills.find((s) => !s.used) ?? null;
+
+  const isNarrowFooter = shell.width < NARROW_FOOTER_BREAKPOINT;
+  const footerContentWidth = Math.max(0, shell.width - spacing.xs * 2);
+  const handFanMaxWidth = isNarrowFooter
+    ? Math.min(footerContentWidth, 620)
+    : Math.min(shell.width - FOOTER_SIDE_W * 2 - spacing.md * 4, 620);
 
   // 現在の場の「捨て場（過去の手）」と、楕円で囲む「最終出し手」。
   const trailPast: FieldTrailStep[] = fieldTrail.slice(0, -1).map((event, i) => ({
@@ -386,8 +397,8 @@ export default function OnlineRoomPlayScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <View style={styles.footerRow}>
-            <View style={styles.footerSide}>
+          <View style={isNarrowFooter ? styles.footerStack : styles.footerRow}>
+            <View style={isNarrowFooter ? { width: footerContentWidth } : styles.footerSide}>
               {heldSkill ? (
                 <SkillPanel
                   heldLabel={translate('cpuGame.skill.held')}
@@ -413,7 +424,7 @@ export default function OnlineRoomPlayScreen() {
             </View>
 
             <HandFan
-              maxWidth={Math.min(shell.width - FOOTER_SIDE_W * 2 - spacing.md * 4, 620)}
+              maxWidth={handFanMaxWidth}
               onPressCard={onSelectCard}
               cards={view.hand.map((card) => {
                 const selected = selection.includes(card.cardId);
@@ -431,7 +442,7 @@ export default function OnlineRoomPlayScreen() {
               })}
             />
 
-            <View style={styles.footerSide}>
+            <View style={isNarrowFooter ? { width: footerContentWidth } : styles.footerSide}>
               <View style={styles.actions}>
                 <Button
                   label={translate('cpuGame.action.submit')}
@@ -478,6 +489,7 @@ const makeStyles = (c: ThemeColors) =>
       gap: spacing.sm,
     },
     footerSide: { width: FOOTER_SIDE_W },
+    footerStack: { alignItems: 'center', gap: spacing.xs },
     topBar: {
       flexDirection: 'row',
       flexWrap: 'wrap',

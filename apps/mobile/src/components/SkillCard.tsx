@@ -9,7 +9,7 @@ import { ACCENT } from './buttonStyle';
 
 export type SkillActionKind = 'JOKER_CLEAR' | 'JOKER_TRANSFORM' | 'EXTENSION_SEAL' | 'REVOLUTION';
 
-export const SKILL_CARD_WIDTH = 64;
+export const SKILL_CARD_WIDTH = 56;
 
 const GLYPH: Record<SkillActionKind, string> = {
   JOKER_CLEAR: '↺',
